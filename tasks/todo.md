@@ -155,8 +155,8 @@ Plan: `tasks/plan.md`. Commands assume Bun: `bun test`, `bun run build`, `bun ru
 **Description:** `skillctx ui` starts `Bun.serve` on 127.0.0.1, serves the built client and `GET /api/summary`, `GET /api/skills`, `GET /api/skills/:name` from inventory files, and opens the browser. `POST /api/refresh` requires a per-session token.
 
 **Acceptance criteria:**
-- [ ] Binds only to loopback; refresh without the token returns 403
-- [ ] API responses match inventory files
+- [x] Binds only to loopback; refresh without the token returns 403
+- [x] API responses match inventory files
 
 **Verification:** server tests; manual open in browser.
 **Dependencies:** 5
@@ -167,9 +167,9 @@ Plan: `tasks/plan.md`. Commands assume Bun: `bun test`, `bun run build`, `bun ru
 **Description:** Table of skills: name, description, sources, number of agent roots it's visible in, drift flag, outdated status. Search plus filters by source, root and status.
 
 **Acceptance criteria:**
-- [ ] Renders ~100 skills from the author's inventory without lag
-- [ ] Filters and search combine correctly
-- [ ] Works offline
+- [x] Renders ~100 skills from the author's inventory without lag
+- [x] Filters and search combine correctly
+- [x] Works offline
 
 **Verification:** component tests; manual check in browser.
 **Dependencies:** 11
@@ -180,8 +180,8 @@ Plan: `tasks/plan.md`. Commands assume Bun: `bun test`, `bun run build`, `bun ru
 **Description:** One skill: description, all instances with locations and how each is linked (symlink or copy), provenance per source, drift diff between differing copies, outdated details.
 
 **Acceptance criteria:**
-- [ ] Shows each instance's root and whether it is a symlink or copy
-- [ ] Drift shows a file-level diff between two copies
+- [x] Shows each instance's root and whether it is a symlink or copy
+- [x] Drift shows a file-level diff between two copies
 
 **Verification:** component tests; manual check on a drifted skill.
 **Dependencies:** 12
@@ -192,8 +192,8 @@ Plan: `tasks/plan.md`. Commands assume Bun: `bun test`, `bun run build`, `bun ru
 **Description:** "Rescan" and "Check for updates" buttons call `POST /api/refresh` (scan, or scan + check) and update the view, with progress and errors shown.
 
 **Acceptance criteria:**
-- [ ] Rescan reflects a newly added skill folder without restarting the server
-- [ ] Check for updates shows the network request count and any rate-limit error
+- [x] Rescan reflects a newly added skill folder without restarting the server
+- [x] Check for updates shows the network request count and any rate-limit error
 
 **Verification:** server test for refresh; manual check.
 **Dependencies:** 10, 13

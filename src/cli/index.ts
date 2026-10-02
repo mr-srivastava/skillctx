@@ -3,6 +3,7 @@ import pkg from "../../package.json" with { type: "json" };
 import { defaultEnv, type Env, WorkspaceError } from "../core/workspace.ts";
 import { initCommand } from "./commands/init.ts";
 import { inventoryCommand } from "./commands/inventory.ts";
+import { uiCommand } from "./commands/ui.ts";
 import { consoleIo, type Io } from "./io.ts";
 
 export const VERSION: string = pkg.version;
@@ -13,6 +14,8 @@ Usage:
   skillctx init [--home <path>]   Create a workspace (default ~/skillctx) and make it active
   skillctx inventory [--check]    Scan all skill roots and write <workspace>/inventory/
                                   --check also compares with upstream (network)
+  skillctx ui [--port N] [--no-open]
+                                  Browse the inventory in a local web page
   skillctx --version
   skillctx --help
 `;
@@ -22,6 +25,7 @@ type Command = (args: string[], io: Io, env: Env) => Promise<number>;
 const COMMANDS: Record<string, Command> = {
 	init: initCommand,
 	inventory: inventoryCommand,
+	ui: uiCommand,
 };
 
 export async function main(
