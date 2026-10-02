@@ -140,9 +140,9 @@ Plan: `tasks/plan.md`. Commands assume Bun: `bun test`, `bun run build`, `bun ru
 **Description:** For GitHub-sourced skills, fetch each repo's tree once and compare the folder's tree SHA at `skillPath` with `skillFolderHash`. For git checkouts, compare HEAD with `git ls-remote`. Status per skill: `up-to-date`, `outdated`, `unknown`, `error`, plus `checkedAt`. Use `gh auth token` when available. Cache responses in `.cache/`. Runs only under `--check`.
 
 **Acceptance criteria:**
-- [ ] First step verifies on one real skill that `skillFolderHash` equals the GitHub tree SHA; if not, switch to the commit-date fallback in plan.md
-- [ ] One request per distinct repo; rate-limit responses map to `error` with a readable message
-- [ ] Without `--check`, no network calls (asserted by a test with networking stubbed to throw)
+- [x] First step verifies on one real skill that `skillFolderHash` equals the GitHub tree SHA; if not, switch to the commit-date fallback in plan.md
+- [x] One request per distinct repo; rate-limit responses map to `error` with a readable message
+- [x] Without `--check`, no network calls (asserted by a test with networking stubbed to throw)
 
 **Verification:** tests with recorded HTTP fixtures; manual `inventory --check` on the author's machine.
 **Dependencies:** 6, 7

@@ -16,6 +16,11 @@ export interface SkillCopy {
 	diagnostics: string[];
 	/** Filled in after indexing by the provenance lookups. */
 	provenance: Provenance[];
+	/**
+	 * Compared with the tree SHA recorded at install (lockfile or gh
+	 * frontmatter); absent when nothing was recorded.
+	 */
+	installState?: "unchanged" | "modified";
 }
 
 /** All copies sharing a name. More than one distinct hash means drift. */

@@ -1,3 +1,4 @@
+import { gitTreeSha } from "./indexer/git-tree.ts";
 import { buildIndex, type Skill } from "./indexer/index.ts";
 import { toPortable } from "./paths.ts";
 import {
@@ -14,11 +15,14 @@ import type { Provenance, ProvenanceKind } from "./provenance/types.ts";
 import { listPlainSkills } from "./sources/plain.ts";
 import { BUILTIN_ROOTS, configuredRoots } from "./sources/roots.ts";
 import type { SkillRoot } from "./sources/types.ts";
+import type { UpstreamReport } from "./upstream/index.ts";
 import type { Workspace } from "./workspace.ts";
 
 export const SKILLS_DIR = "inventory/skills";
 export const SUMMARY_FILE = "inventory/summary.json";
 export const LAST_SCAN_FILE = ".cache/last-scan.json";
+/** Written only by an explicit check, so plain scans never churn it. */
+export const UPSTREAM_FILE = "inventory/upstream.json";
 
 export interface RootSummary {
 	id: string;
@@ -33,6 +37,8 @@ export interface InventorySummary {
 	copies: number;
 	entries: number;
 	drifted: number;
+	/** Skills with a copy edited since it was installed. */
+	modifiedSinceInstall: number;
 	withDiagnostics: number;
 	/** Skills per provenance kind; a skill counts once per kind it has. */
 	sources: Partial<Record<ProvenanceKind | "untracked", number>>;
@@ -72,7 +78,22 @@ export function scan(ws: Workspace, homeDir: string): ScanResult {
 		claudeAppSyncedLookup(homeDir),
 	]);
 	for (const skill of skills) {
-		for (const copy of skill.copies) copy.provenance = lookup(copy.realPath);
+		for (const copy of skill.copies) {
+			copy.provenance = lookup(copy.realPath);
+			const recorded = copy.provenance
+				.map((p) =>
+					p.kind === "skill-lock"
+						? p.folderHash
+						: p.kind === "gh-frontmatter"
+							? p.treeSha
+							: undefined,
+				)
+				.find(Boolean);
+			if (recorded) {
+				copy.installState =
+					gitTreeSha(copy.realPath) === recorded ? "unchanged" : "modified";
+			}
+		}
 	}
 
 	const perRoot = new Map<string, number>();
@@ -92,6 +113,9 @@ export function scan(ws: Workspace, homeDir: string): ScanResult {
 		copies: skills.reduce((n, s) => n + s.copies.length, 0),
 		entries: entries.length,
 		drifted: skills.filter((s) => s.drift).length,
+		modifiedSinceInstall: skills.filter((s) =>
+			s.copies.some((c) => c.installState === "modified"),
+		).length,
 		withDiagnostics: skills.filter((s) =>
 			s.copies.some((c) => c.diagnostics.length > 0),
 		).length,
@@ -153,6 +177,7 @@ export function toRecord(skill: Skill, homeDir: string) {
 				path: toPortable(e.entryPath, homeDir),
 				symlink: e.viaSymlink,
 			})),
+			installState: c.installState,
 			provenance: c.provenance.map((p) => portableProvenance(p, homeDir)),
 			diagnostics: c.diagnostics,
 		})),
@@ -203,4 +228,8 @@ export function writeInventory(
 	// Timestamps live in the git-ignored cache so an unchanged machine produces no diff.
 	ws.write(LAST_SCAN_FILE, json({ scannedAt: new Date().toISOString() }));
 	return out;
+}
+
+export function writeUpstream(ws: Workspace, report: UpstreamReport): void {
+	ws.write(UPSTREAM_FILE, json(report));
 }

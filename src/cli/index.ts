@@ -11,7 +11,8 @@ const USAGE = `skillctx ${VERSION}
 
 Usage:
   skillctx init [--home <path>]   Create a workspace (default ~/skillctx) and make it active
-  skillctx inventory              Scan all skill roots and write <workspace>/inventory/
+  skillctx inventory [--check]    Scan all skill roots and write <workspace>/inventory/
+                                  --check also compares with upstream (network)
   skillctx --version
   skillctx --help
 `;
