@@ -1,6 +1,6 @@
 # skillctx spec
 
-Status: draft v0.7 · 2026-10-02 · Owner: Aadarsh Srivastava
+Status: draft v0.8 · 2026-10-03 · Owner: Aadarsh Srivastava
 Live doc: https://claude.ai/code/artifact/2a245a34-da36-4c90-867e-1cceca1ae294
 Decisions: [docs/decisions/](decisions/) · Research: [docs/research/community-research.md](research/community-research.md) · Engine review notes: [docs/reviews/](reviews/)
 

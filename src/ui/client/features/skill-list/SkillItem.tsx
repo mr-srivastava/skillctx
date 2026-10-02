@@ -30,11 +30,11 @@ export function SkillRow({ row, roots }: { row: Row; roots: string[] }) {
 
 export function SkillCard({ row, roots }: { row: Row; roots: string[] }) {
 	return (
-		<li className="flex min-w-0 flex-col rounded-md border border-rule bg-raised p-3.5 transition-colors hover:border-ink/40 focus-within:border-ink/50">
+		<li className="relative flex min-w-0 flex-col rounded-md border border-rule bg-raised p-3.5 transition-colors hover:border-ink/40 focus-within:border-ink/50">
 			<div className="mb-1.5 flex min-w-0 items-start gap-2">
 				<SkillName
 					row={row}
-					className="block min-w-0 truncate"
+					className="block min-w-0 truncate after:absolute after:inset-0"
 					title={row.name}
 				/>
 			</div>
@@ -79,7 +79,8 @@ function SkillStatuses({
 	row: Row;
 	compact?: boolean;
 }) {
-	if (row.statuses.length === 0) return null;
+	// In list rows the column keeps its width when empty, so logos line up.
+	if (compact && row.statuses.length === 0) return null;
 	return (
 		<div
 			className={cn(

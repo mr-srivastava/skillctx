@@ -8,7 +8,7 @@ Status: Phase 0 (read-only inventory and local web UI) works. The compile engine
 
 | Doc | Purpose |
 | --- | --- |
-| [docs/spec.md](docs/spec.md) | Product and architecture spec (v0.5) |
+| [docs/spec.md](docs/spec.md) | Product and architecture spec |
 | [docs/research/community-research.md](docs/research/community-research.md) | What the community says about the five problems, and existing tools |
 | [docs/decisions/](docs/decisions/) | Architecture Decision Records |
 | [docs/reviews/](docs/reviews/) | Architecture review notes (inputs, not decisions) |
@@ -32,6 +32,9 @@ Status: Phase 0 (read-only inventory and local web UI) works. The compile engine
 | [012](docs/decisions/ADR-012-shadcn-components.md) | shadcn/ui components, themed with the existing palette |
 | [013](docs/decisions/ADR-013-oxlint-and-oxfmt.md) | Oxlint and Oxfmt instead of Biome |
 | [014](docs/decisions/ADR-014-versioned-inventory-format.md) | A versioned inventory format, owned by one core module |
+| [015](docs/decisions/ADR-015-render-skill-files-read-only.md) | Show skill files in the UI, rendered read-only and kept local |
+| [016](docs/decisions/ADR-016-skill-list-items-with-agent-logos.md) | Skill list as items with agent logos |
+| [017](docs/decisions/ADR-017-base-ui-primitives.md) | Base UI primitives for shadcn components |
 
 ## Usage
 
