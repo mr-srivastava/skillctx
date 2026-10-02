@@ -4,7 +4,7 @@ import { BusySpinner, HEADLINE } from "@/components/display";
 import { Problem } from "@/components/problem";
 import { Button } from "@/components/ui/button";
 import { SkillDetail } from "@/features/skill-detail/SkillDetail";
-import { SkillList } from "@/features/skill-list/SkillList";
+import { SkillList, type SkillView } from "@/features/skill-list/SkillList";
 import * as api from "@/lib/api";
 import { type Filters, NO_FILTERS, toRows } from "@/lib/model";
 import { cn } from "@/lib/utils";
@@ -12,7 +12,6 @@ import { type Busy, TopBar } from "./TopBar.tsx";
 import { useHashRoute } from "./useHashRoute.ts";
 
 const PAGE = "mx-auto max-w-[1180px] px-4 pb-16 wide:px-8 wide:pb-24";
-
 export function App() {
 	const [data, setData] = useState<api.Inventory | null>(null);
 	const [loadError, setLoadError] = useState<string | null>(null);
@@ -21,6 +20,7 @@ export function App() {
 		null,
 	);
 	const [filters, setFilters] = useState<Filters>(NO_FILTERS);
+	const [skillView, setSkillView] = useState<SkillView>("list");
 	const [route, setTab] = useHashRoute();
 	const selected = route.name;
 
@@ -140,6 +140,8 @@ export function App() {
 					summary={data.summary}
 					filters={filters}
 					setFilters={setFilters}
+					view={skillView}
+					setView={setSkillView}
 				/>
 			)}
 		</main>

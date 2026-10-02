@@ -10,6 +10,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "bun run src/cli/index.ts",
+		"dev:ui": "bun --watch src/cli/index.ts ui --dev --no-open",
 		"test": "bun test",
 		"lint": "oxlint --type-aware && oxfmt --check",
 		"format": "oxfmt",

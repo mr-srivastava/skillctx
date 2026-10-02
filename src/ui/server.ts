@@ -18,6 +18,8 @@ export interface UiServerOptions {
 	port?: number;
 	/** Rescan, optionally followed by an upstream check (refreshInventory). */
 	refresh: (check: boolean) => Promise<RefreshOutcome>;
+	/** Serve the client unminified with hot module reload. Off in the binary. */
+	dev?: boolean;
 }
 
 export interface UiServer {
@@ -67,7 +69,7 @@ export function startUiServer(opts: UiServerOptions): UiServer {
 	const server = Bun.serve({
 		hostname: "127.0.0.1",
 		port: opts.port ?? 0,
-		development: false,
+		development: opts.dev ? { hmr: true, console: true } : false,
 		routes: {
 			"/": index,
 			"/api/session": guard(() => Response.json({ token })),

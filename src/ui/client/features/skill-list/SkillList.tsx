@@ -1,22 +1,20 @@
-import { SearchIcon, XIcon } from "lucide-react";
+import {
+	CircleCheckIcon,
+	LayoutGridIcon,
+	ListIcon,
+	SearchIcon,
+	XIcon,
+} from "lucide-react";
 import { Fragment, useEffect, useRef } from "react";
 import { HEADLINE, STATUS_ICON, STATUS_TEXT } from "@/components/display";
-import { DiffersDot, LocationIcons, rootIcon } from "@/components/presence";
+import { DiffersDot, rootIcon } from "@/components/presence";
 import { Button } from "@/components/ui/button";
 import {
 	InputGroup,
 	InputGroupAddon,
 	InputGroupInput,
 } from "@/components/ui/input-group";
-import {
-	Item,
-	ItemActions,
-	ItemContent,
-	ItemDescription,
-	ItemGroup,
-	ItemSeparator,
-	ItemTitle,
-} from "@/components/ui/item";
+import { ItemGroup, ItemSeparator } from "@/components/ui/item";
 import { Kbd } from "@/components/ui/kbd";
 import {
 	Select,
@@ -31,13 +29,15 @@ import {
 	filterRows,
 	NO_FILTERS,
 	type Row,
-	STATUS_LABEL,
 	type Status,
 } from "@/lib/model";
 import { cn } from "@/lib/utils";
 import type { InventorySummary } from "../../../../core/inventory/format.ts";
 import { sourceLabel } from "../../../../core/provenance/kinds.ts";
 import { rootLabel } from "../../../../core/sources/roots.ts";
+import { SkillCard, SkillRow } from "./SkillItem";
+
+export type SkillView = "list" | "grid";
 
 function Headline({
 	rows,
@@ -72,46 +72,59 @@ function Headline({
 	];
 	const parts = all.filter((p) => p.count > 0);
 
-	const figure = (status: Status | "", label: string, meaning: string) => (
-		<button
-			type="button"
-			className={cn(
-				"cursor-pointer rounded px-[0.12em] font-semibold underline decoration-2 underline-offset-[0.18em] hover:decoration-current",
-				status ? STATUS_TEXT[status] : "text-ink",
-				status && filters.status === status
-					? "bg-current/12 decoration-current"
-					: "decoration-current/35",
-			)}
-			aria-pressed={status ? filters.status === status : undefined}
-			aria-label={
-				status
-					? `${label} ${meaning}. ${filters.status === status ? "Showing only these; press to show all." : "Press to show only these."}`
-					: `${label}. Press to show all.`
-			}
-			onClick={() => setStatus(filters.status === status ? "" : status)}
-		>
-			{label}
-		</button>
-	);
-
 	return (
-		<h1 className={cn(HEADLINE, "mt-7 mb-7 wide:mt-10")}>
-			{figure("", `${rows.length} skills`, "")} on this machine.
-			{parts.length === 0 ? (
-				" Nothing needs attention."
-			) : (
-				<>
-					{" "}
-					{parts.map((p, i) => (
-						<span key={p.status}>
-							{i > 0 && (i === parts.length - 1 ? " and " : ", ")}
-							{figure(p.status, String(p.count), p.text)} {p.text}
+		<div className="mt-7 mb-5 wide:mt-9">
+			<div className="flex items-center gap-3">
+				<h1 className={cn(HEADLINE, "text-[clamp(24px,3vw,30px)]")}>Library</h1>
+				<span className="rounded-full border border-rule bg-raised px-2.5 py-0.5 text-caption font-medium tabular-nums text-ink-soft">
+					{rows.length}
+					<span className="sr-only"> skills</span>
+				</span>
+			</div>
+			<p className="mt-1 text-caption text-ink-soft">
+				Skills across your agent locations
+			</p>
+			<div className="mt-3 flex flex-wrap items-center gap-2">
+				{parts.length === 0 ? (
+					<p className="inline-flex items-center gap-1.5 text-caption text-ink-soft">
+						<CircleCheckIcon aria-hidden className="size-3.5" />
+						No issues need attention
+					</p>
+				) : (
+					<>
+						<span className="mr-1 text-caption text-ink-soft">
+							Needs attention
 						</span>
-					))}
-					.
-				</>
-			)}
-		</h1>
+						{parts.map((part) => {
+							const Icon = STATUS_ICON[part.status];
+							const selected = filters.status === part.status;
+							return (
+								<button
+									key={part.status}
+									type="button"
+									className={cn(
+										"inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-caption font-medium transition-colors hover:bg-raised focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+										STATUS_TEXT[part.status],
+										selected
+											? "border-current bg-current/10"
+											: "border-rule bg-transparent",
+									)}
+									aria-pressed={selected}
+									aria-label={`${part.count} ${part.text}. ${selected ? "Showing only these; press to show all." : "Press to show only these."}`}
+									onClick={() => setStatus(selected ? "" : part.status)}
+								>
+									<Icon aria-hidden className="size-3.5" />
+									<span className="tabular-nums">{part.count}</span>
+									<span>
+										{part.status === "drift" ? "copies differ" : part.status}
+									</span>
+								</button>
+							);
+						})}
+					</>
+				)}
+			</div>
+		</div>
 	);
 }
 
@@ -120,11 +133,15 @@ export function SkillList({
 	summary,
 	filters,
 	setFilters,
+	view,
+	setView,
 }: {
 	rows: Row[];
 	summary: InventorySummary;
 	filters: Filters;
 	setFilters: (f: Filters | ((f: Filters) => Filters)) => void;
+	view: SkillView;
+	setView: (view: SkillView) => void;
 }) {
 	const search = useRef<HTMLInputElement>(null);
 	const set = (patch: Partial<Filters>) =>
@@ -185,7 +202,7 @@ export function SkillList({
 				setStatus={(status) => set({ status })}
 			/>
 
-			<div className="mb-3.5 flex flex-wrap items-center gap-2">
+			<div className="mb-4 flex flex-wrap items-center gap-2 rounded-md border border-rule bg-raised/40 p-2">
 				<InputGroup className="w-auto max-w-[420px] flex-[1_1_260px]">
 					<InputGroupAddon align="inline-start">
 						<SearchIcon aria-hidden />
@@ -209,7 +226,10 @@ export function SkillList({
 					value={filters.source}
 					onValueChange={(v) => set({ source: v ?? "" })}
 				>
-					<SelectTrigger aria-label="Installed by">
+					<SelectTrigger
+						aria-label="Installed by"
+						className="max-w-[min(42vw,12rem)] overflow-hidden [&_[data-slot=select-value]]:min-w-0 [&_[data-slot=select-value]]:overflow-hidden"
+					>
 						<SelectValue />
 					</SelectTrigger>
 					<SelectContent>
@@ -225,7 +245,10 @@ export function SkillList({
 					value={filters.root}
 					onValueChange={(v) => set({ root: v ?? "" })}
 				>
-					<SelectTrigger aria-label="Location">
+					<SelectTrigger
+						aria-label="Location"
+						className="max-w-[min(42vw,12rem)] overflow-hidden [&_[data-slot=select-value]]:min-w-0 [&_[data-slot=select-value]]:overflow-hidden"
+					>
 						<SelectValue />
 					</SelectTrigger>
 					<SelectContent>
@@ -241,7 +264,10 @@ export function SkillList({
 					value={filters.sort}
 					onValueChange={(v) => v !== null && set({ sort: v })}
 				>
-					<SelectTrigger aria-label="Sort">
+					<SelectTrigger
+						aria-label="Sort"
+						className="max-w-[min(42vw,12rem)] overflow-hidden [&_[data-slot=select-value]]:min-w-0 [&_[data-slot=select-value]]:overflow-hidden"
+					>
 						<SelectValue />
 					</SelectTrigger>
 					<SelectContent>
@@ -263,6 +289,42 @@ export function SkillList({
 						Clear filters
 					</Button>
 				)}
+				<div
+					className="ml-auto inline-flex shrink-0 items-center gap-0.5 rounded-md border border-rule bg-paper p-0.5"
+					role="group"
+					aria-label="Skill view"
+				>
+					<Button
+						variant="ghost"
+						size="icon-xs"
+						className={cn(
+							"size-8",
+							view === "grid" &&
+								"bg-ink text-paper hover:bg-ink/90 hover:text-paper",
+						)}
+						aria-label="Card view"
+						title="Card view"
+						aria-pressed={view === "grid"}
+						onClick={() => setView("grid")}
+					>
+						<LayoutGridIcon aria-hidden />
+					</Button>
+					<Button
+						variant="ghost"
+						size="icon-xs"
+						className={cn(
+							"size-8",
+							view === "list" &&
+								"bg-ink text-paper hover:bg-ink/90 hover:text-paper",
+						)}
+						aria-label="List view"
+						title="List view"
+						aria-pressed={view === "list"}
+						onClick={() => setView("list")}
+					>
+						<ListIcon aria-hidden />
+					</Button>
+				</div>
 			</div>
 
 			<Legend
@@ -273,16 +335,31 @@ export function SkillList({
 				}
 			/>
 
-			<ItemGroup aria-label="Skills">
-				{visible.map((r, i) => (
-					<Fragment key={r.name}>
-						{i > 0 && <ItemSeparator />}
-						<SkillItem row={r} roots={roots.map((root) => root.id)} />
-					</Fragment>
-				))}
-			</ItemGroup>
+			{view === "list" ? (
+				<ItemGroup aria-label="Skills">
+					{visible.map((row, index) => (
+						<Fragment key={row.name}>
+							{index > 0 && <ItemSeparator />}
+							<SkillRow row={row} roots={roots.map((root) => root.id)} />
+						</Fragment>
+					))}
+				</ItemGroup>
+			) : (
+				<ul
+					aria-label="Skills"
+					className="grid list-none grid-cols-1 gap-2.5 p-0 sm:grid-cols-2 wide:grid-cols-3"
+				>
+					{visible.map((row) => (
+						<SkillCard
+							key={row.name}
+							row={row}
+							roots={roots.map((root) => root.id)}
+						/>
+					))}
+				</ul>
+			)}
 			{visible.length === 0 && (
-				<p className="my-4 text-ink-soft">
+				<p className="my-4 text-ink-soft" role="status" aria-live="polite">
 					No skills match. Try a shorter search, or clear the filters.
 				</p>
 			)}
@@ -290,57 +367,9 @@ export function SkillList({
 	);
 }
 
-/**
- * One skill: name and description, the logos of the locations it is in,
- * and its states.
- * The name link stretches over the whole item, so the item is the click
- * target while screen readers hear only the name as the link.
- */
-function SkillItem({ row, roots }: { row: Row; roots: string[] }) {
-	return (
-		<Item role="listitem" size="sm" className="relative px-2 hover:bg-raised">
-			<ItemContent className="min-w-0 basis-[260px]">
-				<ItemTitle>
-					<a
-						className="font-mono text-small font-semibold no-underline after:absolute after:inset-0 hover:underline"
-						href={`#/skill/${encodeURIComponent(row.name)}`}
-					>
-						{row.name}
-					</a>
-				</ItemTitle>
-				<ItemDescription className="max-w-[72ch]">
-					{row.description}
-				</ItemDescription>
-			</ItemContent>
-			<ItemActions className="gap-6 self-start wide:pt-0.5">
-				<div className="wide:w-[124px]">
-					<LocationIcons presence={row.presence} roots={roots} />
-				</div>
-				<div className="flex flex-col gap-1 wide:w-[130px]">
-					{row.statuses.map((s) => {
-						const Icon = STATUS_ICON[s];
-						return (
-							<span
-								key={s}
-								className={cn(
-									"flex items-center gap-1.5 text-caption font-medium whitespace-nowrap",
-									STATUS_TEXT[s],
-								)}
-							>
-								<Icon aria-hidden className="size-3.5 shrink-0" />
-								{STATUS_LABEL[s]}
-							</span>
-						);
-					})}
-				</div>
-			</ItemActions>
-		</Item>
-	);
-}
-
 function Legend({ count }: { count: string }) {
 	return (
-		<p className="mb-1 flex flex-wrap gap-x-5 gap-y-1.5 border-b border-ink pb-2 text-caption text-ink-soft">
+		<p className="mb-1 flex flex-wrap gap-x-5 gap-y-1.5 border-b border-rule pb-2 text-caption text-ink-soft">
 			<span className="font-medium">{count}</span>
 			<span className="inline-flex items-center gap-1.75">
 				<DiffersDot /> copy with different content

@@ -43,13 +43,16 @@ bun run build            # writes dist/skillctx, a single binary
 ```
 
 ```bash
-skillctx init --home ~/skillctx   # create a workspace and make it active
-skillctx inventory                # scan every skill folder, write <home>/inventory/
-skillctx inventory --check        # also compare with GitHub and git remotes
-skillctx ui                       # open the inventory at http://127.0.0.1:4317
+skillctx init [--home <path>]                 # create or activate a workspace
+skillctx inventory [--home <path>] [--check] # scan skill folders into inventory/
+skillctx ui [--home <path>] [--port <port>] [--no-open]
 ```
 
-During development, use `bun run dev <command>` instead of the binary.
+The CLI also supports `--help` and `--version` (or `-h` and `-v`). During
+development, use `bun run dev <command>` in place of `skillctx`; for example,
+`bun run dev ui --no-open`. The UI also accepts `--dev`, which enables the
+development client build. The `dev:ui` package script runs the UI in Bun watch
+mode with `--dev --no-open`.
 
 `inventory` reads skill folders for Agents (`~/.agents/skills`), Claude Code, Codex, Cursor, Gemini, OpenCode, Skills Manager and Claude plugins. It never writes to them. Provenance comes from the `npx skills`/`gh skill` lockfile, `gh skill` frontmatter, git checkouts, the Skills Manager database and Claude's plugin list. Only `--check` (or "Check for updates" in the UI) touches the network: one GitHub request per repository, using `GITHUB_TOKEN` or `gh auth token` if available.
 
@@ -70,11 +73,14 @@ Every path stored in the workspace is relative to `~`, so you can commit it to a
 
 | Command | Does |
 | --- | --- |
-| `bun test` | Run tests |
-| `bun run lint` | Oxlint (type-aware) and Oxfmt check |
+| `bun run dev <command>` | Run a CLI command from source, for example `bun run dev inventory` |
+| `bun run dev:ui` | Run the UI on port 4317 with Bun watch mode, development client build, and no automatic browser open |
+| `bun run test` | Run tests with Bun |
+| `bun run lint` | Run type-aware Oxlint and check formatting with Oxfmt |
+| `bun run lint:fix` | Apply Oxlint fixes, then format with Oxfmt |
 | `bun run format` | Format with Oxfmt |
-| `bun run typecheck` | tsc |
-| `bun run build` | Compile and ad-hoc sign `dist/skillctx` |
+| `bun run typecheck` | Run `tsc --noEmit` |
+| `bun run build` | Build and ad-hoc sign `dist/skillctx` |
 
 CI (`.github/workflows/ci.yml`) runs lint, typecheck and tests on every pull request and on pushes to `main`, with the Bun version pinned by `packageManager` in `package.json`. If a change alters the inventory output on purpose, update `test/__snapshots__/` with `bun test --update-snapshots` in the same commit.
 

@@ -170,7 +170,11 @@ Phase 0 is the source adapters, the Indexer and the inventory UI. The compiler c
 
 CLI and MCP return identical payloads.
 
-### Agent operations (CLI and MCP)
+### Planned agent operations (CLI and MCP)
+
+These operations describe the intended context engine surface. They are not
+implemented in the current Phase 0 CLI, which supports `init`, `inventory`, and
+`ui` (see the [README](../README.md) for current commands).
 
 | Operation | CLI | Returns |
 | --- | --- | --- |
@@ -182,7 +186,9 @@ CLI and MCP return identical payloads.
 
 All take optional `prev` (`used`, `skipped`, `why`) and `traceId`. MCP exposes exactly these five tools.
 
-### Human operations
+### Planned human operations
+
+These commands are part of the target product surface, not the current CLI.
 
 CLI commands: `init`, `build [--agent claude,codex]`, `status`, `check` (CI), `watch`, `sources`, `variant create`, `patch`, `rebase [--all]`, `stats`, `ui`.
 

@@ -26,6 +26,20 @@
 				"4391"
 			],
 			"port": 4391
+		},
+		{
+			"name": "skillctx-ui-dev",
+			"runtimeExecutable": "bun",
+			"runtimeArgs": [
+				"--watch",
+				"src/cli/index.ts",
+				"ui",
+				"--dev",
+				"--no-open",
+				"--port",
+				"4318"
+			],
+			"port": 4318
 		}
 	]
 }
