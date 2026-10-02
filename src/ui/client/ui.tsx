@@ -1,12 +1,16 @@
 import {
+	BotIcon,
 	CircleAlertIcon,
 	CircleArrowUpIcon,
+	FolderIcon,
 	GitCompareIcon,
+	LibraryIcon,
 	type LucideIcon,
 	PencilIcon,
+	PlugIcon,
 	TriangleAlertIcon,
 } from "lucide-react";
-import type { ReactElement, ReactNode } from "react";
+import type { ComponentType, ReactElement, ReactNode, SVGProps } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Spinner } from "@/components/ui/spinner";
 import {
@@ -15,7 +19,14 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { rootLabel } from "../../core/sources/roots.ts";
+import { PLUGIN_ROOT_PREFIX, rootLabel } from "../../core/sources/roots.ts";
+import {
+	ClaudeLogo,
+	CodexLogo,
+	CursorLogo,
+	GeminiLogo,
+	OpenCodeLogo,
+} from "./logos.tsx";
 import type { Presence, Status } from "./model.ts";
 
 /** A file path, repo or hash: the only things set in monospace. */
@@ -157,5 +168,97 @@ export function Cell({
 				<span className="sr-only">{text}</span>
 			</span>
 		</Hint>
+	);
+}
+
+type Icon = ComponentType<SVGProps<SVGSVGElement>>;
+
+/**
+ * The agent's logo for a location. Locations no single agent owns get a
+ * Lucide icon: the shared ~/.agents folder, Skills Manager, plugins and
+ * folders listed in skillctx.yaml.
+ */
+const ROOT_ICON: Record<string, Icon> = {
+	agents: BotIcon,
+	"claude-code": ClaudeLogo,
+	codex: CodexLogo,
+	cursor: CursorLogo,
+	gemini: GeminiLogo,
+	opencode: OpenCodeLogo,
+	"skills-manager": LibraryIcon,
+};
+
+export function rootIcon(id: string): Icon {
+	return (
+		ROOT_ICON[id] ?? (id.startsWith(PLUGIN_ROOT_PREFIX) ? PlugIcon : FolderIcon)
+	);
+}
+
+/** Marks a logo whose copy differs from the one most locations hold. */
+export function DiffersDot({ className }: { className?: string }) {
+	return (
+		<span
+			aria-hidden
+			className={cn(
+				"size-2 rounded-full bg-differs ring-2 ring-background",
+				className,
+			)}
+		/>
+	);
+}
+
+/**
+ * The locations a skill is in, as logos. Past `max` the rest fold into a
+ * "+N" whose hint names them; it carries the differs dot when a folded
+ * location holds a different copy. Names are in hints and sr-only text; the
+ * logos themselves are recognisable without hovering.
+ */
+export function LocationIcons({
+	presence,
+	roots,
+	max = 5,
+}: {
+	presence: Record<string, Presence>;
+	/** Location ids in display order. */
+	roots: string[];
+	max?: number;
+}) {
+	const here = roots.filter((id) => presence[id]);
+	const shown = here.length > max ? here.slice(0, max - 1) : here;
+	const rest = here.slice(shown.length);
+	const say = (id: string) =>
+		`${PRESENCE_TEXT[presence[id] ?? "absent"]} in ${rootLabel(id)}`;
+	return (
+		<ul className="relative flex items-center gap-2">
+			{shown.map((id) => {
+				const Logo = rootIcon(id);
+				return (
+					<li key={id} className="flex">
+						<Hint text={say(id)}>
+							<span className="relative flex text-ink">
+								<Logo aria-hidden className="size-4" />
+								{presence[id] === "differs" && (
+									<DiffersDot className="absolute -top-0.5 -right-0.5" />
+								)}
+								<span className="sr-only">{say(id)}</span>
+							</span>
+						</Hint>
+					</li>
+				);
+			})}
+			{rest.length > 0 && (
+				<li className="flex">
+					<Hint text={rest.map(say).join(". ")}>
+						<span className="relative text-caption text-ink-soft">
+							+{rest.length}
+							{rest.some((id) => presence[id] === "differs") && (
+								<DiffersDot className="absolute -top-0.5 -right-2" />
+							)}
+							<span className="sr-only">: {rest.map(say).join(". ")}</span>
+						</span>
+					</Hint>
+				</li>
+			)}
+		</ul>
 	);
 }

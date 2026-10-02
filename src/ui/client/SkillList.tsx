@@ -1,11 +1,20 @@
 import { SearchIcon, XIcon } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { Fragment, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
 	InputGroup,
 	InputGroupAddon,
 	InputGroupInput,
 } from "@/components/ui/input-group";
+import {
+	Item,
+	ItemActions,
+	ItemContent,
+	ItemDescription,
+	ItemGroup,
+	ItemSeparator,
+	ItemTitle,
+} from "@/components/ui/item";
 import { Kbd } from "@/components/ui/kbd";
 import {
 	Select,
@@ -23,18 +32,15 @@ import {
 	type Filters,
 	filterRows,
 	NO_FILTERS,
-	type Presence,
 	type Row,
 	STATUS_LABEL,
 	type Status,
 } from "./model.ts";
 import {
-	CELL,
-	Cell,
-	DESC,
+	DiffersDot,
 	HEADLINE,
-	Hint,
-	PRESENCE_TEXT,
+	LocationIcons,
+	rootIcon,
 	STATUS_ICON,
 	STATUS_TEXT,
 } from "./ui.tsx";
@@ -198,6 +204,26 @@ export function SkillList({
 					</SelectContent>
 				</Select>
 				<Select
+					value={filters.root || ANY}
+					onValueChange={(v) => set({ root: v === ANY ? "" : v })}
+				>
+					<SelectTrigger aria-label="Location">
+						<SelectValue />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value={ANY}>In any location</SelectItem>
+						{roots.map((r) => {
+							const Logo = rootIcon(r.id);
+							return (
+								<SelectItem key={r.id} value={r.id}>
+									<Logo aria-hidden />
+									In {rootLabel(r.id)} ({r.entries})
+								</SelectItem>
+							);
+						})}
+					</SelectContent>
+				</Select>
+				<Select
 					value={filters.sort}
 					onValueChange={(v) => set({ sort: v as Filters["sort"] })}
 				>
@@ -222,86 +248,22 @@ export function SkillList({
 				)}
 			</div>
 
-			<Legend />
+			<Legend
+				count={
+					visible.length === rows.length
+						? `${rows.length} skills`
+						: `${visible.length} of ${rows.length} skills`
+				}
+			/>
 
-			<div className="overflow-x-auto">
-				<table className="w-full">
-					<thead>
-						<tr>
-							<th scope="col" className={cn(CELL.headSkill, "w-[46%]")}>
-								{visible.length === rows.length
-									? "Skill"
-									: `${visible.length} of ${rows.length} skills`}
-							</th>
-							{roots.map((r) => (
-								<th key={r.id} scope="col" className={CELL.headLoc}>
-									<Hint
-										text={`${r.path} holds ${r.entries} skills. ${filters.root === r.id ? "Showing only these; press to show all." : "Press to show only these."}`}
-									>
-										<button
-											type="button"
-											className={cn(
-												"cursor-pointer rounded px-1 py-0.5 hover:text-ink",
-												filters.root === r.id &&
-													"bg-raised text-ink shadow-[inset_0_-2px_0_var(--ink)]",
-											)}
-											aria-pressed={filters.root === r.id}
-											onClick={() =>
-												set({ root: filters.root === r.id ? "" : r.id })
-											}
-										>
-											{rootLabel(r.id)}
-										</button>
-									</Hint>
-								</th>
-							))}
-							<th scope="col" className={CELL.headState}>
-								State
-							</th>
-						</tr>
-					</thead>
-					<tbody>
-						{visible.map((r) => (
-							<tr key={r.name} className="hover:bg-raised">
-								<th scope="row" className={cn(CELL.bodySkill, "w-[46%]")}>
-									<a
-										className="font-mono text-small font-semibold no-underline hover:underline"
-										href={`#/skill/${encodeURIComponent(r.name)}`}
-									>
-										{r.name}
-									</a>
-									<span className={DESC}>{r.description}</span>
-								</th>
-								{roots.map((root) => (
-									<td key={root.id} className={CELL.bodyLoc}>
-										<Cell
-											presence={r.presence[root.id] ?? "absent"}
-											root={root.id}
-										/>
-									</td>
-								))}
-								<td className={CELL.bodyState}>
-									{r.statuses.map((s) => {
-										const Icon = STATUS_ICON[s];
-										return (
-											<span
-												key={s}
-												className={cn(
-													"flex items-center gap-1.5 text-caption font-medium whitespace-nowrap",
-													STATUS_TEXT[s],
-												)}
-											>
-												<Icon aria-hidden className="size-3.5 shrink-0" />
-												{STATUS_LABEL[s]}
-											</span>
-										);
-									})}
-								</td>
-							</tr>
-						))}
-					</tbody>
-				</table>
-			</div>
+			<ItemGroup aria-label="Skills">
+				{visible.map((r, i) => (
+					<Fragment key={r.name}>
+						{i > 0 && <ItemSeparator />}
+						<SkillItem row={r} roots={roots.map((root) => root.id)} />
+					</Fragment>
+				))}
+			</ItemGroup>
 			{visible.length === 0 && (
 				<p className="my-4 text-ink-soft">
 					No skills match. Try a shorter search, or clear the filters.
@@ -311,15 +273,61 @@ export function SkillList({
 	);
 }
 
-function Legend() {
-	const kinds: Presence[] = ["folder", "link", "differs", "absent"];
+/**
+ * One skill: name and description, the logos of the locations it is in,
+ * and its states.
+ * The name link stretches over the whole item, so the item is the click
+ * target while screen readers hear only the name as the link.
+ */
+function SkillItem({ row, roots }: { row: Row; roots: string[] }) {
 	return (
-		<p className="mb-2 flex flex-wrap gap-x-5 gap-y-1.5 text-caption text-ink-soft">
-			{kinds.map((k) => (
-				<span key={k} className="inline-flex items-center gap-1.75">
-					<Cell presence={k} /> {PRESENCE_TEXT[k].toLowerCase()}
-				</span>
-			))}
+		<Item role="listitem" size="sm" className="relative px-2 hover:bg-raised">
+			<ItemContent className="min-w-0 basis-[260px]">
+				<ItemTitle>
+					<a
+						className="font-mono text-small font-semibold no-underline after:absolute after:inset-0 hover:underline"
+						href={`#/skill/${encodeURIComponent(row.name)}`}
+					>
+						{row.name}
+					</a>
+				</ItemTitle>
+				<ItemDescription className="max-w-[72ch]">
+					{row.description}
+				</ItemDescription>
+			</ItemContent>
+			<ItemActions className="gap-6 self-start wide:pt-0.5">
+				<div className="wide:w-[124px]">
+					<LocationIcons presence={row.presence} roots={roots} />
+				</div>
+				<div className="flex flex-col gap-1 wide:w-[130px]">
+					{row.statuses.map((s) => {
+						const Icon = STATUS_ICON[s];
+						return (
+							<span
+								key={s}
+								className={cn(
+									"flex items-center gap-1.5 text-caption font-medium whitespace-nowrap",
+									STATUS_TEXT[s],
+								)}
+							>
+								<Icon aria-hidden className="size-3.5 shrink-0" />
+								{STATUS_LABEL[s]}
+							</span>
+						);
+					})}
+				</div>
+			</ItemActions>
+		</Item>
+	);
+}
+
+function Legend({ count }: { count: string }) {
+	return (
+		<p className="mb-1 flex flex-wrap gap-x-5 gap-y-1.5 border-b border-ink pb-2 text-caption text-ink-soft">
+			<span className="font-medium">{count}</span>
+			<span className="inline-flex items-center gap-1.75">
+				<DiffersDot /> copy with different content
+			</span>
 		</p>
 	);
 }
