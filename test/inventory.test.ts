@@ -16,6 +16,7 @@ import { hashFolder } from "../src/core/indexer/hash.ts";
 import { buildIndex } from "../src/core/indexer/index.ts";
 import { parseSkillMd } from "../src/core/indexer/parse.ts";
 import { skillFileName } from "../src/core/inventory/format.ts";
+import { refreshInventory } from "../src/core/inventory/refresh.ts";
 import { scan } from "../src/core/inventory/scan.ts";
 import {
 	InventoryFormatError,
@@ -266,5 +267,40 @@ describe("inventory format (ADR-014)", () => {
 		);
 		expect(code).toBe(1);
 		expect(err[0]).toContain("Upgrade skillctx");
+	});
+});
+
+describe("refreshInventory", () => {
+	test("a plain refresh never asks for network deps", async () => {
+		const { workspace } = initWorkspace("~/ws", env);
+		const outcome = await refreshInventory(workspace, home, {
+			check: false,
+			upstream: () => {
+				throw new Error("must not be called");
+			},
+		});
+		expect(outcome.upstream).toBeUndefined();
+		expect(outcome.written.written).toBe(outcome.scan.skills.length);
+	});
+
+	test("with check, the scan is reported before the network is touched", async () => {
+		const { workspace } = initWorkspace("~/ws", env);
+		const order: string[] = [];
+		const outcome = await refreshInventory(workspace, home, {
+			check: true,
+			onScanned: () => order.push("scanned"),
+			upstream: () => {
+				order.push("network");
+				return {
+					fetch: (() => {
+						throw new Error("offline");
+					}) as unknown as typeof fetch,
+					lsRemote: () => undefined,
+				};
+			},
+		});
+		expect(order).toEqual(["scanned", "network"]);
+		expect(outcome.upstream?.checkedAt).toBeString();
+		expect(workspace.read("inventory/upstream.json")).toContain('"format": 1');
 	});
 });

@@ -14,12 +14,10 @@ import {
 } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import {
-	inventoryCommand,
-	type UpstreamDeps,
-} from "../src/cli/commands/inventory.ts";
+import { inventoryCommand } from "../src/cli/commands/inventory.ts";
 import { gitTreeSha } from "../src/core/indexer/git-tree.ts";
 import { InventoryReader } from "../src/core/inventory/store.ts";
+import type { UpstreamDeps } from "../src/core/upstream/index.ts";
 import { type Env, initWorkspace } from "../src/core/workspace.ts";
 import { toRows } from "../src/ui/client/model.ts";
 import { copyDiff } from "../src/ui/data.ts";

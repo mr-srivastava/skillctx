@@ -1,5 +1,7 @@
 import { randomBytes } from "node:crypto";
+import type { RefreshOutcome } from "../core/inventory/refresh.ts";
 import { InventoryReader } from "../core/inventory/store.ts";
+import { tallyUpstream } from "../core/upstream/index.ts";
 import type { Workspace } from "../core/workspace.ts";
 import index from "./client/index.html";
 import { copyDiff } from "./data.ts";
@@ -14,8 +16,8 @@ export interface UiServerOptions {
 	homeDir: string;
 	/** 0 picks a free port. */
 	port?: number;
-	/** Rescan, optionally followed by an upstream check. */
-	refresh: (check: boolean) => Promise<RefreshResult>;
+	/** Rescan, optionally followed by an upstream check (refreshInventory). */
+	refresh: (check: boolean) => Promise<RefreshOutcome>;
 }
 
 export interface UiServer {
@@ -23,6 +25,16 @@ export interface UiServer {
 	port: number;
 	token: string;
 	stop: () => void;
+}
+
+/** One line for the page's status area. */
+function refreshMessage({ scan, written, upstream }: RefreshOutcome): string {
+	let message = `Scanned ${scan.summary.skills} skills: ${written.written} updated, ${written.removed} removed.`;
+	if (upstream) {
+		const t = tallyUpstream(upstream);
+		message += ` Checked upstream with ${upstream.requests} requests: ${t.skills.outdated} outdated${t.errorResults ? `, ${t.errorResults} errors` : ""}.`;
+	}
+	return message;
 }
 
 type Handler<R extends Request = Request> = (
@@ -103,7 +115,11 @@ export function startUiServer(opts: UiServerOptions): UiServer {
 					};
 					refreshing = true;
 					try {
-						return Response.json(await opts.refresh(Boolean(body.check)));
+						const outcome = await opts.refresh(Boolean(body.check));
+						return Response.json({
+							ok: true,
+							message: refreshMessage(outcome),
+						} satisfies RefreshResult);
 					} finally {
 						refreshing = false;
 					}

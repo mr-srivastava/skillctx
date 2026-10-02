@@ -254,6 +254,46 @@ export async function checkUpstream(
 	};
 }
 
+export interface UpstreamTally {
+	/** Distinct skills per status. */
+	skills: Record<UpstreamStatus, number>;
+	/** Outdated skill names, each once, in report order. */
+	outdated: string[];
+	/** Distinct error messages. */
+	errors: string[];
+	/** Results (copy × source) that errored. */
+	errorResults: number;
+}
+
+/** Counts for reporting a check, shared by the CLI and the UI. */
+export function tallyUpstream(report: UpstreamReport): UpstreamTally {
+	const skillsWith = (status: UpstreamStatus) =>
+		new Set(
+			report.results.filter((r) => r.status === status).map((r) => r.skill),
+		);
+	return {
+		skills: {
+			"up-to-date": skillsWith("up-to-date").size,
+			outdated: skillsWith("outdated").size,
+			"missing-upstream": skillsWith("missing-upstream").size,
+			error: skillsWith("error").size,
+		},
+		outdated: [...skillsWith("outdated")],
+		errors: [
+			...new Set(report.results.flatMap((r) => (r.error ? [r.error] : []))),
+		],
+		errorResults: report.results.filter((r) => r.status === "error").length,
+	};
+}
+
+/** Network access for a check; injectable so tests never hit the network. */
+export type UpstreamDeps = Omit<CheckDeps, "homeDir">;
+
+/** The real network: fetch, the installed git, and a token from GITHUB_TOKEN or gh. */
+export function defaultUpstreamDeps(tokenFromEnv?: string): UpstreamDeps {
+	return { fetch, token: githubToken(tokenFromEnv), lsRemote: gitLsRemote };
+}
+
 /** `git ls-remote` via the installed git. */
 export function gitLsRemote(remote: string, ref: string): string | undefined {
 	const proc = Bun.spawnSync(["git", "ls-remote", remote, ref], {

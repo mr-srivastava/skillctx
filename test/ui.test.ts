@@ -2,8 +2,8 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { makeRefresh } from "../src/cli/commands/ui.ts";
 import type { SkillRecord } from "../src/core/inventory/format.ts";
+import { refreshInventory } from "../src/core/inventory/refresh.ts";
 import { scan } from "../src/core/inventory/scan.ts";
 import { writeInventory } from "../src/core/inventory/store.ts";
 import {
@@ -41,7 +41,13 @@ beforeEach(() => {
 		ws,
 		homeDir: home,
 		port: 0,
-		refresh: makeRefresh(ws, env),
+		refresh: (check) =>
+			refreshInventory(ws, home, {
+				check,
+				upstream: () => {
+					throw new Error("no network in tests");
+				},
+			}),
 	});
 });
 
