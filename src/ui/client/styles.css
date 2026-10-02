@@ -135,6 +135,11 @@
 		text-decoration-color: currentColor;
 	}
 
+	/* Lucide's default 2px stroke reads heavier than the text beside it. */
+	svg.lucide {
+		stroke-width: 1.75;
+	}
+
 	:focus-visible {
 		outline: 2px solid var(--outdated);
 		outline-offset: 2px;
