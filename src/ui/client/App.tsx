@@ -437,8 +437,8 @@ function SkillList({
 
 			<Legend />
 
-			<div className="grid-wrap">
-				<table className="grid">
+			<div className="presence-wrap">
+				<table className="presence">
 					<thead>
 						<tr>
 							<th scope="col" className="skill-col">
@@ -619,8 +619,8 @@ function SkillDetail({
 			<Advice skill={skill} row={row} />
 
 			<h2>Where it lives</h2>
-			<div className="grid-wrap">
-				<table className="grid where">
+			<div className="presence-wrap">
+				<table className="presence where">
 					<thead>
 						<tr>
 							<th scope="col" className="skill-col">

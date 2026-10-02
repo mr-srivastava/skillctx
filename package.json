@@ -13,7 +13,7 @@
 		"lint": "biome check .",
 		"format": "biome format --write .",
 		"typecheck": "tsc --noEmit",
-		"build": "bun build src/cli/index.ts --compile --outfile dist/skillctx && bun run scripts/sign.ts"
+		"build": "bun run scripts/build.ts && bun run scripts/sign.ts"
 	},
 	"license": "UNLICENSED",
 	"devDependencies": {
@@ -21,6 +21,8 @@
 		"@types/bun": "^1.4.2",
 		"@types/react": "^19.3.0",
 		"@types/react-dom": "^19.3.0",
+		"bun-plugin-tailwind": "^0.1.2",
+		"tailwindcss": "^4.3.3",
 		"typescript": "^7.0.2"
 	},
 	"dependencies": {

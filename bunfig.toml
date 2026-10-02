@@ -1,0 +1,4 @@
+# Tailwind runs inside Bun's HTML bundler for `skillctx ui` (src/ui/server.ts)
+# when started from source, including in tests.
+[serve.static]
+plugins = ["bun-plugin-tailwind"]

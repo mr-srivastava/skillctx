@@ -28,6 +28,7 @@ Status: Phase 0 (read-only inventory and local web UI) works. The compile engine
 | [008](docs/decisions/ADR-008-local-usefulness-analytics.md) | Local usefulness funnel, harness telemetry, paired evals |
 | [009](docs/decisions/ADR-009-workspace-at-user-chosen-home.md) | One workspace at a user-chosen path holds all skillctx data; git-backable |
 | [010](docs/decisions/ADR-010-inventory-first-with-local-web-ui.md) | Phase 0 is a read-only cross-source inventory with a local web UI |
+| [011](docs/decisions/ADR-011-tailwind-for-the-web-ui.md) | Tailwind CSS v4 for the web UI, via Bun's plugin |
 
 ## Usage
 
@@ -71,4 +72,4 @@ Every path stored in the workspace is relative to `~`, so you can commit it to a
 | `bun run typecheck` | tsc |
 | `bun run build` | Compile and ad-hoc sign `dist/skillctx` |
 
-The UI server builds the client bundle at startup, so restart `skillctx ui` after editing `src/ui/client/`.
+The UI server builds the client bundle at startup, so restart `skillctx ui` after editing `src/ui/client/`. Styles use Tailwind v4; theme tokens are in `src/ui/client/styles.css` (ADR-011).
