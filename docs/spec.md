@@ -1,6 +1,6 @@
 # skillctx spec
 
-Status: draft v0.5 · 2026-10-02 · Owner: Aadarsh Srivastava
+Status: draft v0.6 · 2026-10-02 · Owner: Aadarsh Srivastava
 Live doc: https://claude.ai/code/artifact/2a245a34-da36-4c90-867e-1cceca1ae294
 Decisions: [docs/decisions/](decisions/) · Research: [docs/research/community-research.md](research/community-research.md) · Engine review notes: [docs/reviews/](reviews/)
 
@@ -147,6 +147,8 @@ Changes stack in three layers, like CSS: the upstream skill (never edited), then
 ```
 
 Committed files are plain text with no machine-specific absolute paths, so the workspace can move between machines and later back up to cloud storage.
+
+`inventory/` holds one JSON file per skill under `inventory/skills/`, plus `summary.json` and, after an explicit check, `upstream.json`. Every file carries a `format` number. Added fields keep the number; anything an older reader would misread bumps it, and a reader refuses formats newer than it knows ([ADR-014](decisions/ADR-014-versioned-inventory-format.md)).
 
 ## 5. Architecture
 

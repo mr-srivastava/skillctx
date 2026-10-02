@@ -1,5 +1,6 @@
 import { parseArgs } from "node:util";
-import { scan, writeInventory, writeUpstream } from "../../core/inventory.ts";
+import { scan } from "../../core/inventory/scan.ts";
+import { writeInventory, writeUpstream } from "../../core/inventory/store.ts";
 import { checkUpstream } from "../../core/upstream/index.ts";
 import {
 	type Env,

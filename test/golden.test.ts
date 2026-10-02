@@ -19,9 +19,10 @@ import {
 	type UpstreamDeps,
 } from "../src/cli/commands/inventory.ts";
 import { gitTreeSha } from "../src/core/indexer/git-tree.ts";
+import { InventoryReader } from "../src/core/inventory/store.ts";
 import { type Env, initWorkspace } from "../src/core/workspace.ts";
 import { toRows } from "../src/ui/client/model.ts";
-import { InventoryStore } from "../src/ui/data.ts";
+import { copyDiff } from "../src/ui/data.ts";
 
 /*
  * Characterization test: one fixture home that touches every source, every
@@ -246,10 +247,12 @@ describe("golden inventory", () => {
 		expect(out.join("\n")).toMatchSnapshot("stdout");
 		expect(err.join("\n")).toMatchSnapshot("stderr");
 
-		const store = new InventoryStore(workspace, home);
+		const store = new InventoryReader(workspace);
 		expect(toRows(store.skills(), store.upstream() ?? null)).toMatchSnapshot(
 			"ui rows",
 		);
-		expect(store.diff("beta", 0, 1)).toMatchSnapshot("diff beta 0..1");
+		expect(copyDiff(store.skill("beta"), 0, 1, home)).toMatchSnapshot(
+			"diff beta 0..1",
+		);
 	});
 });

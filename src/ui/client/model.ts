@@ -1,8 +1,8 @@
+import type { SkillRecord } from "../../core/inventory/format.ts";
 import type {
 	UpstreamReport,
 	UpstreamResult,
 } from "../../core/upstream/index.ts";
-import type { SkillRecord } from "../data.ts";
 
 export type Status = "outdated" | "edited" | "drift" | "warnings";
 

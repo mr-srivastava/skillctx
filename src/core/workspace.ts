@@ -35,6 +35,12 @@ version: ${WORKSPACE_VERSION}
 roots: []
 `;
 
+/** What skillctx.yaml says. Grows as later phases add settings. */
+export interface WorkspaceConfig {
+	/** Extra skill roots to scan, as `~/` or absolute paths. */
+	roots: string[];
+}
+
 export class WorkspaceError extends Error {
 	override name = "WorkspaceError";
 }
@@ -93,6 +99,26 @@ export class Workspace {
 		if (!existsSync(target)) return false;
 		rmSync(target);
 		return true;
+	}
+
+	/** Text of a workspace file, or undefined if it doesn't exist. */
+	read(relPath: string): string | undefined {
+		const target = this.resolve(relPath);
+		return existsSync(target) ? readFileSync(target, "utf8") : undefined;
+	}
+
+	/** Parsed skillctx.yaml. Unknown or malformed keys fall back to defaults. */
+	config(): WorkspaceConfig {
+		const text = this.read(WORKSPACE_FILE);
+		const parsed = (text ? Bun.YAML.parse(text) : null) as {
+			roots?: unknown;
+		} | null;
+		const roots = Array.isArray(parsed?.roots) ? parsed.roots : [];
+		return {
+			roots: roots.filter(
+				(r): r is string => typeof r === "string" && r.length > 0,
+			),
+		};
 	}
 
 	/** File names directly inside a workspace folder; empty if the folder is missing. */

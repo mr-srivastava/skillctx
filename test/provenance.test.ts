@@ -13,11 +13,9 @@ import {
 import os from "node:os";
 import path from "node:path";
 import { hashFolder } from "../src/core/indexer/hash.ts";
-import {
-	portableProvenance,
-	scan,
-	writeInventory,
-} from "../src/core/inventory.ts";
+import { portableProvenance } from "../src/core/inventory/format.ts";
+import { scan } from "../src/core/inventory/scan.ts";
+import { writeInventory } from "../src/core/inventory/store.ts";
 import {
 	claudeAppSyncedLookup,
 	ghFrontmatterLookup,

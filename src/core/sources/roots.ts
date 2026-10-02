@@ -1,5 +1,3 @@
-import { existsSync, readFileSync } from "node:fs";
-import path from "node:path";
 import type { SkillRoot } from "./types.ts";
 
 /**
@@ -26,14 +24,6 @@ export const BUILTIN_ROOTS: readonly SkillRoot[] = [
 ];
 
 /** Extra roots listed under `roots:` in the workspace's skillctx.yaml. */
-export function configuredRoots(workspaceRoot: string): SkillRoot[] {
-	const file = path.join(workspaceRoot, "skillctx.yaml");
-	if (!existsSync(file)) return [];
-	const parsed = Bun.YAML.parse(readFileSync(file, "utf8")) as {
-		roots?: unknown;
-	} | null;
-	const roots = Array.isArray(parsed?.roots) ? parsed.roots : [];
-	return roots
-		.filter((r): r is string => typeof r === "string" && r.length > 0)
-		.map((p) => ({ id: `custom:${p}`, label: p, path: p }));
+export function configuredRoots(paths: readonly string[]): SkillRoot[] {
+	return paths.map((p) => ({ id: `custom:${p}`, label: p, path: p }));
 }

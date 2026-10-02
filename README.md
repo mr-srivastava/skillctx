@@ -31,6 +31,7 @@ Status: Phase 0 (read-only inventory and local web UI) works. The compile engine
 | [011](docs/decisions/ADR-011-tailwind-for-the-web-ui.md) | Tailwind CSS v4 for the web UI, via Bun's plugin |
 | [012](docs/decisions/ADR-012-shadcn-components.md) | shadcn/ui components, themed with the existing palette |
 | [013](docs/decisions/ADR-013-oxlint-and-oxfmt.md) | Oxlint and Oxfmt instead of Biome |
+| [014](docs/decisions/ADR-014-versioned-inventory-format.md) | A versioned inventory format, owned by one core module |
 
 ## Usage
 

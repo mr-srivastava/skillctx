@@ -35,9 +35,12 @@ import {
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
-import type { InventorySummary } from "../../core/inventory.ts";
+import type {
+	InventorySummary,
+	SkillRecord,
+} from "../../core/inventory/format.ts";
 import type { UpstreamReport } from "../../core/upstream/index.ts";
-import type { CopyDiff, SkillRecord } from "../data.ts";
+import type { CopyDiff } from "../data.ts";
 import {
 	countBy,
 	type Filters,
@@ -87,7 +90,12 @@ type Busy = null | "scan" | "check";
 
 async function getJson<T>(url: string): Promise<T> {
 	const res = await fetch(url);
-	if (!res.ok) throw new Error(`${url} returned ${res.status}`);
+	if (!res.ok) {
+		const body = (await res.json().catch(() => null)) as {
+			error?: string;
+		} | null;
+		throw new Error(body?.error ?? `${url} returned ${res.status}`);
+	}
 	return (await res.json()) as T;
 }
 

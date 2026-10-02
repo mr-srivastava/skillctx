@@ -3,14 +3,15 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { makeRefresh } from "../src/cli/commands/ui.ts";
-import { scan, writeInventory } from "../src/core/inventory.ts";
+import type { SkillRecord } from "../src/core/inventory/format.ts";
+import { scan } from "../src/core/inventory/scan.ts";
+import { writeInventory } from "../src/core/inventory/store.ts";
 import {
 	type Env,
 	initWorkspace,
 	type Workspace,
 } from "../src/core/workspace.ts";
 import { filterRows, NO_FILTERS, toRows } from "../src/ui/client/model.ts";
-import type { SkillRecord } from "../src/ui/data.ts";
 import { startUiServer, type UiServer } from "../src/ui/server.ts";
 
 let tmp: string;
@@ -78,6 +79,15 @@ describe("ui server", () => {
 			["SKILL.md", "changed"],
 		]);
 		expect(diff.files[0]?.patch).toMatch(/[-+]Two\./);
+	});
+
+	test("an inventory from a newer skillctx comes back as a readable error", async () => {
+		ws.write("inventory/summary.json", JSON.stringify({ format: 99 }));
+		const res = await api("/api/summary");
+		expect(res.status).toBe(500);
+		expect(((await res.json()) as { error: string }).error).toContain(
+			"Upgrade skillctx",
+		);
 	});
 
 	test("rejects a foreign Host header (DNS rebinding)", async () => {

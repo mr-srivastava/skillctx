@@ -1,7 +1,8 @@
 import { randomBytes } from "node:crypto";
+import { InventoryReader } from "../core/inventory/store.ts";
 import type { Workspace } from "../core/workspace.ts";
 import index from "./client/index.html";
-import { InventoryStore } from "./data.ts";
+import { copyDiff } from "./data.ts";
 
 export interface RefreshResult {
 	ok: boolean;
@@ -36,7 +37,7 @@ type Handler<R extends Request = Request> = (
  * cross-origin pages can't read /api/session, so they can't get the token.
  */
 export function startUiServer(opts: UiServerOptions): UiServer {
-	const store = new InventoryStore(opts.ws, opts.homeDir);
+	const store = new InventoryReader(opts.ws);
 	const token = randomBytes(24).toString("hex");
 	let refreshing = false;
 	let port = 0;
@@ -70,10 +71,11 @@ export function startUiServer(opts: UiServerOptions): UiServer {
 			"/api/skills/:name/diff": guard(
 				(req: Bun.BunRequest<"/api/skills/:name/diff">) => {
 					const url = new URL(req.url);
-					const diff = store.diff(
-						decodeURIComponent(req.params.name),
+					const diff = copyDiff(
+						store.skill(decodeURIComponent(req.params.name)),
 						Number(url.searchParams.get("a")),
 						Number(url.searchParams.get("b")),
+						opts.homeDir,
 					);
 					return diff
 						? Response.json(diff)
@@ -109,6 +111,8 @@ export function startUiServer(opts: UiServerOptions): UiServer {
 			},
 		},
 		fetch: () => new Response("Not found", { status: 404 }),
+		// Reader errors (e.g. an inventory from a newer skillctx) reach the page as text.
+		error: (error) => Response.json({ error: error.message }, { status: 500 }),
 	});
 
 	port = server.port ?? 0;
