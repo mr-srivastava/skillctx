@@ -37,13 +37,19 @@ export function DiffView({ skill }: { skill: SkillRecord }) {
 			setDiff(null);
 			return;
 		}
+		// A slower response for an earlier pair must not replace this one.
+		let live = true;
 		api
 			.copyDiff(skill.name, a, b)
 			.then((d) => {
+				if (!live) return;
 				setDiff(d);
 				setError(null);
 			})
-			.catch((e: Error) => setError(e.message));
+			.catch((e: Error) => live && setError(e.message));
+		return () => {
+			live = false;
+		};
 	}, [skill.name, a, b]);
 
 	const copies = copyItems(skill.copies);

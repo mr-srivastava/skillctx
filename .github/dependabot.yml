@@ -1,0 +1,16 @@
+version: 2
+updates:
+  - package-ecosystem: bun
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      # One PR for the lint/format/type toolchain, which moves together.
+      toolchain:
+        patterns: ["oxlint*", "oxfmt", "typescript", "knip", "@types/bun", "@types/hast"]
+      react:
+        patterns: ["react", "react-dom", "@types/react*"]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
