@@ -11,7 +11,7 @@ ADR-012 adopted shadcn on Radix (`radix-ui`, style `new-york`). shadcn now ships
 
 ## Decision
 - Use `@base-ui/react` for every interactive primitive. `components.json` uses style `base-vega` (the Base UI counterpart of `new-york`), so `bunx shadcn@latest add` generates Base UI components.
-- Composition uses `render` instead of `asChild`: `<TooltipTrigger render={children} />` in `Hint`. When `render` turns a Base UI `Button` into a non-button, pass `nativeButton={false}`.
+- Composition uses `render` instead of `asChild`. `Hint` only composes with interactive button triggers; decorative location indicators use a native `title` for pointer hover and screen-reader text, without becoming keyboard controls. Base UI's Tooltip Trigger does not expose Button's `nativeButton` prop.
 - `Select` gets an `items` list (value and label) and the call site maps the same list into `SelectItem`s. `SelectValue` reads labels from `items`; without it the trigger shows the raw value. Values can be any type: the copy pickers use numbers, and the "no filter" option uses `""` directly, so the `ANY` sentinel is gone.
 - `onValueChange` can pass `null` and a second `eventDetails` argument. Handlers ignore `null` or map it to `""`.
 - The local tuning from ADR-012 carries over unchanged (type scale, `bg-card`, the page-wide focus outline, the `inline` button size, line-style tabs). Only the primitive layer and its state selectors changed:

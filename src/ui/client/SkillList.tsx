@@ -27,6 +27,7 @@ import { cn } from "@/lib/utils";
 import type { InventorySummary } from "../../core/inventory/format.ts";
 import { sourceLabel } from "../../core/provenance/kinds.ts";
 import { rootLabel } from "../../core/sources/roots.ts";
+import { DiffersDot, HEADLINE, STATUS_ICON, STATUS_TEXT } from "./display.tsx";
 import {
 	countBy,
 	type Filters,
@@ -36,14 +37,7 @@ import {
 	STATUS_LABEL,
 	type Status,
 } from "./model.ts";
-import {
-	DiffersDot,
-	HEADLINE,
-	LocationIcons,
-	rootIcon,
-	STATUS_ICON,
-	STATUS_TEXT,
-} from "./ui.tsx";
+import { LocationIcons, rootIcon } from "./presence.tsx";
 
 function Headline({
 	rows,

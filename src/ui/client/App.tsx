@@ -3,11 +3,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import * as api from "./api.ts";
+import { BusySpinner, HEADLINE } from "./display.tsx";
 import { type Filters, NO_FILTERS, toRows } from "./model.ts";
+import { Problem } from "./problem.tsx";
 import { type DetailTab, SkillDetail } from "./SkillDetail.tsx";
 import { SkillList } from "./SkillList.tsx";
 import { type Busy, TopBar } from "./TopBar.tsx";
-import { BusySpinner, HEADLINE, Problem } from "./ui.tsx";
 
 const PAGE = "mx-auto max-w-[1180px] px-4 pb-16 wide:px-8 wide:pb-24";
 

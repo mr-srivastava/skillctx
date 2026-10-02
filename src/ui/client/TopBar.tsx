@@ -7,7 +7,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { UpstreamReport } from "../../core/upstream/index.ts";
-import { BusySpinner, Hint } from "./ui.tsx";
+import { BusySpinner } from "./display.tsx";
+import { Hint } from "./Hint.tsx";
 
 export type Busy = null | "scan" | "check";
 

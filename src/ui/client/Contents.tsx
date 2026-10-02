@@ -10,6 +10,8 @@ import { cn } from "@/lib/utils";
 import type { SkillRecord } from "../../core/inventory/format.ts";
 import type { CopyFiles, FileText } from "../data.ts";
 import * as api from "./api.ts";
+import { copyItems } from "./copy-items.tsx";
+import { Path } from "./display.tsx";
 import {
 	goToAnchor,
 	type Heading,
@@ -17,7 +19,7 @@ import {
 	parseMarkdown,
 	splitFrontmatter,
 } from "./markdown.tsx";
-import { Path, Problem } from "./ui.tsx";
+import { Problem } from "./problem.tsx";
 
 function size(bytes: number): string {
 	return bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
@@ -99,15 +101,7 @@ export function Contents({
 	// hidden until its replacement arrives.
 	const current = shown && shown.path === file ? shown : null;
 
-	// Select items double as the trigger's labels (SelectValue reads them).
-	const copyItems = skill.copies.map((c, i) => ({
-		value: i,
-		label: (
-			<>
-				Copy {i + 1}: <Path>{c.realPath}</Path>
-			</>
-		),
-	}));
+	const copies = copyItems(skill.copies);
 	const fileItems = (listing?.files ?? []).map((f) => ({
 		value: f.path,
 		label: (
@@ -124,7 +118,7 @@ export function Contents({
 				<div className="mb-2 flex flex-wrap items-center gap-2">
 					{skill.copies.length > 1 && (
 						<Select
-							items={copyItems}
+							items={copies}
 							value={copy}
 							onValueChange={(v) => {
 								if (v === null) return;
@@ -138,7 +132,7 @@ export function Contents({
 								<SelectValue />
 							</SelectTrigger>
 							<SelectContent>
-								{copyItems.map((it) => (
+								{copies.map((it) => (
 									<SelectItem key={it.value} value={it.value}>
 										{it.label}
 									</SelectItem>

@@ -16,7 +16,9 @@ import { cn } from "@/lib/utils";
 import type { SkillRecord } from "../../core/inventory/format.ts";
 import type { CopyDiff } from "../data.ts";
 import * as api from "./api.ts";
-import { Path, Problem } from "./ui.tsx";
+import { copyItems } from "./copy-items.tsx";
+import { Path } from "./display.tsx";
+import { Problem } from "./problem.tsx";
 
 export function DiffView({ skill }: { skill: SkillRecord }) {
 	const [a, setA] = useState(0);
@@ -44,15 +46,7 @@ export function DiffView({ skill }: { skill: SkillRecord }) {
 			.catch((e: Error) => setError(e.message));
 	}, [skill.name, a, b]);
 
-	// Select items double as the trigger's labels (SelectValue reads them).
-	const copyItems = skill.copies.map((c, i) => ({
-		value: i,
-		label: (
-			<>
-				Copy {i + 1}: <Path>{c.realPath}</Path>
-			</>
-		),
-	}));
+	const copies = copyItems(skill.copies);
 
 	const pick = (
 		value: number,
@@ -60,7 +54,7 @@ export function DiffView({ skill }: { skill: SkillRecord }) {
 		label: string,
 	) => (
 		<Select
-			items={copyItems}
+			items={copies}
 			value={value}
 			onValueChange={(v) => v !== null && onChange(v)}
 		>
@@ -68,7 +62,7 @@ export function DiffView({ skill }: { skill: SkillRecord }) {
 				<SelectValue />
 			</SelectTrigger>
 			<SelectContent>
-				{copyItems.map((it) => (
+				{copies.map((it) => (
 					<SelectItem key={it.value} value={it.value}>
 						{it.label}
 					</SelectItem>

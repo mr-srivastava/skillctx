@@ -21,19 +21,11 @@ import {
 import { rootLabel } from "../../core/sources/roots.ts";
 import { Contents } from "./Contents.tsx";
 import { DiffView } from "./DiffView.tsx";
+import { DESC, H2, Notes, Path, STATUS_ICON, STATUS_TEXT } from "./display.tsx";
+import { Hint } from "./Hint.tsx";
 import type { Presence, Row } from "./model.ts";
-import {
-	CELL,
-	Cell,
-	DESC,
-	H2,
-	Hint,
-	Notes,
-	Path,
-	Problem,
-	STATUS_ICON,
-	STATUS_TEXT,
-} from "./ui.tsx";
+import { CELL, Cell } from "./presence.tsx";
+import { Problem } from "./problem.tsx";
 
 const FACT =
 	"grid gap-0.5 border-b border-rule py-2.25 wide:grid-cols-[180px_1fr] wide:gap-4";
