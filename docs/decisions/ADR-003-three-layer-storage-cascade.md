@@ -1,7 +1,7 @@
 # ADR-003: Three-layer cascade and where each layer lives
 
 ## Status
-Accepted
+Accepted in part. The three-layer cascade still holds; the storage locations are superseded by ADR-009.
 
 ## Date
 2026-10-02

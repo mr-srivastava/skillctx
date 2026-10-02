@@ -1,7 +1,7 @@
 # ADR-005: CLI plus on-demand local web UI; no desktop app, no daemon
 
 ## Status
-Accepted
+Accepted. Amended by ADR-010: the local web UI ships in Phase 0 as the inventory view.
 
 ## Date
 2026-10-02

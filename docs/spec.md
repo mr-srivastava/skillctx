@@ -1,14 +1,16 @@
 # skillctx spec
 
-Status: draft v0.3 · 2026-10-02 · Owner: Aadarsh Srivastava
+Status: draft v0.4 · 2026-10-02 · Owner: Aadarsh Srivastava
 Live doc: https://claude.ai/code/artifact/2a245a34-da36-4c90-867e-1cceca1ae294
-Decisions: [docs/decisions/](decisions/) · Research: [docs/research/community-research.md](research/community-research.md)
+Decisions: [docs/decisions/](decisions/) · Research: [docs/research/community-research.md](research/community-research.md) · Engine review notes: [docs/reviews/](reviews/)
 
 "skillctx" is a working name.
 
 ## 1. Problem and summary
 
-skillctx is a local skill compiler. You keep installing skills the way you do now. skillctx takes those skills, applies your own tweaks and this repo's rules, and writes small project-specific skills into the folders Claude Code, Codex and Cursor already read. Later it also tracks which sections actually helped.
+skillctx is a local skill compiler. You keep installing skills the way you do now. skillctx takes those skills, applies your own tweaks and each project's rules, and produces small project-specific skills for Claude Code, Codex and Cursor. Later it also tracks which sections actually helped.
+
+It starts as something simpler: a read-only inventory of every skill on your machine, across all the tools that installed them, showing duplicates and what's out of date ([ADR-010](decisions/ADR-010-inventory-first-with-local-web-ui.md)). Everything skillctx owns lives in one workspace folder you choose, which you can back up to your own GitHub repo ([ADR-009](decisions/ADR-009-workspace-at-user-chosen-home.md)).
 
 Five things are broken in how skills work today.
 
@@ -26,9 +28,9 @@ The research ([community research](research/community-research.md)) showed these
 | No safe customization | Repeated user questions with no answers; the only overlay design (Hermes) is unbuilt | Lead with patches |
 | No feedback | 39 of 49 coding skills gave zero gain in SWE-Skills-Bench; tools count invocations only | Next: usefulness tracking |
 | No memory between runs | Crowded: claude-mem (~84k stars), convention MCPs | Narrow: lens rules tied to sections |
-| No visibility | Crowded and security-driven: Skillshare, Skills Manager, SkillSpector | Integrate, don't build |
+| No visibility | Crowded and security-driven: Skillshare, Skills Manager, SkillSpector | Build a read-only cross-source inventory first, as the compiler's foundation (ADR-010) |
 
-In short, install skills with `npx skills`, `gh skill` or Skills Manager as you do today. skillctx never edits them. It layers your changes on top and writes the result where your agents look. A CLI and MCP server come later for search, code grounding and usage tracking.
+In short, install skills with `npx skills`, `gh skill` or Skills Manager as you do today. skillctx never edits them. It layers your changes on top and writes the result into your workspace, from where it reaches your agents. A CLI and MCP server come later for search, code grounding and usage tracking.
 
 ## 2. Positioning and non-goals
 
@@ -38,7 +40,7 @@ Installing, deploying and syncing skills are solved. Plenty of tools do it well.
 | --- | --- | --- |
 | Publish and registry | skills.sh, GitHub, Tessl | Read provenance only |
 | Install and update | `npx skills`, `gh skill` | Read lockfiles as upstream; detect changes by our own content hash |
-| Library, deploy, sync | Skills Manager, Skillshare | Read their libraries; reuse presets as profiles |
+| Library, deploy, sync | Skills Manager, Skillshare | Read their libraries; reuse presets as profiles; show a read-only inventory across all of them |
 | Security scanning | NVIDIA SkillSpector, Snyk Agent Scan | Run them on compiled output during `build` |
 | Session memory | claude-mem, memory and convention MCPs | Coexist; we hold only curated lens rules |
 | Use: compile, patch, retrieve, measure | Nobody yet | skillctx |
@@ -55,21 +57,23 @@ Installing, deploying and syncing skills are solved. Plenty of tools do it well.
 ### Non-goals
 
 - A skill registry or marketplace.
-- Deploying skills into 50+ agent folders or syncing one library across agents.
+- Installing, updating, deploying or syncing skills (the inventory is read-only).
 - Session memory (capturing and replaying what an agent did).
 - Our own security scanner; we call existing ones.
-- Multi-device backup and sync, beyond the store being a git repo you can push.
+- Our own sync service. The workspace is plain files you can push to GitHub; cloud storage is a later option (ADR-009).
 - A hosted or multi-user service.
 - Managing MCP server configs.
 
 ## 3. Packaging and user flow
 
-skillctx is a CLI. It writes compiled skills into each agent's own skill folder, and optionally answers queries over the CLI and MCP. There's no proxy, no background daemon and no desktop app ([ADR-001](decisions/ADR-001-compile-to-native-skill-folders.md), [ADR-005](decisions/ADR-005-cli-and-local-web-ui-no-desktop-app.md)).
+skillctx is a CLI with a local web UI. All its data lives in a workspace at a path you pick (ADR-009). Phase 0 scans and shows your skills; later phases write compiled skills into `<home>/compiled/` and optionally answer queries over the CLI and MCP. There's no proxy, no background daemon and no desktop app ([ADR-001](decisions/ADR-001-compile-to-native-skill-folders.md), [ADR-005](decisions/ADR-005-cli-and-local-web-ui-no-desktop-app.md)).
+
+Agents only load skills from their own folders (`.claude/skills`, `.agents/skills`), so compiled output will need a delivery step, most likely a symlink from the agent folder into the workspace. That design is open; see the engine review notes.
 
 Harnesses already load skills in stages. They read each skill's `name` and `description`, open `SKILL.md` when one matches, and read reference files only when asked. That mechanism is fine. Upstream skills just aren't shaped for it, so the compiler reshapes them.
 
 ```
-.claude/skills/api-design/        generated by skillctx build (also .agents/skills/, etc.)
+<home>/compiled/<project>/api-design/   generated by skillctx build
   SKILL.md      sharp description + index of in-scope sections + top lens rules
   sections/     one file per in-scope section, patches applied
 ```
@@ -94,16 +98,18 @@ Set per project in `lens.yaml`.
 
 Nothing runs in the background. The CLI starts, reads SQLite and exits. The harness starts the MCP server when it needs it. The dashboard exists only while `skillctx ui` is open, and `skillctx watch` is opt-in.
 
-### A user's first day
+### A user's first day (Phase 0)
 
 ```bash
-npm i -g skillctx              # or npx skillctx
-cd my-app && skillctx init     # detect installed skills, pick scope tags, write .skillctx/lens.yaml
-skillctx build                 # compile lean skills into each agent's skill folder
-# work normally in Claude Code, Codex, Cursor
-skillctx status                # upstream changed? patches stale? suggestions waiting?
-skillctx ui                    # occasionally: review rebases, suggestions, analytics
+npm i -g skillctx                   # or npx skillctx
+skillctx init --home ~/skillctx     # create the workspace, detect skill sources
+skillctx inventory                  # scan all sources, write <home>/inventory/
+skillctx inventory --check          # explicit refresh: compare against upstream (network)
+skillctx ui                         # browse skills, locations, duplicates, outdated
+cd ~/skillctx && git init && git remote add origin <your repo>   # optional backup
 ```
+
+Later phases add `skillctx build`, `status` and the review screens.
 
 ## 4. Core concepts and data model
 
@@ -113,31 +119,34 @@ Everything is built from sections, not whole skills.
 | --- | --- | --- | --- |
 | Upstream skill | Installed by another tool, pinned by revision and content hash | `skill:vercel-react@a1b2c3` | Read in place, never copied |
 | Section | Heading-delimited chunk with tags and a one-line summary | `section:api-design#frontend-contracts` | Index only |
-| Variant | Personal derivative of one upstream skill, as section ops | `variant:api-design@frontend` | Personal store (git) |
-| Composite | New skill assembled from sections of several skills/variants | `composite:react-data-layer` | Personal store (git) |
-| Profile | Named set of skills, variants and composites for a stack | `profile:react-convex` | Personal store (git) |
-| Project lens | Per-repo scope, profile, pinned sections, read mode, rules | `lens:<repo>` | `<repo>/.skillctx/lens.yaml` |
-| Project patch | Section ops true only for this repo | `patch:<repo>/api-design` | `<repo>/.skillctx/patches/` |
+| Variant | Personal derivative of one upstream skill, as section ops | `variant:api-design@frontend` | `<home>/variants/` |
+| Composite | New skill assembled from sections of several skills/variants | `composite:react-data-layer` | `<home>/variants/` |
+| Profile | Named set of skills, variants and composites for a stack | `profile:react-convex` | `<home>/profiles/` |
+| Project lens | Per-project scope, profile, pinned sections, read mode, rules | `lens:<project>` | `<home>/projects/<project>/lens.yaml` (or opt-in `<repo>/.skillctx/`) |
+| Project patch | Section ops true only for this project | `patch:<project>/api-design` | `<home>/projects/<project>/patches/` (or opt-in `<repo>/.skillctx/`) |
 | Lens rule | One-line fact about this repo ("we use Zod, not valibot") | `rule:<repo>/zod-validation` | Inside the lens |
-| Build output | Compiled lean skill per agent | n/a | `<repo>/.claude/skills/`, `.agents/skills/`, … |
+| Inventory entry | One skill with all its installed copies, provenance and outdated status | `skill:<name>@<hash>` | `<home>/inventory/` |
+| Build output | Compiled lean skill | n/a | `<home>/compiled/` (delivery to agents open) |
 | Event | One usage signal (shown, opened, applied, corrected) | n/a | Local SQLite |
 
 For physical files we borrow the vocabulary from udayvarmora07/skills-manager's ADR-002, `SkillRoot` → `Consumer` → `SkillInstance` → `EffectiveSkill`. Deduplicate by content hash.
 
 Every variant, composite and section records `{source, revision, content_hash, section_anchor}`. Like `gh skill`, we also write this into frontmatter so it travels with the file.
 
-Changes stack in three layers, like CSS: the upstream skill (never edited), then your personal variant, then the project patch. See [ADR-003](decisions/ADR-003-three-layer-storage-cascade.md).
+Changes stack in three layers, like CSS: the upstream skill (never edited), then your personal variant, then the project patch. See [ADR-003](decisions/ADR-003-three-layer-storage-cascade.md); locations per [ADR-009](decisions/ADR-009-workspace-at-user-chosen-home.md).
 
 ```
-~/.skillctx/
-  store/            your own git repo: variants/, composites/, profiles/
-  index.db          SQLite: sections, FTS index, grounding cache (rebuildable)
-  events.db         SQLite: usage events (local only)
-<repo>/.skillctx/   committed with the code
-  lens.yaml         scope, profile, read mode, pinned sections, rules
-  patches/          project-only section ops
-  lock.json         exact upstream and variant hashes, for identical builds
+<home>/              a folder you choose; push it to your own GitHub repo if you like
+  skillctx.yaml      workspace config: sources, agents, settings
+  inventory/         installed skills, locations, versions, outdated status
+  variants/          personal overrides and composites (later)
+  profiles/          named skill sets (later)
+  projects/<name>/   lens.yaml, patches/, lock.json per project (later)
+  compiled/          compiler output (later)
+  .cache/            index.db, events.db; rebuildable, git-ignored
 ```
+
+Committed files are plain text with no machine-specific absolute paths, so the workspace can move between machines and later back up to cloud storage.
 
 ## 5. Architecture
 
@@ -153,7 +162,7 @@ Changes stack in three layers, like CSS: the upstream skill (never edited), then
                                Project lens   Code graph          Any agent
 ```
 
-The compiler is the centre of Phase 0. The context engine serves the same material on demand over CLI and MCP; every read through those paths writes to the event log.
+Phase 0 is the source adapters, the Indexer and the inventory UI. The compiler comes next. The context engine serves the same material on demand over CLI and MCP; every read through those paths writes to the event log.
 
 ## 6. Surfaces
 
@@ -275,21 +284,22 @@ Guardrails: weights corrections > agent reports > inferred; hints hidden below 5
 
 ## 10. MVP and roadmap
 
-The MVP is Phase 0: read installed skills, split them into sections, apply the lens, and `build` small skills into the Claude Code and `.agents/skills` folders. That alone fixes the problem this started from.
+The MVP is Phase 0, a read-only inventory (ADR-010). It is useful on its own, and the scanning and indexing it needs are the compiler's foundation. The compile engine design stays open; the [engine review notes](reviews/2026-10-02-engine-architecture-review.md) collect what we know so far.
 
 | Phase | Scope | Gate to next |
 | --- | --- | --- |
-| 0 · Compile | Source adapters, section parser, lens scope + rules, build to native dirs, lock.json | Compiled beats original in paired runs |
-| 1 · Patches | Section ops, five patch states, personal store repo, `check` in CI, drafted conflict fixes | Patches survive 3 upstream updates |
-| 2 · Read path | CLI search/get, MCP (stdio), `cli` mode + events, dashboard v1, rebase review UI | Agents use the read path unprompted |
-| 3 · Learning | Code-graph grounding, `context`, suggestions inbox, usage hints, verify/propose | n/a |
+| 0 · Inventory | Workspace init, source adapters, Indexer (realpath + content-hash dedupe), outdated check on refresh, inventory files, local web UI | Inventory matches what's on disk across all sources on the author's machine |
+| 1 · Compile | Section parser, lens scope + rules, build into `<home>/compiled/`, delivery into agent folders, lock.json | Compiled beats original in paired runs |
+| 2 · Patches | Section ops, five patch states, personal store repo, `check` in CI, drafted conflict fixes | Patches survive 3 upstream updates |
+| 3 · Read path | CLI search/get, MCP (stdio), `cli` mode + events, dashboard v1, rebase review UI | Agents use the read path unprompted |
+| 4 · Learning | Code-graph grounding, `context`, suggestions inbox, usage hints, verify/propose | n/a |
 
 ## 11. Risks and open questions
 
 | Risk | Mitigation |
 | --- | --- |
 | Compiling drops a critical section | `get` escape hatch; paired runs before each release |
-| Compiled skills don't beat originals | Phase 0 gate measures pass rate and tokens; ship only on a win |
+| Compiled skills don't beat originals | Phase 1 gate measures pass rate and tokens; ship only on a win |
 | Harness doesn't pick compiled skill | Trigger-first descriptions; budget report |
 | Too many compiled skills exceed description budget | Merge sections; warn before ~1% |
 | Compiled + original both installed | Detect; offer disable/rename |
@@ -299,7 +309,9 @@ The MVP is Phase 0: read installed skills, split them into sections, apply the l
 | Agents don't report used/skipped | OTLP + hooks; piggyback; inferred |
 | Upstream restructures headings | Five states; fail loudly; 3-way review |
 | Grounding cache stale | Invalidate by file hash |
-| Scope creep into manager/memory tool | Non-goals; read-only adapters |
+| Scope creep into manager/memory tool | Non-goals; read-only adapters; the inventory never installs or deploys |
+| Outdated check needs the network | Runs only on explicit refresh; everything else works offline |
+| Workspace leaks machine-specific paths into a shared repo | Store paths relative to `~` or project roots; per-machine values in an ignored local file |
 
 ### Open questions
 
@@ -307,11 +319,13 @@ The MVP is Phase 0: read installed skills, split them into sections, apply the l
 - [ ] Are markdown headings enough as section boundaries?
 - [x] Language: TypeScript + Bun single binary ([ADR-004](decisions/ADR-004-typescript-with-bun-binary.md))
 - [ ] Success metric for the context engine: tokens, tool calls, or task results first?
-- [ ] Lens files committed for the team, or per developer?
+- [x] Where project overrides live: workspace by default, opt-in to the repo (ADR-009).
 - [ ] Skills Manager integration: read disk, or only its `--json` CLI?
-- [ ] Commit build output, or regenerate on checkout?
+- [ ] Commit compiled output in the workspace repo, or regenerate it?
 - [ ] Default read mode: `files` or `cli`?
-- [ ] First `build` targets: Claude Code + `.agents/skills` only, or Cursor too?
+- [ ] First `build` targets: Claude Code + `.agents/skills` only, or Cursor too? (Cursor reads both folders; see engine review.)
+- [ ] How do compiled skills in `<home>/compiled/` reach agent folders: symlink, copy, or agent config?
+- [ ] Cloud storage backup: which provider first, and when?
 
 ## 12. Prior art
 

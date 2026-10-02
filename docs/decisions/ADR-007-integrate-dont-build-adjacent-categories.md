@@ -1,7 +1,7 @@
 # ADR-007: Integrate with, don't build, inventory/sync, memory and security scanning
 
 ## Status
-Accepted
+Accepted in part. Superseded by ADR-010 for inventory: we build a read-only cross-source inventory and UI. Still no installing, deploying or syncing.
 
 ## Date
 2026-10-02
