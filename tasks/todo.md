@@ -8,9 +8,9 @@ Plan: `tasks/plan.md`. Commands assume Bun: `bun test`, `bun run build`, `bun ru
 **Description:** Bun + TypeScript project with test, lint and build scripts, and a CLI entry that prints its version.
 
 **Acceptance criteria:**
-- [ ] `bun run src/cli/index.ts --version` prints the package version
-- [ ] `bun test` runs a passing smoke test
-- [ ] `bun run build` produces a single binary via `bun build --compile`
+- [x] `bun run src/cli/index.ts --version` prints the package version
+- [x] `bun test` runs a passing smoke test
+- [x] `bun run build` produces a single binary via `bun build --compile`
 
 **Verification:** tests pass; build succeeds; binary runs `--version`.
 **Dependencies:** None
