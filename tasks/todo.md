@@ -21,9 +21,9 @@ Plan: `tasks/plan.md`. Commands assume Bun: `bun test`, `bun run build`, `bun ru
 **Description:** `skillctx init --home <path>` creates the ADR-009 layout, writes `skillctx.yaml` and `.gitignore` (`.cache/`, `local.yaml`), and records the pointer in `~/.config/skillctx/config.json`. Includes the path helper (absolute ↔ `~`-relative) and the write guard that refuses paths outside `<home>`.
 
 **Acceptance criteria:**
-- [ ] Creates `inventory/`, `variants/`, `profiles/`, `projects/`, `compiled/`, `.cache/` and config files; running it twice changes nothing
-- [ ] Refuses a non-empty folder that isn't already a workspace, with a clear message
-- [ ] Write guard throws on any path outside `<home>`; covered by a test
+- [x] Creates `inventory/`, `variants/`, `profiles/`, `projects/`, `compiled/`, `.cache/` and config files; running it twice changes nothing
+- [x] Refuses a non-empty folder that isn't already a workspace, with a clear message
+- [x] Write guard throws on any path outside `<home>`; covered by a test
 
 **Verification:** tests pass using a temp HOME; manual: `init --home /tmp/sk-test` then inspect the tree.
 **Dependencies:** 1
@@ -31,8 +31,8 @@ Plan: `tasks/plan.md`. Commands assume Bun: `bun test`, `bun run build`, `bun ru
 **Scope:** M
 
 ## Checkpoint A
-- [ ] Tests and lint pass; binary builds
-- [ ] `init` works against a temp HOME
+- [x] Tests and lint pass; binary builds
+- [x] `init` works against a temp HOME
 
 ## Local inventory
 
