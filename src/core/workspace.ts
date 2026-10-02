@@ -44,6 +44,10 @@ export interface Env {
 	homeDir: string;
 	/** Directory holding the pointer file (config.json). */
 	configDir: string;
+	/** SKILLCTX_HOME: overrides the pointer file. */
+	skillctxHome?: string;
+	/** GITHUB_TOKEN for upstream checks. */
+	githubToken?: string;
 }
 
 export function defaultEnv(): Env {
@@ -52,6 +56,8 @@ export function defaultEnv(): Env {
 	return {
 		homeDir,
 		configDir: path.join(xdg || path.join(homeDir, ".config"), "skillctx"),
+		skillctxHome: process.env.SKILLCTX_HOME || undefined,
+		githubToken: process.env.GITHUB_TOKEN || undefined,
 	};
 }
 
@@ -139,10 +145,9 @@ function writePointer(root: string, env: Env): void {
 	writeFileSync(pointerPath(env), body);
 }
 
-/** Find the active workspace: explicit flag, then SKILLCTX_HOME, then the pointer file. */
+/** Find the active workspace: explicit flag, then env.skillctxHome, then the pointer file. */
 export function resolveWorkspace(env: Env, flag?: string): Workspace {
-	const fromEnv = process.env.SKILLCTX_HOME;
-	let candidate = flag ?? fromEnv;
+	let candidate = flag ?? env.skillctxHome;
 	if (!candidate && existsSync(pointerPath(env))) {
 		const parsed = JSON.parse(readFileSync(pointerPath(env), "utf8")) as {
 			home?: string;

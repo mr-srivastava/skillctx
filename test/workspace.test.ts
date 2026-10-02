@@ -32,7 +32,6 @@ beforeEach(() => {
 		configDir: path.join(tmp, "home/.config/skillctx"),
 	};
 	mkdirSync(env.homeDir, { recursive: true });
-	delete process.env.SKILLCTX_HOME;
 });
 
 afterEach(() => rmSync(tmp, { recursive: true, force: true }));
@@ -118,6 +117,17 @@ describe("resolveWorkspace", () => {
 	test("explicit flag wins and must be a workspace", () => {
 		initWorkspace("~/sk", env);
 		expect(() => resolveWorkspace(env, "~/other")).toThrow(WorkspaceError);
+	});
+
+	test("SKILLCTX_HOME (env.skillctxHome) beats the pointer, the flag beats both", () => {
+		initWorkspace("~/sk", env);
+		initWorkspace("~/other", env);
+		initWorkspace("~/third", env);
+		const withHome = { ...env, skillctxHome: "~/sk" };
+		expect(resolveWorkspace(withHome).root).toBe(path.join(env.homeDir, "sk"));
+		expect(resolveWorkspace(withHome, "~/other").root).toBe(
+			path.join(env.homeDir, "other"),
+		);
 	});
 
 	test("errors clearly when nothing is set up", () => {

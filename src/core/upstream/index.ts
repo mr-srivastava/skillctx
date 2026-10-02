@@ -265,9 +265,9 @@ export function gitLsRemote(remote: string, ref: string): string | undefined {
 	return proc.stdout.toString().split(/\s+/)[0] || undefined;
 }
 
-/** GITHUB_TOKEN, else `gh auth token` if gh is installed and logged in. */
-export function githubToken(): string | undefined {
-	if (process.env.GITHUB_TOKEN) return process.env.GITHUB_TOKEN;
+/** The given token (GITHUB_TOKEN), else `gh auth token` if gh is installed and logged in. */
+export function githubToken(fromEnv?: string): string | undefined {
+	if (fromEnv) return fromEnv;
 	try {
 		const proc = Bun.spawnSync(["gh", "auth", "token"], {
 			stdout: "pipe",

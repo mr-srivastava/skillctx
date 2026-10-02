@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import path from "node:path";
+import { listSkillFiles } from "./files.ts";
 import { canonicalSkillMd } from "./parse.ts";
 
 /**
@@ -26,30 +27,10 @@ export const PROVENANCE_KEYS: ReadonlySet<string> = new Set([
 	"metadata.local-path",
 ]);
 
-const IGNORED = new Set([".git", "node_modules", ".DS_Store"]);
-
 export interface FolderDigest {
 	hash: string;
 	fileCount: number;
 	bytes: number;
-}
-
-function listFiles(root: string): string[] {
-	const out: string[] = [];
-	const walk = (dir: string) => {
-		for (const name of readdirSync(dir)) {
-			if (IGNORED.has(name)) continue;
-			const full = path.join(dir, name);
-			const stat = statSync(full, { throwIfNoEntry: false });
-			if (!stat) continue;
-			if (stat.isDirectory()) walk(full);
-			else if (stat.isFile()) out.push(full);
-		}
-	};
-	walk(root);
-	return out
-		.map((f) => path.relative(root, f).split(path.sep).join("/"))
-		.sort();
 }
 
 /** Content hash of a skill folder: sorted relative paths plus bytes, provenance keys stripped. */
@@ -59,7 +40,7 @@ export function hashFolder(
 ): FolderDigest {
 	const hash = createHash("sha256");
 	let bytes = 0;
-	const files = listFiles(folder);
+	const files = listSkillFiles(folder);
 	for (const rel of files) {
 		let content: Buffer = readFileSync(path.join(folder, rel));
 		if (rel === "SKILL.md") {

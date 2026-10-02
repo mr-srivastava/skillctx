@@ -13,15 +13,15 @@ import type { Io } from "../io.ts";
 /** Network access for --check; injectable so tests never hit the network. */
 export type UpstreamDeps = Omit<CheckDeps, "homeDir">;
 
-export function defaultUpstreamDeps(): UpstreamDeps {
-	return { fetch, token: githubToken(), lsRemote: gitLsRemote };
+export function defaultUpstreamDeps(env: Env): UpstreamDeps {
+	return { fetch, token: githubToken(env.githubToken), lsRemote: gitLsRemote };
 }
 
 export async function inventoryCommand(
 	args: string[],
 	io: Io,
 	env: Env,
-	upstreamDeps: () => UpstreamDeps = defaultUpstreamDeps,
+	upstreamDeps: () => UpstreamDeps = () => defaultUpstreamDeps(env),
 ): Promise<number> {
 	const { values } = parseArgs({
 		args,

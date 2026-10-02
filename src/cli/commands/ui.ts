@@ -13,9 +13,10 @@ import { defaultUpstreamDeps, type UpstreamDeps } from "./inventory.ts";
 /** Rescan (and optionally check upstream), the same work `inventory [--check]` does. */
 export function makeRefresh(
 	ws: Workspace,
-	homeDir: string,
-	upstreamDeps: () => UpstreamDeps = defaultUpstreamDeps,
+	env: Env,
+	upstreamDeps: () => UpstreamDeps = () => defaultUpstreamDeps(env),
 ): (check: boolean) => Promise<RefreshResult> {
+	const { homeDir } = env;
 	return async (check) => {
 		const result = scan(ws, homeDir);
 		const written = writeInventory(ws, result, homeDir);
@@ -71,7 +72,7 @@ export async function uiCommand(
 		ws,
 		homeDir: env.homeDir,
 		port: values.port ? Number(values.port) : 4317,
-		refresh: makeRefresh(ws, env.homeDir),
+		refresh: makeRefresh(ws, env),
 	});
 	io.out(
 		`skillctx UI running at ${server.url} (local only). Press Ctrl+C to stop.`,

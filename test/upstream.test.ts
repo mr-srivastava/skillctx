@@ -33,7 +33,6 @@ beforeEach(() => {
 	home = path.join(tmp, "home");
 	env = { homeDir: home, configDir: path.join(home, ".config/skillctx") };
 	mkdirSync(home, { recursive: true });
-	delete process.env.SKILLCTX_HOME;
 });
 
 afterEach(() => rmSync(tmp, { recursive: true, force: true }));

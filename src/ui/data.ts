@@ -1,6 +1,7 @@
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { createTwoFilesPatch } from "diff";
+import { listSkillFiles } from "../core/indexer/files.ts";
 import {
 	type InventorySummary,
 	SKILLS_DIR,
@@ -105,25 +106,11 @@ function readText(file: string): string | null | undefined {
 	return buf.includes(0) ? null : buf.toString("utf8");
 }
 
+/** A copy that can't be read diffs as empty. */
 function listFiles(root: string): string[] {
-	const out: string[] = [];
-	const walk = (dir: string, prefix: string) => {
-		let names: string[];
-		try {
-			names = readdirSync(dir);
-		} catch {
-			return;
-		}
-		for (const name of names) {
-			if (name === ".git" || name === ".DS_Store" || name === "node_modules")
-				continue;
-			const full = path.join(dir, name);
-			const rel = prefix ? `${prefix}/${name}` : name;
-			const stat = statSync(full, { throwIfNoEntry: false });
-			if (stat?.isDirectory()) walk(full, rel);
-			else if (stat?.isFile()) out.push(rel);
-		}
-	};
-	walk(root, "");
-	return out;
+	try {
+		return listSkillFiles(root);
+	} catch {
+		return [];
+	}
 }

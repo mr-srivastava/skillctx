@@ -40,7 +40,7 @@ beforeEach(() => {
 		ws,
 		homeDir: home,
 		port: 0,
-		refresh: makeRefresh(ws, home),
+		refresh: makeRefresh(ws, env),
 	});
 });
 
