@@ -13,7 +13,10 @@
 		"verbatimModuleSyntax": true,
 		"noEmit": true,
 		"skipLibCheck": true,
-		"jsx": "react-jsx"
+		"jsx": "react-jsx",
+		"paths": {
+			"@/*": ["./src/ui/client/*"]
+		}
 	},
 	"include": ["src", "test"]
 }

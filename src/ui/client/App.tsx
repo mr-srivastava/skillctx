@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { InventorySummary } from "../../core/inventory.ts";
 import type { UpstreamReport } from "../../core/upstream/index.ts";
 import type { CopyDiff, SkillRecord } from "../data.ts";
@@ -16,7 +18,7 @@ import {
 	toRows,
 	updateCommand,
 } from "./model.ts";
-import { Button, CELL, cx, FIELD, H2, HEADLINE, Notes, Path } from "./ui.tsx";
+import { CELL, FIELD, H2, HEADLINE, Notes, Path } from "./ui.tsx";
 
 const PAGE = "mx-auto max-w-[1180px] px-4 pb-16 wide:px-8 wide:pb-24";
 
@@ -171,13 +173,13 @@ export function App() {
 			<main className={PAGE}>
 				{bar}
 				<section className="max-w-[52ch] py-12">
-					<h1 className={cx(HEADLINE, "mb-7")}>No inventory yet</h1>
+					<h1 className={cn(HEADLINE, "mb-7")}>No inventory yet</h1>
 					<p className="mb-5">
 						Scan your skill folders to see every skill on this machine and where
 						it lives.
 					</p>
 					<Button
-						variant="primary"
+						variant="default"
 						disabled={busy !== null}
 						onClick={() => refresh(false)}
 					>
@@ -250,6 +252,7 @@ function TopBar({
 								: "Not checked for updates yet"}
 				</span>
 				<Button
+					variant="outline"
 					disabled={busy !== null}
 					onClick={() => onRefresh(false)}
 					title="Re-read every skill folder on this machine"
@@ -257,7 +260,7 @@ function TopBar({
 					Rescan
 				</Button>
 				<Button
-					variant="primary"
+					variant="default"
 					disabled={busy !== null}
 					onClick={() => onRefresh(true)}
 					title="Rescan, then compare with GitHub and git remotes. Uses the network."
@@ -267,7 +270,7 @@ function TopBar({
 			</div>
 			{result && (
 				<p
-					className={cx(
+					className={cn(
 						"basis-full text-small",
 						result.ok ? "text-ink-soft" : "text-problem",
 					)}
@@ -317,7 +320,7 @@ function Headline({
 	const figure = (status: Status | "", label: string, meaning: string) => (
 		<button
 			type="button"
-			className={cx(
+			className={cn(
 				"cursor-pointer rounded px-[0.12em] font-semibold underline decoration-2 underline-offset-[0.18em] hover:decoration-current",
 				status ? STATUS_TEXT[status] : "text-ink",
 				status && filters.status === status
@@ -337,7 +340,7 @@ function Headline({
 	);
 
 	return (
-		<h1 className={cx(HEADLINE, "mt-7 mb-7 wide:mt-10")}>
+		<h1 className={cn(HEADLINE, "mt-7 mb-7 wide:mt-10")}>
 			{figure("", `${rows.length} skills`, "")} on this machine.
 			{parts.length === 0 ? (
 				" Nothing needs attention."
@@ -432,7 +435,7 @@ function SkillList({
 					ref={search}
 					type="search"
 					placeholder="Find a skill  ( / )"
-					className={cx(FIELD, "max-w-[420px] flex-[1_1_260px]")}
+					className={cn(FIELD, "max-w-[420px] flex-[1_1_260px]")}
 					value={filters.query}
 					onChange={(e) => set({ query: e.target.value })}
 					aria-label="Find a skill by name or description"
@@ -461,7 +464,8 @@ function SkillList({
 				</select>
 				{filtered && (
 					<Button
-						variant="plain"
+						variant="link"
+						size="inline"
 						onClick={() => setFilters({ ...NO_FILTERS, sort: filters.sort })}
 					>
 						Clear filters
@@ -475,7 +479,7 @@ function SkillList({
 				<table className="w-full">
 					<thead>
 						<tr>
-							<th scope="col" className={cx(CELL.headSkill, "w-[46%]")}>
+							<th scope="col" className={cn(CELL.headSkill, "w-[46%]")}>
 								{visible.length === rows.length
 									? "Skill"
 									: `${visible.length} of ${rows.length} skills`}
@@ -484,7 +488,7 @@ function SkillList({
 								<th key={r.id} scope="col" className={CELL.headLoc}>
 									<button
 										type="button"
-										className={cx(
+										className={cn(
 											"cursor-pointer rounded px-1 py-0.5 hover:text-ink",
 											filters.root === r.id &&
 												"bg-raised text-ink shadow-[inset_0_-2px_0_var(--ink)]",
@@ -507,7 +511,7 @@ function SkillList({
 					<tbody>
 						{visible.map((r) => (
 							<tr key={r.name} className="hover:bg-raised">
-								<th scope="row" className={cx(CELL.bodySkill, "w-[46%]")}>
+								<th scope="row" className={cn(CELL.bodySkill, "w-[46%]")}>
 									<a
 										className="font-mono text-small font-semibold no-underline hover:underline"
 										href={`#/skill/${encodeURIComponent(r.name)}`}
@@ -528,7 +532,7 @@ function SkillList({
 									{r.statuses.map((s) => (
 										<span
 											key={s}
-											className={cx(
+											className={cn(
 												"block text-caption font-medium whitespace-nowrap before:mr-1.75 before:inline-block before:size-1.5 before:rounded-full before:bg-current before:align-[2px]",
 												STATUS_TEXT[s],
 											)}
@@ -568,7 +572,8 @@ function CopyButton({ text }: { text: string }) {
 	const [done, setDone] = useState(false);
 	return (
 		<Button
-			variant="plain"
+			variant="link"
+			size="inline"
 			onClick={async () => {
 				await navigator.clipboard.writeText(text);
 				setDone(true);
@@ -854,7 +859,7 @@ function DiffView({ skill }: { skill: SkillRecord }) {
 		label: string,
 	) => (
 		<select
-			className={cx(FIELD, "max-w-full")}
+			className={cn(FIELD, "max-w-full")}
 			value={value}
 			onChange={(e) => onChange(Number(e.target.value))}
 			aria-label={label}
@@ -917,7 +922,7 @@ function Patch({ text }: { text: string }) {
 			{lines.map(({ key, line }) => (
 				<span
 					key={key}
-					className={cx(
+					className={cn(
 						"block px-3.5 whitespace-pre-wrap wrap-anywhere",
 						line.startsWith("+")
 							? "bg-add"

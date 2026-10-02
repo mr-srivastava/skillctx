@@ -3,6 +3,7 @@
  * grid showing where each skill lives. Everything else stays quiet.
  */
 @import "tailwindcss" source("./");
+@import "tw-animate-css";
 
 /*
  * Palette and type live in plain custom properties so dark mode can swap
@@ -25,6 +26,34 @@
 
 	--font-sans: var(--ui);
 	--font-mono: var(--id);
+
+	/*
+	 * shadcn/ui's token names, pointed at the same palette, so components
+	 * added with `bunx shadcn add` match the rest of the UI unedited.
+	 */
+	--color-background: var(--paper);
+	--color-foreground: var(--ink);
+	--color-card: var(--raised);
+	--color-card-foreground: var(--ink);
+	--color-popover: var(--raised);
+	--color-popover-foreground: var(--ink);
+	--color-primary: var(--ink);
+	--color-primary-foreground: var(--paper);
+	--color-secondary: var(--raised);
+	--color-secondary-foreground: var(--ink);
+	--color-muted: var(--raised);
+	--color-muted-foreground: var(--ink-soft);
+	--color-accent: var(--raised);
+	--color-accent-foreground: var(--ink);
+	--color-destructive: var(--problem);
+	--color-border: var(--rule);
+	--color-input: var(--rule);
+	--color-ring: var(--outdated);
+
+	--radius-sm: calc(var(--radius) - 2px);
+	--radius-md: var(--radius);
+	--radius-lg: calc(var(--radius) + 2px);
+	--radius-xl: calc(var(--radius) + 6px);
 }
 
 /* Type scale and the one layout breakpoint, named by role. */
@@ -55,6 +84,8 @@
 	--ui:
 		"Avenir Next", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
 	--id: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+
+	--radius: 6px;
 
 	color-scheme: light;
 }

@@ -174,3 +174,15 @@ describe("list model", () => {
 		).toEqual(["alpha"]);
 	});
 });
+
+describe("client code", () => {
+	test("imports cn from @/lib/utils, which knows our text sizes", async () => {
+		const glob = new Bun.Glob("**/*.{ts,tsx}");
+		const offenders: string[] = [];
+		for await (const file of glob.scan("src/ui/client")) {
+			const src = await Bun.file(`src/ui/client/${file}`).text();
+			if (/from\s+["']cn["']/.test(src)) offenders.push(file);
+		}
+		expect(offenders).toEqual([]);
+	});
+});
