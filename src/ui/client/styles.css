@@ -56,7 +56,7 @@
 	--radius-xl: calc(var(--radius) + 6px);
 }
 
-/* Type scale and the one layout breakpoint, named by role. */
+/* Type scale and layout breakpoints, named by role. */
 @theme {
 	--text-code: 12.5px;
 	--text-caption: 13px;
@@ -64,8 +64,11 @@
 	--text-body: 15px;
 	--text-lead: 16px;
 	--text-heading: 17px;
+	--text-title: 20px;
 
 	--breakpoint-wide: 45rem;
+	/* Room for a side column next to a 72ch reading column. */
+	--breakpoint-split: 64rem;
 }
 
 :root {

@@ -87,6 +87,41 @@ describe("ui server", () => {
 		expect(diff.files[0]?.patch).toMatch(/[-+]Two\./);
 	});
 
+	test("lists a copy's files and serves them as text", async () => {
+		writeFileSync(
+			path.join(home, ".agents/skills/alpha/notes.md"),
+			"# Notes\n",
+		);
+		const listing = (await (
+			await api("/api/skills/alpha/files?copy=0")
+		).json()) as { realPath: string; files: { path: string; bytes: number }[] };
+		expect(listing.realPath).toStartWith("~/");
+		expect(listing.files.map((f) => f.path)).toContain("SKILL.md");
+
+		const copy = listing.realPath.includes(".agents") ? 0 : 1;
+		const file = (await (
+			await api(`/api/skills/alpha/file?copy=${copy}&path=notes.md`)
+		).json()) as { text: string };
+		expect(file.text).toBe("# Notes\n");
+		expect(
+			(await api("/api/skills/alpha/file?copy=9&path=SKILL.md")).status,
+		).toBe(404);
+	});
+
+	test("refuses file paths outside the skill folder", async () => {
+		for (const p of [
+			"../beta/SKILL.md",
+			"../../.agents/skills/beta/SKILL.md",
+			path.join(home, ".agents/skills/beta/SKILL.md"),
+			"",
+		]) {
+			const res = await api(
+				`/api/skills/alpha/file?copy=0&path=${encodeURIComponent(p)}`,
+			);
+			expect([p, res.status]).toEqual([p, 404]);
+		}
+	});
+
 	test("an inventory from a newer skillctx comes back as a readable error", async () => {
 		ws.write("inventory/summary.json", JSON.stringify({ format: 99 }));
 		const res = await api("/api/summary");

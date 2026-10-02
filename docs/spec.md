@@ -1,6 +1,6 @@
 # skillctx spec
 
-Status: draft v0.6 · 2026-10-02 · Owner: Aadarsh Srivastava
+Status: draft v0.7 · 2026-10-02 · Owner: Aadarsh Srivastava
 Live doc: https://claude.ai/code/artifact/2a245a34-da36-4c90-867e-1cceca1ae294
 Decisions: [docs/decisions/](decisions/) · Research: [docs/research/community-research.md](research/community-research.md) · Engine review notes: [docs/reviews/](reviews/)
 
@@ -105,7 +105,7 @@ npm i -g skillctx                   # or npx skillctx
 skillctx init --home ~/skillctx     # create the workspace, detect skill sources
 skillctx inventory                  # scan all sources, write <home>/inventory/
 skillctx inventory --check          # explicit refresh: compare against upstream (network)
-skillctx ui                         # browse skills, locations, duplicates, outdated
+skillctx ui                         # read skills; see locations, duplicates, outdated
 cd ~/skillctx && git init && git remote add origin <your repo>   # optional backup
 ```
 
@@ -290,7 +290,7 @@ The MVP is Phase 0, a read-only inventory (ADR-010). It is useful on its own, an
 
 | Phase | Scope | Gate to next |
 | --- | --- | --- |
-| 0 · Inventory | Workspace init, source adapters, Indexer (realpath + content-hash dedupe), outdated check on refresh, inventory files, local web UI | Inventory matches what's on disk across all sources on the author's machine |
+| 0 · Inventory | Workspace init, source adapters, Indexer (realpath + content-hash dedupe), outdated check on refresh, inventory files, local web UI that also renders skill files read-only ([ADR-015](decisions/ADR-015-render-skill-files-read-only.md)) | Inventory matches what's on disk across all sources on the author's machine |
 | 1 · Compile | Section parser, lens scope + rules, build into `<home>/compiled/`, delivery into agent folders, lock.json | Compiled beats original in paired runs |
 | 2 · Patches | Section ops, five patch states, personal store repo, `check` in CI, drafted conflict fixes | Patches survive 3 upstream updates |
 | 3 · Read path | CLI search/get, MCP (stdio), `cli` mode + events, dashboard v1, rebase review UI | Agents use the read path unprompted |

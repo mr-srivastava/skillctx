@@ -4,29 +4,50 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import * as api from "./api.ts";
 import { type Filters, NO_FILTERS, toRows } from "./model.ts";
-import { SkillDetail } from "./SkillDetail.tsx";
+import { type DetailTab, SkillDetail } from "./SkillDetail.tsx";
 import { SkillList } from "./SkillList.tsx";
 import { type Busy, TopBar } from "./TopBar.tsx";
 import { BusySpinner, HEADLINE, Problem } from "./ui.tsx";
 
 const PAGE = "mx-auto max-w-[1180px] px-4 pb-16 wide:px-8 wide:pb-24";
 
-function readHash(): string | null {
-	const m = /^#\/skill\/(.+)$/.exec(window.location.hash);
-	return m?.[1] ? decodeURIComponent(m[1]) : null;
+interface Route {
+	/** The skill shown, or null for the list. */
+	name: string | null;
+	tab: DetailTab;
 }
 
-function useHashRoute(): string | null {
-	const [name, setName] = useState(readHash);
+const TABS: readonly DetailTab[] = ["contents", "where", "copies"];
+
+/** `#/skill/<name>` opens Contents; `#/skill/<name>/<tab>` opens a tab. */
+function readHash(): Route {
+	const m = /^#\/skill\/([^/]+)(?:\/([a-z]+))?$/.exec(window.location.hash);
+	const tab = TABS.find((t) => t === m?.[2]) ?? "contents";
+	return { name: m?.[1] ? decodeURIComponent(m[1]) : null, tab };
+}
+
+function useHashRoute(): [Route, (tab: DetailTab) => void] {
+	const [route, setRoute] = useState(readHash);
 	useEffect(() => {
 		const onChange = () => {
-			setName(readHash());
+			setRoute(readHash());
 			window.scrollTo(0, 0);
 		};
 		window.addEventListener("hashchange", onChange);
 		return () => window.removeEventListener("hashchange", onChange);
 	}, []);
-	return name;
+	// Switching tabs replaces the URL so Back still returns to the list.
+	const setTab = (tab: DetailTab) => {
+		if (!route.name) return;
+		const base = `#/skill/${encodeURIComponent(route.name)}`;
+		history.replaceState(
+			null,
+			"",
+			tab === "contents" ? base : `${base}/${tab}`,
+		);
+		setRoute({ ...route, tab });
+	};
+	return [route, setTab];
 }
 
 export function App() {
@@ -37,7 +58,8 @@ export function App() {
 		null,
 	);
 	const [filters, setFilters] = useState<Filters>(NO_FILTERS);
-	const selected = useHashRoute();
+	const [route, setTab] = useHashRoute();
+	const selected = route.name;
 
 	const load = useCallback(async () => {
 		try {
@@ -138,6 +160,8 @@ export function App() {
 						skill={skill}
 						row={rows.find((r) => r.name === skill.name)}
 						summary={data.summary}
+						tab={route.tab}
+						onTab={setTab}
 					/>
 				) : (
 					<Problem

@@ -53,6 +53,57 @@ export interface CopyDiff {
 	files: FileDiff[];
 }
 
+export interface CopyFiles {
+	realPath: string;
+	files: { path: string; bytes: number }[];
+}
+
+/** The files in one copy, as the content hash sees them. */
+export function copyFiles(
+	skill: SkillRecord | undefined,
+	copy: number,
+	homeDir: string,
+): CopyFiles | undefined {
+	const c = skill?.copies[copy];
+	if (!c) return undefined;
+	const dir = fromPortable(c.realPath, homeDir);
+	return {
+		realPath: c.realPath,
+		files: listFiles(dir).map((rel) => ({
+			path: rel,
+			bytes:
+				statSync(path.join(dir, rel), { throwIfNoEntry: false })?.size ?? 0,
+		})),
+	};
+}
+
+export interface FileText {
+	path: string;
+	bytes: number;
+	/** null when the file is binary or too large to show. */
+	text: string | null;
+}
+
+/**
+ * One file of one copy. Only paths the file listing returns are served, so a
+ * crafted `path` can't read outside the skill folder.
+ */
+export function copyFile(
+	skill: SkillRecord | undefined,
+	copy: number,
+	rel: string,
+	homeDir: string,
+): FileText | undefined {
+	const c = skill?.copies[copy];
+	if (!c) return undefined;
+	const dir = fromPortable(c.realPath, homeDir);
+	if (!listFiles(dir).includes(rel)) return undefined;
+	const file = path.join(dir, rel);
+	const text = readText(file);
+	if (text === undefined) return undefined;
+	return { path: rel, bytes: statSync(file).size, text };
+}
+
 const MAX_TEXT = 256 * 1024;
 
 /** undefined = missing, null = binary or too large to show. */
