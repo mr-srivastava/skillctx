@@ -29,6 +29,7 @@ Use shadcn/ui. Components are copied into `src/ui/client/components/ui/` with `b
 - Rejected: shadcn gives the same Radix primitives with source we control
 
 ## Consequences
-- The CLI writes `import { cn } from "cn"`. That `cn` doesn't know `text-caption` and friends and drops them next to a text colour. After each `shadcn add`, change the import to `@/lib/utils`; a test in `test/ui.test.ts` fails until you do.
-- Generated components use Tailwind's default sizes (`text-sm`, `h-9`). Adjust variants to the type scale when adding one, as was done for `Button` (`text-body`, the page-wide focus outline, an `inline` size for link-style buttons).
+- The CLI may write `import { cn } from "cn"` (it did for the first component, before `@/lib/utils` existed; later adds used `@/lib/utils`). That `cn` doesn't know `text-caption` and friends and drops them next to a text colour. A test in `test/ui.test.ts` fails if any client file imports it.
+- Radix `Select` can't use `""` as an item value. Filters that mean "no filter" use a sentinel (`ANY`) and map it back to `""`.
+- Generated components use Tailwind's default sizes (`text-sm`, `h-9`). Adjust variants to the type scale when adding one, as was done for `Button`, `Input` and `Select` (`text-body`, `bg-card`, the page-wide focus outline instead of shadcn's ring, an `inline` size for link-style buttons).
 - Adds `radix-ui`, `class-variance-authority`, `lucide-react`, `cn` and `tw-animate-css`.

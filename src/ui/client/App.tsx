@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import type { InventorySummary } from "../../core/inventory.ts";
 import type { UpstreamReport } from "../../core/upstream/index.ts";
@@ -18,7 +26,7 @@ import {
 	toRows,
 	updateCommand,
 } from "./model.ts";
-import { CELL, FIELD, H2, HEADLINE, Notes, Path } from "./ui.tsx";
+import { CELL, H2, HEADLINE, Notes, Path } from "./ui.tsx";
 
 const PAGE = "mx-auto max-w-[1180px] px-4 pb-16 wide:px-8 wide:pb-24";
 
@@ -28,6 +36,8 @@ const STATUS_TEXT: Record<Status, string> = {
 	drift: "text-differs",
 	warnings: "text-problem",
 };
+
+const ANY = "any";
 
 const DESC = "mt-0.5 line-clamp-2 max-w-[64ch] text-caption text-ink-soft";
 const FACT =
@@ -431,37 +441,44 @@ function SkillList({
 			/>
 
 			<div className="mb-3.5 flex flex-wrap items-center gap-2">
-				<input
+				<Input
 					ref={search}
 					type="search"
 					placeholder="Find a skill  ( / )"
-					className={cn(FIELD, "max-w-[420px] flex-[1_1_260px]")}
+					className="w-auto max-w-[420px] flex-[1_1_260px]"
 					value={filters.query}
 					onChange={(e) => set({ query: e.target.value })}
 					aria-label="Find a skill by name or description"
 				/>
-				<select
-					className={FIELD}
-					value={filters.source}
-					onChange={(e) => set({ source: e.target.value })}
-					aria-label="Installed by"
+				<Select
+					// Radix Select can't use "" as an item value; ANY stands for no filter.
+					value={filters.source || ANY}
+					onValueChange={(v) => set({ source: v === ANY ? "" : v })}
 				>
-					<option value="">Installed by anything</option>
-					{sources.map((s) => (
-						<option key={s} value={s}>
-							{SOURCE_LABEL[s] ?? s}
-						</option>
-					))}
-				</select>
-				<select
-					className={FIELD}
+					<SelectTrigger aria-label="Installed by">
+						<SelectValue />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value={ANY}>Installed by anything</SelectItem>
+						{sources.map((s) => (
+							<SelectItem key={s} value={s}>
+								{SOURCE_LABEL[s] ?? s}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
+				<Select
 					value={filters.sort}
-					onChange={(e) => set({ sort: e.target.value as Filters["sort"] })}
-					aria-label="Sort"
+					onValueChange={(v) => set({ sort: v as Filters["sort"] })}
 				>
-					<option value="attention">Needs attention first</option>
-					<option value="name">A to Z</option>
-				</select>
+					<SelectTrigger aria-label="Sort">
+						<SelectValue />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="attention">Needs attention first</SelectItem>
+						<SelectItem value="name">A to Z</SelectItem>
+					</SelectContent>
+				</Select>
 				{filtered && (
 					<Button
 						variant="link"
@@ -858,18 +875,18 @@ function DiffView({ skill }: { skill: SkillRecord }) {
 		onChange: (n: number) => void,
 		label: string,
 	) => (
-		<select
-			className={cn(FIELD, "max-w-full")}
-			value={value}
-			onChange={(e) => onChange(Number(e.target.value))}
-			aria-label={label}
-		>
-			{skill.copies.map((c, i) => (
-				<option key={c.realPath} value={i}>
-					Copy {i + 1}: {c.realPath}
-				</option>
-			))}
-		</select>
+		<Select value={String(value)} onValueChange={(v) => onChange(Number(v))}>
+			<SelectTrigger aria-label={label} className="max-w-full">
+				<SelectValue />
+			</SelectTrigger>
+			<SelectContent>
+				{skill.copies.map((c, i) => (
+					<SelectItem key={c.realPath} value={String(i)}>
+						Copy {i + 1}: <Path>{c.realPath}</Path>
+					</SelectItem>
+				))}
+			</SelectContent>
+		</Select>
 	);
 
 	return (

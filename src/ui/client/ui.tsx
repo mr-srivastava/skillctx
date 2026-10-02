@@ -1,9 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-/** Text inputs and selects. */
-export const FIELD = "rounded-md border border-rule bg-raised px-3 py-1.5";
-
 /** A file path, repo or hash: the only things set in monospace. */
 export function Path({ children }: { children: ReactNode }) {
 	return <span className="font-mono text-[0.86em]">{children}</span>;
