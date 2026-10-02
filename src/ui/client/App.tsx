@@ -1,4 +1,22 @@
-import { CircleAlertIcon } from "lucide-react";
+import {
+	ArrowLeftIcon,
+	CheckIcon,
+	CircleAlertIcon,
+	CircleArrowUpIcon,
+	CircleCheckIcon,
+	CopyIcon,
+	FileDiffIcon,
+	FileMinusIcon,
+	FilePlusIcon,
+	FolderSearchIcon,
+	FolderSyncIcon,
+	GitCompareIcon,
+	type LucideIcon,
+	PencilIcon,
+	SearchIcon,
+	TriangleAlertIcon,
+	XIcon,
+} from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -37,6 +55,14 @@ import {
 import { CELL, H2, HEADLINE, Hint, Notes, Path } from "./ui.tsx";
 
 const PAGE = "mx-auto max-w-[1180px] px-4 pb-16 wide:px-8 wide:pb-24";
+
+/** One icon per status, shared by the State column and the advice notes. */
+const STATUS_ICON: Record<Status, LucideIcon> = {
+	outdated: CircleArrowUpIcon,
+	edited: PencilIcon,
+	drift: GitCompareIcon,
+	warnings: TriangleAlertIcon,
+};
 
 const STATUS_TEXT: Record<Status, string> = {
 	outdated: "text-outdated",
@@ -201,7 +227,7 @@ export function App() {
 						disabled={busy !== null}
 						onClick={() => refresh(false)}
 					>
-						{busy && <BusySpinner />}
+						{busy ? <BusySpinner /> : <FolderSearchIcon aria-hidden />}
 						{busy ? "Scanning…" : "Scan now"}
 					</Button>
 				</section>
@@ -278,7 +304,7 @@ function TopBar({
 						disabled={busy !== null}
 						onClick={() => onRefresh(false)}
 					>
-						{busy === "scan" && <BusySpinner />}
+						{busy === "scan" ? <BusySpinner /> : <FolderSyncIcon aria-hidden />}
 						Rescan
 					</Button>
 				</Hint>
@@ -288,7 +314,11 @@ function TopBar({
 						disabled={busy !== null}
 						onClick={() => onRefresh(true)}
 					>
-						{busy === "check" && <BusySpinner />}
+						{busy === "check" ? (
+							<BusySpinner />
+						) : (
+							<CircleArrowUpIcon aria-hidden />
+						)}
 						Check for updates
 					</Button>
 				</Hint>
@@ -296,12 +326,17 @@ function TopBar({
 			{result && (
 				<p
 					className={cn(
-						"basis-full text-small",
+						"flex basis-full items-start gap-2 text-small",
 						result.ok ? "text-ink-soft" : "text-problem",
 					)}
 					role="status"
 					aria-live="polite"
 				>
+					{result.ok ? (
+						<CircleCheckIcon aria-hidden className="mt-0.75 size-4 shrink-0" />
+					) : (
+						<CircleAlertIcon aria-hidden className="mt-0.75 size-4 shrink-0" />
+					)}
 					{result.text}
 				</p>
 			)}
@@ -309,7 +344,10 @@ function TopBar({
 	);
 }
 
-/** Decorative: the busy text next to the buttons already says what's running. */
+/**
+ * Decorative: the busy text next to the buttons already says what's running.
+ * It takes the place of the button's icon so the button keeps its width.
+ */
 function BusySpinner() {
 	return <Spinner role="presentation" aria-label={undefined} aria-hidden />;
 }
@@ -489,6 +527,9 @@ function SkillList({
 
 			<div className="mb-3.5 flex flex-wrap items-center gap-2">
 				<InputGroup className="w-auto max-w-[420px] flex-[1_1_260px]">
+					<InputGroupAddon align="inline-start">
+						<SearchIcon aria-hidden />
+					</InputGroupAddon>
 					<InputGroupInput
 						ref={search}
 						type="search"
@@ -536,8 +577,10 @@ function SkillList({
 					<Button
 						variant="link"
 						size="inline"
+						className="gap-1"
 						onClick={() => setFilters({ ...NO_FILTERS, sort: filters.sort })}
 					>
+						<XIcon aria-hidden className="size-3.5" />
 						Clear filters
 					</Button>
 				)}
@@ -602,17 +645,21 @@ function SkillList({
 									</td>
 								))}
 								<td className={CELL.bodyState}>
-									{r.statuses.map((s) => (
-										<span
-											key={s}
-											className={cn(
-												"block text-caption font-medium whitespace-nowrap before:mr-1.75 before:inline-block before:size-1.5 before:rounded-full before:bg-current before:align-[2px]",
-												STATUS_TEXT[s],
-											)}
-										>
-											{STATUS_LABEL[s]}
-										</span>
-									))}
+									{r.statuses.map((s) => {
+										const Icon = STATUS_ICON[s];
+										return (
+											<span
+												key={s}
+												className={cn(
+													"flex items-center gap-1.5 text-caption font-medium whitespace-nowrap",
+													STATUS_TEXT[s],
+												)}
+											>
+												<Icon aria-hidden className="size-3.5 shrink-0" />
+												{STATUS_LABEL[s]}
+											</span>
+										);
+									})}
 								</td>
 							</tr>
 						))}
@@ -641,20 +688,60 @@ function Legend() {
 	);
 }
 
+type CopyState = "idle" | "copied" | "failed";
+
 function CopyButton({ text }: { text: string }) {
-	const [done, setDone] = useState(false);
+	const [state, setState] = useState<CopyState>("idle");
+	const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+	useEffect(() => () => clearTimeout(timer.current), []);
+
+	const show = (next: CopyState, ms: number) => {
+		clearTimeout(timer.current);
+		setState(next);
+		timer.current = setTimeout(() => setState("idle"), ms);
+	};
+
 	return (
-		<Button
-			variant="link"
-			size="inline"
-			onClick={async () => {
-				await navigator.clipboard.writeText(text);
-				setDone(true);
-				setTimeout(() => setDone(false), 1500);
-			}}
-		>
-			{done ? "Copied" : "Copy"}
-		</Button>
+		<>
+			<Hint text="Copy command">
+				<Button
+					variant="ghost"
+					size="icon-sm"
+					className={
+						state === "failed" ? "text-problem" : "text-ink-soft hover:text-ink"
+					}
+					aria-label="Copy command"
+					onClick={async () => {
+						try {
+							await navigator.clipboard.writeText(text);
+							show("copied", 1500);
+						} catch {
+							// Clipboard access can be denied (permissions, embedded
+							// browsers). Say so; the command is still selectable.
+							show("failed", 4000);
+						}
+					}}
+				>
+					{state === "copied" ? (
+						<CheckIcon aria-hidden />
+					) : state === "failed" ? (
+						<CircleAlertIcon aria-hidden />
+					) : (
+						<CopyIcon aria-hidden />
+					)}
+				</Button>
+			</Hint>
+			<span
+				className={state === "failed" ? "text-caption text-problem" : "sr-only"}
+				role="status"
+			>
+				{state === "copied"
+					? "Copied"
+					: state === "failed"
+						? "Couldn't copy. Select the command and copy it instead."
+						: ""}
+			</span>
+		</>
 	);
 }
 
@@ -663,12 +750,21 @@ function shortRepo(url: string): string {
 }
 
 function Advice({ skill, row }: { skill: SkillRecord; row?: Row }) {
-	const items: { key: string; text: string; command?: string }[] = [];
+	const items: {
+		key: string;
+		icon: LucideIcon;
+		/** Text colour for the icon. */
+		tone: string;
+		text: string;
+		command?: string;
+	}[] = [];
 	for (const u of row?.upstream ?? []) {
 		const command = updateCommand(u, skill.name);
 		if (command) {
 			items.push({
 				key: `up-${u.copy}-${u.via}`,
+				icon: STATUS_ICON.outdated,
+				tone: STATUS_TEXT.outdated,
 				text: `${shortRepo(u.repo)} has a newer version. To update:`,
 				command,
 			});
@@ -676,6 +772,8 @@ function Advice({ skill, row }: { skill: SkillRecord; row?: Row }) {
 		if (u.status === "error") {
 			items.push({
 				key: `err-${u.copy}`,
+				icon: CircleAlertIcon,
+				tone: "text-problem",
 				text: `Couldn't check for updates: ${u.error}`,
 			});
 		}
@@ -684,34 +782,43 @@ function Advice({ skill, row }: { skill: SkillRecord; row?: Row }) {
 	if (edited && row?.statuses.includes("outdated")) {
 		items.push({
 			key: "edited-outdated",
+			icon: STATUS_ICON.edited,
+			tone: STATUS_TEXT.edited,
 			text: "You edited this skill after installing it. Updating replaces those edits, so save anything you want to keep first.",
 		});
 	} else if (edited) {
 		items.push({
 			key: "edited",
+			icon: STATUS_ICON.edited,
+			tone: STATUS_TEXT.edited,
 			text: "You edited this skill after installing it. The next update will replace those edits.",
 		});
 	}
 	if (skill.drift) {
 		items.push({
 			key: "drift",
+			icon: STATUS_ICON.drift,
+			tone: STATUS_TEXT.drift,
 			text: "Agents reading different locations see different versions of this skill. Compare the copies below.",
 		});
 	}
 	if (items.length === 0) return null;
 	return (
 		<Notes>
-			{items.map((i) => (
-				<li key={i.key}>
-					{i.text}
-					{i.command && (
-						<div className="mt-2 flex items-center gap-2">
-							<code className="overflow-x-auto rounded-md border border-rule bg-paper px-2.5 py-1.5 font-mono text-caption whitespace-nowrap">
-								{i.command}
-							</code>
-							<CopyButton text={i.command} />
-						</div>
-					)}
+			{items.map(({ key, icon: Icon, tone, text, command }) => (
+				<li key={key} className="flex gap-2.5">
+					<Icon aria-hidden className={cn("mt-1 size-4 shrink-0", tone)} />
+					<div className="min-w-0">
+						{text}
+						{command && (
+							<div className="mt-2 flex flex-wrap items-center gap-2">
+								<code className="max-w-full overflow-x-auto rounded-md border border-rule bg-paper px-2.5 py-1.5 font-mono text-caption whitespace-nowrap">
+									{command}
+								</code>
+								<CopyButton text={command} />
+							</div>
+						)}
+					</div>
 				</li>
 			))}
 		</Notes>
@@ -734,7 +841,10 @@ function SkillDetail({
 	return (
 		<article>
 			<p className="mt-7 text-small">
-				<a href="#/">All skills</a>
+				<a href="#/" className="inline-flex items-center gap-1.5">
+					<ArrowLeftIcon aria-hidden className="size-3.5" />
+					All skills
+				</a>
 			</p>
 			<h1 className="mt-2.5 mb-1.5 font-mono text-[clamp(24px,3vw,32px)] font-semibold tracking-[-0.02em] wrap-break-word">
 				{skill.name}
@@ -976,8 +1086,9 @@ function DiffView({ skill }: { skill: SkillRecord }) {
 			)}
 			{diff?.files.map((f) => (
 				<section key={f.path}>
-					<h3 className="mt-5 mb-1.5 text-small font-medium">
-						<Path>{f.path}</Path>{" "}
+					<h3 className="mt-5 mb-1.5 flex flex-wrap items-center gap-x-1.5 text-small font-medium">
+						<FileIcon status={f.status} />
+						<Path>{f.path}</Path>
 						<span className="text-ink-soft">
 							{f.status === "changed"
 								? "changed"
@@ -992,6 +1103,20 @@ function DiffView({ skill }: { skill: SkillRecord }) {
 			))}
 		</>
 	);
+}
+
+type FileStatus = CopyDiff["files"][number]["status"];
+
+const FILE_ICON: Record<FileStatus, LucideIcon> = {
+	changed: FileDiffIcon,
+	"only-left": FileMinusIcon,
+	"only-right": FilePlusIcon,
+};
+
+/** Decorative: the text after the path already says how the file differs. */
+function FileIcon({ status }: { status: FileStatus }) {
+	const Icon = FILE_ICON[status];
+	return <Icon aria-hidden className="size-3.5 shrink-0 text-ink-soft" />;
 }
 
 function Patch({ text }: { text: string }) {
