@@ -32,4 +32,7 @@ Use shadcn/ui. Components are copied into `src/ui/client/components/ui/` with `b
 - The CLI may write `import { cn } from "cn"` (it did for the first component, before `@/lib/utils` existed; later adds used `@/lib/utils`). That `cn` doesn't know `text-caption` and friends and drops them next to a text colour. A test in `test/ui.test.ts` fails if any client file imports it.
 - Radix `Select` can't use `""` as an item value. Filters that mean "no filter" use a sentinel (`ANY`) and map it back to `""`.
 - Generated components use Tailwind's default sizes (`text-sm`, `h-9`). Adjust variants to the type scale when adding one, as was done for `Button`, `Input` and `Select` (`text-body`, `bg-card`, the page-wide focus outline instead of shadcn's ring, an `inline` size for link-style buttons).
+- Adding a component that depends on one we've tuned (`input-group` needs `button` and `input`) prompts to overwrite it, and `--yes` doesn't answer that prompt. Run `yes n | bunx shadcn@latest add <name>` to keep our versions.
+- Radix tooltips don't open on touch. `Hint` (in `ui.tsx`) is for extra detail on hover and keyboard focus; anything a phone user needs stays visible or in `sr-only` text.
+- shadcn's `InputGroup` uses `role="group"` on divs and a mouse-only click-to-focus; Biome flags both, and the file carries `biome-ignore` comments with the reasons.
 - Adds `radix-ui`, `class-variance-authority`, `lucide-react`, `cn` and `tw-animate-css`.

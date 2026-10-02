@@ -1,4 +1,9 @@
-import type { ReactNode } from "react";
+import type { ReactElement, ReactNode } from "react";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 /** A file path, repo or hash: the only things set in monospace. */
@@ -12,23 +17,31 @@ export const H2 = "mt-10 mb-2.5 text-heading font-semibold";
 export const HEADLINE =
 	"max-w-[40ch] text-[clamp(24px,3.4vw,34px)] leading-[1.3] font-medium tracking-[-0.015em] text-balance";
 
-/** Bordered note with a coloured left edge, used for advice and problems. */
-export function Notes({
-	tone = "ink",
-	children,
-}: {
-	tone?: "ink" | "problem";
-	children: ReactNode;
-}) {
+/** Notes with an ink left edge: what to do about a skill. */
+export function Notes({ children }: { children: ReactNode }) {
 	return (
-		<ul
-			className={cn(
-				"max-w-[72ch] [&>li]:mb-2 [&>li]:rounded-r-md [&>li]:border-l-3 [&>li]:bg-raised [&>li]:px-4 [&>li]:py-3",
-				tone === "problem" ? "[&>li]:border-problem" : "[&>li]:border-ink",
-			)}
-		>
+		<ul className="max-w-[72ch] [&>li]:mb-2 [&>li]:rounded-r-md [&>li]:border-l-3 [&>li]:border-ink [&>li]:bg-raised [&>li]:px-4 [&>li]:py-3">
 			{children}
 		</ul>
+	);
+}
+
+/**
+ * A tooltip on hover and keyboard focus. Radix tooltips don't open on touch,
+ * so anything a phone user needs must also be visible or in sr-only text.
+ */
+export function Hint({
+	text,
+	children,
+}: {
+	text: string;
+	children: ReactElement;
+}) {
+	return (
+		<Tooltip>
+			<TooltipTrigger asChild>{children}</TooltipTrigger>
+			<TooltipContent>{text}</TooltipContent>
+		</Tooltip>
 	);
 }
 

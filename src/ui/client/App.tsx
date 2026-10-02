@@ -1,6 +1,13 @@
+import { CircleAlertIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+	InputGroup,
+	InputGroupAddon,
+	InputGroupInput,
+} from "@/components/ui/input-group";
+import { Kbd } from "@/components/ui/kbd";
 import {
 	Select,
 	SelectContent,
@@ -8,6 +15,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import type { InventorySummary } from "../../core/inventory.ts";
 import type { UpstreamReport } from "../../core/upstream/index.ts";
@@ -26,7 +34,7 @@ import {
 	toRows,
 	updateCommand,
 } from "./model.ts";
-import { CELL, H2, HEADLINE, Notes, Path } from "./ui.tsx";
+import { CELL, H2, HEADLINE, Hint, Notes, Path } from "./ui.tsx";
 
 const PAGE = "mx-auto max-w-[1180px] px-4 pb-16 wide:px-8 wide:pb-24";
 
@@ -163,10 +171,9 @@ export function App() {
 		return (
 			<main className={PAGE}>
 				{bar}
-				<p className="my-10 text-problem">
-					The inventory couldn't be loaded: {loadError}. Restart `skillctx ui`
-					and reload this page.
-				</p>
+				<Problem className="my-10" title="The inventory couldn't be loaded">
+					{loadError}. Restart <code>skillctx ui</code> and reload this page.
+				</Problem>
 			</main>
 		);
 	}
@@ -193,6 +200,7 @@ export function App() {
 						disabled={busy !== null}
 						onClick={() => refresh(false)}
 					>
+						{busy && <BusySpinner />}
 						{busy ? "Scanning…" : "Scan now"}
 					</Button>
 				</section>
@@ -215,10 +223,12 @@ export function App() {
 						summary={data.summary}
 					/>
 				) : (
-					<p className="my-10 text-problem">
-						There's no skill named “{selected}” in the inventory.{" "}
+					<Problem
+						className="my-10"
+						title={`There's no skill named “${selected}” in the inventory`}
+					>
 						<a href="#/">Show all skills</a>
-					</p>
+					</Problem>
 				)
 			) : (
 				<SkillList
@@ -261,22 +271,26 @@ function TopBar({
 								? `Checked for updates ${when(upstream.checkedAt)}`
 								: "Not checked for updates yet"}
 				</span>
-				<Button
-					variant="outline"
-					disabled={busy !== null}
-					onClick={() => onRefresh(false)}
-					title="Re-read every skill folder on this machine"
-				>
-					Rescan
-				</Button>
-				<Button
-					variant="default"
-					disabled={busy !== null}
-					onClick={() => onRefresh(true)}
-					title="Rescan, then compare with GitHub and git remotes. Uses the network."
-				>
-					Check for updates
-				</Button>
+				<Hint text="Re-read every skill folder on this machine">
+					<Button
+						variant="outline"
+						disabled={busy !== null}
+						onClick={() => onRefresh(false)}
+					>
+						{busy === "scan" && <BusySpinner />}
+						Rescan
+					</Button>
+				</Hint>
+				<Hint text="Rescan, then compare with GitHub and git remotes. Uses the network.">
+					<Button
+						variant="default"
+						disabled={busy !== null}
+						onClick={() => onRefresh(true)}
+					>
+						{busy === "check" && <BusySpinner />}
+						Check for updates
+					</Button>
+				</Hint>
 			</div>
 			{result && (
 				<p
@@ -291,6 +305,36 @@ function TopBar({
 				</p>
 			)}
 		</header>
+	);
+}
+
+/** Decorative: the busy text next to the buttons already says what's running. */
+function BusySpinner() {
+	return <Spinner role="presentation" aria-label={undefined} aria-hidden />;
+}
+
+function Problem({
+	title,
+	children,
+	className,
+	role,
+}: {
+	title: React.ReactNode;
+	children: React.ReactNode;
+	className?: string;
+	/** Defaults to "alert"; pass "note" for problems that are part of the page. */
+	role?: "alert" | "note";
+}) {
+	return (
+		<Alert
+			variant="destructive"
+			className={cn("max-w-[72ch]", className)}
+			role={role ?? "alert"}
+		>
+			<CircleAlertIcon aria-hidden />
+			<AlertTitle className="line-clamp-none wrap-anywhere">{title}</AlertTitle>
+			<AlertDescription>{children}</AlertDescription>
+		</Alert>
 	);
 }
 
@@ -390,9 +434,11 @@ function Cell({ presence, root }: { presence: Presence; root?: string }) {
 		return <span className={PRESENCE_CELL[presence]} aria-hidden="true" />;
 	const text = `${PRESENCE_TEXT[presence]} in ${rootLabel(root)}`;
 	return (
-		<span className={PRESENCE_CELL[presence]} title={text}>
-			<span className="sr-only">{text}</span>
-		</span>
+		<Hint text={text}>
+			<span className={PRESENCE_CELL[presence]}>
+				<span className="sr-only">{text}</span>
+			</span>
+		</Hint>
 	);
 }
 
@@ -441,15 +487,21 @@ function SkillList({
 			/>
 
 			<div className="mb-3.5 flex flex-wrap items-center gap-2">
-				<Input
-					ref={search}
-					type="search"
-					placeholder="Find a skill  ( / )"
-					className="w-auto max-w-[420px] flex-[1_1_260px]"
-					value={filters.query}
-					onChange={(e) => set({ query: e.target.value })}
-					aria-label="Find a skill by name or description"
-				/>
+				<InputGroup className="w-auto max-w-[420px] flex-[1_1_260px]">
+					<InputGroupInput
+						ref={search}
+						type="search"
+						placeholder="Find a skill"
+						value={filters.query}
+						onChange={(e) => set({ query: e.target.value })}
+						aria-label="Find a skill by name or description"
+						aria-keyshortcuts="/"
+					/>
+					{/* The shortcut is useless without a keyboard; hide it on phones. */}
+					<InputGroupAddon align="inline-end" className="hidden wide:flex">
+						<Kbd>/</Kbd>
+					</InputGroupAddon>
+				</InputGroup>
 				<Select
 					// Radix Select can't use "" as an item value; ANY stands for no filter.
 					value={filters.source || ANY}
@@ -503,21 +555,24 @@ function SkillList({
 							</th>
 							{roots.map((r) => (
 								<th key={r.id} scope="col" className={CELL.headLoc}>
-									<button
-										type="button"
-										className={cn(
-											"cursor-pointer rounded px-1 py-0.5 hover:text-ink",
-											filters.root === r.id &&
-												"bg-raised text-ink shadow-[inset_0_-2px_0_var(--ink)]",
-										)}
-										aria-pressed={filters.root === r.id}
-										title={`${r.path} holds ${r.entries} skills. ${filters.root === r.id ? "Showing only these; press to show all." : "Press to show only these."}`}
-										onClick={() =>
-											set({ root: filters.root === r.id ? "" : r.id })
-										}
+									<Hint
+										text={`${r.path} holds ${r.entries} skills. ${filters.root === r.id ? "Showing only these; press to show all." : "Press to show only these."}`}
 									>
-										{rootLabel(r.id)}
-									</button>
+										<button
+											type="button"
+											className={cn(
+												"cursor-pointer rounded px-1 py-0.5 hover:text-ink",
+												filters.root === r.id &&
+													"bg-raised text-ink shadow-[inset_0_-2px_0_var(--ink)]",
+											)}
+											aria-pressed={filters.root === r.id}
+											onClick={() =>
+												set({ root: filters.root === r.id ? "" : r.id })
+											}
+										>
+											{rootLabel(r.id)}
+										</button>
+									</Hint>
 								</th>
 							))}
 							<th scope="col" className={CELL.headState}>
@@ -768,15 +823,25 @@ function SkillDetail({
 			{skill.copies.some((c) => c.diagnostics.length > 0) && (
 				<>
 					<h2 className={H2}>Problems</h2>
-					<Notes tone="problem">
-						{skill.copies.flatMap((c) =>
-							c.diagnostics.map((d) => (
-								<li key={`${c.realPath}-${d}`}>
-									{d} in <Path>{c.realPath}</Path>
-								</li>
-							)),
-						)}
-					</Notes>
+					<div className="grid max-w-[72ch] gap-2">
+						{skill.copies
+							.filter((c) => c.diagnostics.length > 0)
+							.map((c) => (
+								// Part of the page, not a live event: don't interrupt a
+								// screen reader the way role="alert" would.
+								<Problem
+									key={c.realPath}
+									role="note"
+									title={<Path>{c.realPath}</Path>}
+								>
+									<ul>
+										{c.diagnostics.map((d) => (
+											<li key={d}>{d}</li>
+										))}
+									</ul>
+								</Problem>
+							))}
+					</div>
 				</>
 			)}
 
@@ -899,7 +964,11 @@ function DiffView({ skill }: { skill: SkillRecord }) {
 			{a === b && (
 				<p className="my-4 text-ink-soft">Pick two different copies.</p>
 			)}
-			{error && <p className="my-4 text-problem">Couldn't compare: {error}</p>}
+			{error && (
+				<Problem className="my-4" title="Couldn't compare these copies">
+					{error}
+				</Problem>
+			)}
 			{diff && diff.files.length === 0 && (
 				<p className="my-4 text-ink-soft">These two copies are identical.</p>
 			)}
