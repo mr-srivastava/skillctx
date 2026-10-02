@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 import type { SkillRecord } from "../../core/inventory/format.ts";
 import type { CopyDiff } from "../data.ts";
 import * as api from "./api.ts";
-import { H2, Path, Problem } from "./ui.tsx";
+import { Path, Problem } from "./ui.tsx";
 
 export function DiffView({ skill }: { skill: SkillRecord }) {
 	const [a, setA] = useState(0);
@@ -65,7 +65,6 @@ export function DiffView({ skill }: { skill: SkillRecord }) {
 
 	return (
 		<>
-			<h2 className={H2}>Compare copies</h2>
 			<div className="mb-3.5 flex flex-wrap items-center gap-2">
 				{pick(a, setA, "Compare")} <span className="text-ink-soft">with</span>{" "}
 				{pick(b, setB, "With")}

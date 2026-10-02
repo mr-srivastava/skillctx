@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import type {
 	InventorySummary,
@@ -18,6 +19,7 @@ import {
 	updateCommand,
 } from "../../core/provenance/kinds.ts";
 import { rootLabel } from "../../core/sources/roots.ts";
+import { Contents } from "./Contents.tsx";
 import { DiffView } from "./DiffView.tsx";
 import type { Presence, Row } from "./model.ts";
 import {
@@ -150,7 +152,7 @@ function Advice({ skill, row }: { skill: SkillRecord; row?: Row }) {
 			key: "drift",
 			icon: STATUS_ICON.drift,
 			tone: STATUS_TEXT.drift,
-			text: "Agents reading different locations see different versions of this skill. Compare the copies below.",
+			text: "Agents reading different locations see different versions of this skill. Compare copies shows what differs.",
 		});
 	}
 	if (items.length === 0) return null;
@@ -176,19 +178,28 @@ function Advice({ skill, row }: { skill: SkillRecord; row?: Row }) {
 	);
 }
 
+export type DetailTab = "contents" | "where" | "copies";
+
 export function SkillDetail({
 	skill,
 	row,
 	summary,
+	tab,
+	onTab,
 }: {
 	skill: SkillRecord;
 	row?: Row;
 	summary: InventorySummary;
+	tab: DetailTab;
+	onTab: (tab: DetailTab) => void;
 }) {
 	const roots = summary.roots.filter((r) => r.present);
 	const main = [...skill.copies].sort(
 		(a, b) => b.seenIn.length - a.seenIn.length,
 	)[0];
+	const mainIndex = main ? skill.copies.indexOf(main) : 0;
+	const canCompare = skill.versions > 1;
+	const shownTab = tab === "copies" && !canCompare ? "contents" : tab;
 	return (
 		<article>
 			<p className="mt-7 text-small">
@@ -203,109 +214,126 @@ export function SkillDetail({
 			<p className="mb-6 max-w-[68ch] text-ink-soft">{skill.description}</p>
 
 			<Advice skill={skill} row={row} />
-
-			<h2 className={H2}>Where it lives</h2>
-			<div className="overflow-x-auto">
-				<table className="w-full">
-					<thead>
-						<tr>
-							<th scope="col" className={CELL.headSkill}>
-								Folder on disk
-							</th>
-							{roots.map((r) => (
-								<th key={r.id} scope="col" className={CELL.headLoc}>
-									<span className="inline-block px-1 py-0.5">
-										{rootLabel(r.id)}
-									</span>
-								</th>
-							))}
-						</tr>
-					</thead>
-					<tbody>
-						{skill.copies.map((c, i) => (
-							<tr key={c.realPath} className="hover:bg-raised">
-								<th scope="row" className={CELL.bodySkill}>
-									<Path>{c.realPath}</Path>
-									<span className={DESC}>
-										Copy {i + 1}, {c.fileCount}{" "}
-										{c.fileCount === 1 ? "file" : "files"},{" "}
-										{(c.bytes / 1024).toFixed(1)} KB
-										{c.installState === "modified" && ", edited after install"}
-									</span>
-								</th>
-								{roots.map((r) => {
-									const e = c.seenIn.find((s) => s.root === r.id);
-									const p: Presence = !e
-										? "absent"
-										: c.hash !== main?.hash
-											? "differs"
-											: e.symlink
-												? "link"
-												: "folder";
-									return (
-										<td key={r.id} className={CELL.bodyLoc}>
-											<Cell presence={p} root={r.id} />
-										</td>
-									);
-								})}
-							</tr>
-						))}
-					</tbody>
-				</table>
-			</div>
-
-			<h2 className={H2}>Installed by</h2>
-			<dl className="max-w-[80ch]">
-				{skill.copies.flatMap((c, i) =>
-					c.provenance.map((p) => (
-						<div key={`${c.realPath}-${p.kind}`} className={FACT}>
-							<dt className="text-ink-soft">{sourceLabel(p.kind)}</dt>
-							<dd className="wrap-break-word">
-								<ProvenanceText p={p} />
-								{skill.copies.length > 1 && (
-									<span className="text-ink-soft"> (copy {i + 1})</span>
-								)}
-							</dd>
-						</div>
-					)),
-				)}
-				{skill.copies.every((c) => c.provenance.length === 0) && (
-					<div className={FACT}>
-						<dt className="text-ink-soft">Untracked</dt>
-						<dd className="text-ink-soft">
-							No installer recorded this skill, so it can't be checked for
-							updates.
-						</dd>
-					</div>
-				)}
-			</dl>
-
 			{skill.copies.some((c) => c.diagnostics.length > 0) && (
-				<>
-					<h2 className={H2}>Problems</h2>
-					<div className="grid max-w-[72ch] gap-2">
-						{skill.copies
-							.filter((c) => c.diagnostics.length > 0)
-							.map((c) => (
-								// Part of the page, not a live event: don't interrupt a
-								// screen reader the way role="alert" would.
-								<Problem
-									key={c.realPath}
-									role="note"
-									title={<Path>{c.realPath}</Path>}
-								>
-									<ul>
-										{c.diagnostics.map((d) => (
-											<li key={d}>{d}</li>
-										))}
-									</ul>
-								</Problem>
-							))}
-					</div>
-				</>
+				<div className="mb-2 grid max-w-[72ch] gap-2">
+					{skill.copies
+						.filter((c) => c.diagnostics.length > 0)
+						.map((c) => (
+							// Part of the page, not a live event: don't interrupt a
+							// screen reader the way role="alert" would.
+							<Problem
+								key={c.realPath}
+								role="note"
+								title={<Path>{c.realPath}</Path>}
+							>
+								<ul>
+									{c.diagnostics.map((d) => (
+										<li key={d}>{d}</li>
+									))}
+								</ul>
+							</Problem>
+						))}
+				</div>
 			)}
 
-			{skill.versions > 1 && <DiffView skill={skill} />}
+			<Tabs
+				value={shownTab}
+				onValueChange={(v) => onTab(v as DetailTab)}
+				className="mt-8"
+			>
+				<TabsList>
+					<TabsTrigger value="contents">Contents</TabsTrigger>
+					<TabsTrigger value="where">Where it lives</TabsTrigger>
+					{canCompare && (
+						<TabsTrigger value="copies">Compare copies</TabsTrigger>
+					)}
+				</TabsList>
+				<TabsContent value="contents">
+					<Contents key={skill.name} skill={skill} mainCopy={mainIndex} />
+				</TabsContent>
+				<TabsContent value="where" className="pt-6">
+					<div className="overflow-x-auto">
+						<table className="w-full">
+							<thead>
+								<tr>
+									<th scope="col" className={CELL.headSkill}>
+										Folder on disk
+									</th>
+									{roots.map((r) => (
+										<th key={r.id} scope="col" className={CELL.headLoc}>
+											<span className="inline-block px-1 py-0.5">
+												{rootLabel(r.id)}
+											</span>
+										</th>
+									))}
+								</tr>
+							</thead>
+							<tbody>
+								{skill.copies.map((c, i) => (
+									<tr key={c.realPath} className="hover:bg-raised">
+										<th scope="row" className={CELL.bodySkill}>
+											<Path>{c.realPath}</Path>
+											<span className={DESC}>
+												Copy {i + 1}, {c.fileCount}{" "}
+												{c.fileCount === 1 ? "file" : "files"},{" "}
+												{(c.bytes / 1024).toFixed(1)} KB
+												{c.installState === "modified" &&
+													", edited after install"}
+											</span>
+										</th>
+										{roots.map((r) => {
+											const e = c.seenIn.find((s) => s.root === r.id);
+											const p: Presence = !e
+												? "absent"
+												: c.hash !== main?.hash
+													? "differs"
+													: e.symlink
+														? "link"
+														: "folder";
+											return (
+												<td key={r.id} className={CELL.bodyLoc}>
+													<Cell presence={p} root={r.id} />
+												</td>
+											);
+										})}
+									</tr>
+								))}
+							</tbody>
+						</table>
+					</div>
+
+					<h2 className={H2}>Installed by</h2>
+					<dl className="max-w-[80ch]">
+						{skill.copies.flatMap((c, i) =>
+							c.provenance.map((p) => (
+								<div key={`${c.realPath}-${p.kind}`} className={FACT}>
+									<dt className="text-ink-soft">{sourceLabel(p.kind)}</dt>
+									<dd className="wrap-break-word">
+										<ProvenanceText p={p} />
+										{skill.copies.length > 1 && (
+											<span className="text-ink-soft"> (copy {i + 1})</span>
+										)}
+									</dd>
+								</div>
+							)),
+						)}
+						{skill.copies.every((c) => c.provenance.length === 0) && (
+							<div className={FACT}>
+								<dt className="text-ink-soft">Untracked</dt>
+								<dd className="text-ink-soft">
+									No installer recorded this skill, so it can't be checked for
+									updates.
+								</dd>
+							</div>
+						)}
+					</dl>
+				</TabsContent>
+				{canCompare && (
+					<TabsContent value="copies" className="pt-6">
+						<DiffView skill={skill} />
+					</TabsContent>
+				)}
+			</Tabs>
 		</article>
 	);
 }

@@ -3,7 +3,7 @@ import type {
 	SkillRecord,
 } from "../../core/inventory/format.ts";
 import type { UpstreamReport } from "../../core/upstream/index.ts";
-import type { CopyDiff } from "../data.ts";
+import type { CopyDiff, CopyFiles, FileText } from "../data.ts";
 import type { RefreshResult } from "../server.ts";
 
 /*
@@ -65,5 +65,21 @@ export function copyDiff(
 ): Promise<CopyDiff> {
 	return getJson<CopyDiff>(
 		`/api/skills/${encodeURIComponent(name)}/diff?a=${a}&b=${b}`,
+	);
+}
+
+export function copyFiles(name: string, copy: number): Promise<CopyFiles> {
+	return getJson<CopyFiles>(
+		`/api/skills/${encodeURIComponent(name)}/files?copy=${copy}`,
+	);
+}
+
+export function copyFile(
+	name: string,
+	copy: number,
+	file: string,
+): Promise<FileText> {
+	return getJson<FileText>(
+		`/api/skills/${encodeURIComponent(name)}/file?copy=${copy}&path=${encodeURIComponent(file)}`,
 	);
 }

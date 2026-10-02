@@ -4,7 +4,7 @@ import { InventoryReader } from "../core/inventory/store.ts";
 import { tallyUpstream } from "../core/upstream/index.ts";
 import type { Workspace } from "../core/workspace.ts";
 import index from "./client/index.html";
-import { copyDiff } from "./data.ts";
+import { copyDiff, copyFile, copyFiles } from "./data.ts";
 
 export interface RefreshResult {
 	ok: boolean;
@@ -91,6 +91,33 @@ export function startUiServer(opts: UiServerOptions): UiServer {
 					);
 					return diff
 						? Response.json(diff)
+						: Response.json({ error: "Not found" }, { status: 404 });
+				},
+			),
+			"/api/skills/:name/files": guard(
+				(req: Bun.BunRequest<"/api/skills/:name/files">) => {
+					const url = new URL(req.url);
+					const files = copyFiles(
+						store.skill(decodeURIComponent(req.params.name)),
+						Number(url.searchParams.get("copy")),
+						opts.homeDir,
+					);
+					return files
+						? Response.json(files)
+						: Response.json({ error: "Not found" }, { status: 404 });
+				},
+			),
+			"/api/skills/:name/file": guard(
+				(req: Bun.BunRequest<"/api/skills/:name/file">) => {
+					const url = new URL(req.url);
+					const file = copyFile(
+						store.skill(decodeURIComponent(req.params.name)),
+						Number(url.searchParams.get("copy")),
+						url.searchParams.get("path") ?? "",
+						opts.homeDir,
+					);
+					return file
+						? Response.json(file)
 						: Response.json({ error: "Not found" }, { status: 404 });
 				},
 			),
