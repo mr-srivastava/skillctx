@@ -120,7 +120,7 @@ export function scan(ws: Workspace, homeDir: string): ScanResult {
 			s.copies.some((c) => c.diagnostics.length > 0),
 		).length,
 		sources: Object.fromEntries(
-			Object.entries(sources).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)),
+			Object.entries(sources).sort(([a], [b]) => (a < b ? -1 : 1)),
 		),
 		roots: roots.map((r) => ({
 			id: r.id,

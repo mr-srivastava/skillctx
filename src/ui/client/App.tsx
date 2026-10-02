@@ -117,8 +117,7 @@ export function App() {
 	}, []);
 
 	useEffect(() => {
-		// load() sets state only after its fetches resolve, not synchronously.
-		// oxlint-disable-next-line react/set-state-in-effect
+		// oxlint-disable-next-line react/set-state-in-effect -- load() sets state after its fetches resolve, not synchronously.
 		void load();
 	}, [load]);
 

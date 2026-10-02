@@ -10,7 +10,6 @@
 		"node": true,
 		"es2024": true
 	},
-	"ignorePatterns": ["dist/**"],
 	"rules": {
 		"react/react-in-jsx-scope": "off",
 		"typescript/no-unsafe-type-assertion": "off",
