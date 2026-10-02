@@ -40,9 +40,9 @@ Plan: `tasks/plan.md`. Commands assume Bun: `bun test`, `bun run build`, `bun ru
 **Description:** A table of known skill roots (`~/.agents/skills`, `~/.claude/skills`, `~/.codex/skills`, `~/.cursor/skills`, `~/.gemini/skills`, `~/.config/opencode/skills`, plus extra roots from `skillctx.yaml`). The plain-folder source lists every folder containing `SKILL.md`, following symlinks, skipping `.trash/`, `.cowork-export/`, `.skills-manager/`, `.git/`, `node_modules/`.
 
 **Acceptance criteria:**
-- [ ] `list()` returns `{root, entryPath, realPath, sourceId}` per skill folder
-- [ ] Symlink loops terminate; missing roots are skipped silently
-- [ ] Fixture with a canonical root plus two symlinked agent roots returns all entries with correct realpaths
+- [x] `list()` returns `{root, entryPath, realPath, sourceId}` per skill folder
+- [x] Symlink loops terminate; missing roots are skipped silently
+- [x] Fixture with a canonical root plus two symlinked agent roots returns all entries with correct realpaths
 
 **Verification:** fixture tests pass.
 **Dependencies:** 2
@@ -53,9 +53,9 @@ Plan: `tasks/plan.md`. Commands assume Bun: `bun test`, `bun run build`, `bun ru
 **Description:** Parse `SKILL.md` frontmatter (name, description). Compute the normalized content hash (`h1:`, sorted paths + bytes, provenance keys stripped). Group instances by realpath, then by hash, into skills. Flag drift (same name, different hash). Per-skill diagnostics for malformed files; one bad skill never stops the scan.
 
 **Acceptance criteria:**
-- [ ] One skill visible through three roots becomes one skill with three instances
-- [ ] Same content at two realpaths (a byte copy) groups into one skill; edited copy is reported as drift
-- [ ] Malformed frontmatter yields a diagnostic, not an exception
+- [x] One skill visible through three roots becomes one skill with three instances
+- [x] Same content at two realpaths (a byte copy) groups into one skill; edited copy is reported as drift
+- [x] Malformed frontmatter yields a diagnostic, not an exception
 
 **Verification:** fixture tests pass; hashing is deterministic across runs.
 **Dependencies:** 3
@@ -66,9 +66,9 @@ Plan: `tasks/plan.md`. Commands assume Bun: `bun test`, `bun run build`, `bun ru
 **Description:** Run sources and Indexer, write `<home>/inventory/skills/<name>.json` and `summary.json` with stable ordering and `~`-relative paths, remove files for skills that disappeared, print a terminal summary (skills, instances, drift, diagnostics).
 
 **Acceptance criteria:**
-- [ ] Second run with no changes leaves `git status` clean in the workspace
-- [ ] No inventory file contains the absolute home path
-- [ ] Terminal summary shows counts per root
+- [x] Second run with no changes leaves `git status` clean in the workspace
+- [x] No inventory file contains the absolute home path
+- [x] Terminal summary shows counts per root
 
 **Verification:** tests pass; manual run on the author's machine.
 **Dependencies:** 4
@@ -76,8 +76,8 @@ Plan: `tasks/plan.md`. Commands assume Bun: `bun test`, `bun run build`, `bun ru
 **Scope:** M
 
 ## Checkpoint B: real-machine run
-- [ ] `skillctx inventory` on the author's machine collapses ~590 entries into ~100 skills
-- [ ] Skills Manager copies group with their `~/.agents/skills` originals (or show as drift)
+- [x] `skillctx inventory` on the author's machine collapses ~590 entries into ~100 skills
+- [ ] Skills Manager copies group with their `~/.agents/skills` originals (or show as drift) — moved to Task 8; its root is not scanned yet
 - [ ] Review output with the user before adding provenance
 
 ## Provenance

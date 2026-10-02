@@ -1,3 +1,4 @@
+import { realpathSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
@@ -9,10 +10,25 @@ export function toPortable(
 	absPath: string,
 	homeDir: string = os.homedir(),
 ): string {
-	const rel = path.relative(homeDir, absPath);
-	if (rel === "") return "~";
-	if (rel.startsWith("..") || path.isAbsolute(rel)) return absPath;
-	return `~/${rel.split(path.sep).join("/")}`;
+	// Real paths come from realpath(), so compare against the real home too
+	// (on macOS /var is a symlink to /private/var, and homes can be symlinked).
+	for (const base of homeBases(homeDir)) {
+		const rel = path.relative(base, absPath);
+		if (rel === "") return "~";
+		if (!rel.startsWith("..") && !path.isAbsolute(rel)) {
+			return `~/${rel.split(path.sep).join("/")}`;
+		}
+	}
+	return absPath;
+}
+
+function homeBases(homeDir: string): string[] {
+	try {
+		const real = realpathSync(homeDir);
+		return real === homeDir ? [homeDir] : [homeDir, real];
+	} catch {
+		return [homeDir];
+	}
 }
 
 export function fromPortable(

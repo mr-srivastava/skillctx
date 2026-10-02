@@ -4,7 +4,9 @@ import {
 	mkdirSync,
 	mkdtempSync,
 	readFileSync,
+	realpathSync,
 	rmSync,
+	symlinkSync,
 	writeFileSync,
 } from "node:fs";
 import os from "node:os";
@@ -141,5 +143,17 @@ describe("init command", () => {
 	test("unknown flag exits 2", async () => {
 		const { io } = quietIo();
 		expect(await main(["init", "--nope"], io, env)).toBe(2);
+	});
+});
+
+describe("toPortable with a symlinked home", () => {
+	test("real paths under a symlinked home still become ~/", () => {
+		const realHome = path.join(tmp, "real-home");
+		const linkHome = path.join(tmp, "link-home");
+		mkdirSync(path.join(realHome, "x"), { recursive: true });
+		symlinkSync(realHome, linkHome);
+		expect(toPortable(path.join(realpathSync(realHome), "x"), linkHome)).toBe(
+			"~/x",
+		);
 	});
 });

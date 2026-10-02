@@ -2,6 +2,7 @@
 import pkg from "../../package.json" with { type: "json" };
 import { defaultEnv, type Env, WorkspaceError } from "../core/workspace.ts";
 import { initCommand } from "./commands/init.ts";
+import { inventoryCommand } from "./commands/inventory.ts";
 import { consoleIo, type Io } from "./io.ts";
 
 export const VERSION: string = pkg.version;
@@ -10,6 +11,7 @@ const USAGE = `skillctx ${VERSION}
 
 Usage:
   skillctx init [--home <path>]   Create a workspace (default ~/skillctx) and make it active
+  skillctx inventory              Scan all skill roots and write <workspace>/inventory/
   skillctx --version
   skillctx --help
 `;
@@ -18,6 +20,7 @@ type Command = (args: string[], io: Io, env: Env) => Promise<number>;
 
 const COMMANDS: Record<string, Command> = {
 	init: initCommand,
+	inventory: inventoryCommand,
 };
 
 export async function main(

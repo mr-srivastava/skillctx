@@ -4,6 +4,7 @@ import {
 	readdirSync,
 	readFileSync,
 	renameSync,
+	rmSync,
 	writeFileSync,
 } from "node:fs";
 import os from "node:os";
@@ -78,6 +79,20 @@ export class Workspace {
 		writeFileSync(tmp, content);
 		renameSync(tmp, target);
 		return true;
+	}
+
+	/** Delete a file inside the workspace. Returns false if it didn't exist. */
+	remove(relPath: string): boolean {
+		const target = this.resolve(relPath);
+		if (!existsSync(target)) return false;
+		rmSync(target);
+		return true;
+	}
+
+	/** File names directly inside a workspace folder; empty if the folder is missing. */
+	list(relDir: string): string[] {
+		const dir = this.resolve(relDir);
+		return existsSync(dir) ? readdirSync(dir) : [];
 	}
 }
 
