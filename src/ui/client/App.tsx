@@ -39,6 +39,12 @@ import type {
 	InventorySummary,
 	SkillRecord,
 } from "../../core/inventory/format.ts";
+import {
+	provenanceDetails,
+	sourceLabel,
+	updateCommand,
+} from "../../core/provenance/kinds.ts";
+import { rootLabel } from "../../core/sources/roots.ts";
 import type { UpstreamReport } from "../../core/upstream/index.ts";
 import type { CopyDiff } from "../data.ts";
 import {
@@ -48,12 +54,9 @@ import {
 	NO_FILTERS,
 	type Presence,
 	type Row,
-	rootLabel,
-	SOURCE_LABEL,
 	STATUS_LABEL,
 	type Status,
 	toRows,
-	updateCommand,
 } from "./model.ts";
 import { CELL, H2, HEADLINE, Hint, Notes, Path } from "./ui.tsx";
 
@@ -564,7 +567,7 @@ function SkillList({
 						<SelectItem value={ANY}>Installed by anything</SelectItem>
 						{sources.map((s) => (
 							<SelectItem key={s} value={s}>
-								{SOURCE_LABEL[s] ?? s}
+								{sourceLabel(s)}
 							</SelectItem>
 						))}
 					</SelectContent>
@@ -767,7 +770,10 @@ function Advice({ skill, row }: { skill: SkillRecord; row?: Row }) {
 		command?: string;
 	}[] = [];
 	for (const u of row?.upstream ?? []) {
-		const command = updateCommand(u, skill.name);
+		const command =
+			u.status === "outdated"
+				? updateCommand(u.via, skill.name, u.copy)
+				: undefined;
 		if (command) {
 			items.push({
 				key: `up-${u.copy}-${u.via}`,
@@ -916,9 +922,7 @@ function SkillDetail({
 				{skill.copies.flatMap((c, i) =>
 					c.provenance.map((p) => (
 						<div key={`${c.realPath}-${p.kind}`} className={FACT}>
-							<dt className="text-ink-soft">
-								{SOURCE_LABEL[p.kind] ?? p.kind}
-							</dt>
+							<dt className="text-ink-soft">{sourceLabel(p.kind)}</dt>
 							<dd className="wrap-break-word">
 								<ProvenanceText p={p} />
 								{skill.copies.length > 1 && (
@@ -974,58 +978,17 @@ function ProvenanceText({
 }: {
 	p: SkillRecord["copies"][number]["provenance"][number];
 }) {
-	switch (p.kind) {
-		case "skill-lock":
-			return (
-				<>
-					<Path>{p.source}</Path>
-					{p.updatedAt && (
-						<span className="text-ink-soft">
-							, last updated {new Date(p.updatedAt).toLocaleDateString()}
-						</span>
-					)}
-				</>
-			);
-		case "gh-frontmatter":
-			return (
-				<Path>
-					{p.repo}
-					{p.ref ? `@${p.ref}` : ""}
-				</Path>
-			);
-		case "git-checkout":
-			return (
-				<>
-					<Path>{p.remote ?? p.repoRoot}</Path>
-					<span className="text-ink-soft">
-						, branch {p.branch}, commit <Path>{p.head.slice(0, 8)}</Path>
-					</span>
-				</>
-			);
-		case "skills-manager":
-			return (
-				<>
-					{p.sourceType === "import" ? "Imported" : p.sourceType}
-					{p.sourceRef && (
-						<>
-							{" "}
-							from <Path>{p.sourceRef}</Path>
-						</>
-					)}
-				</>
-			);
-		case "claude-plugin":
-			return (
-				<>
-					<Path>{p.plugin}</Path>
-					{p.version && (
-						<span className="text-ink-soft">, version {p.version}</span>
-					)}
-				</>
-			);
-		case "claude-app-synced":
-			return <>Synced by the Claude desktop app</>;
-	}
+	return provenanceDetails(p).map((d, i) =>
+		d.as === "path" ? (
+			<Path key={i}>{d.text}</Path>
+		) : d.as === "soft" ? (
+			<span key={i} className="text-ink-soft">
+				{d.text}
+			</span>
+		) : (
+			d.text
+		),
+	);
 }
 
 function DiffView({ skill }: { skill: SkillRecord }) {

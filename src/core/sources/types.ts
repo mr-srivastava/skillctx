@@ -16,6 +16,8 @@ export interface SkillEntry {
 export interface SkillRoot {
 	id: string;
 	label: string;
+	/** Column-width name for tables; defaults to a name derived from the id. */
+	short?: string;
 	/** `~/` path or absolute path. */
 	path: string;
 }

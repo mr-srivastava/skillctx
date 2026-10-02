@@ -8,6 +8,7 @@ Domain terms for skillctx. Architecture terms (module, interface, seam, adapter,
 - **Skill instance**: one copy of a skill found in one skill root. Symlinks to the same real path are the same instance.
 - **Skill**: all instances with the same normalized content hash, grouped by the Indexer.
 - **Provenance**: where an instance came from (source, URL, revision, upstream hash), as recorded by its source.
+- **Provenance kind**: which tool recorded a provenance (`skill-lock`, `gh-frontmatter`, `git-checkout`, `skills-manager`, `claude-plugin`, `claude-app-synced`). What each kind means for install state, upstream checks, update commands and display is in one table, `src/core/provenance/kinds.ts`.
 - **Inventory**: the Indexer's view of all skills, their instances, drift between copies, and outdated status, written to `<home>/inventory/`.
 - **Inventory format**: the version number in every inventory file. Added fields keep it; changes an older reader would misread bump it (ADR-014).
 - **Outdated**: upstream has a newer revision than the installed instance. Checked only on explicit refresh.

@@ -1,6 +1,8 @@
 import path from "node:path";
 import type { Skill } from "../indexer/index.ts";
 import { toPortable } from "../paths.ts";
+import { upstreamTarget } from "../provenance/kinds.ts";
+import type { ProvenanceKind } from "../provenance/types.ts";
 
 export type UpstreamStatus =
 	| "up-to-date"
@@ -12,7 +14,8 @@ export interface UpstreamResult {
 	skill: string;
 	/** `~/` path of the copy that was checked. */
 	copy: string;
-	via: "skill-lock" | "gh-frontmatter" | "git-checkout";
+	/** The provenance kind that recorded what was installed. */
+	via: ProvenanceKind;
 	/** Repository URL or remote. */
 	repo: string;
 	/** What was installed: a tree SHA (lockfile/gh) or a commit (git checkout). */
@@ -144,48 +147,39 @@ export async function checkUpstream(
 		for (const copy of skill.copies) {
 			const copyPath = toPortable(copy.realPath, deps.homeDir);
 			for (const p of copy.provenance) {
-				if (p.kind === "skill-lock" || p.kind === "gh-frontmatter") {
-					const repoUrl = p.kind === "skill-lock" ? p.sourceUrl : p.repo;
-					const gh = parseGithub(repoUrl);
-					const installed = p.kind === "skill-lock" ? p.folderHash : p.treeSha;
-					const dirPath = p.kind === "skill-lock" ? p.skillPath : p.path;
-					if (!gh || !installed || dirPath === undefined) continue;
-					const ref =
-						(p.kind === "skill-lock" ? p.pinnedRef : p.pinned) ?? "HEAD";
-					const key = `${gh.owner}/${gh.repo}@${ref}`;
+				const t = upstreamTarget(p);
+				if (t?.type === "github-tree") {
+					const gh = parseGithub(t.repo);
+					if (!gh) continue;
+					const key = `${gh.owner}/${gh.repo}@${t.ref}`;
 					const entry = byTarget.get(key) ?? {
-						target: { ...gh, ref },
+						target: { ...gh, ref: t.ref },
 						items: [],
 					};
 					entry.items.push({
 						skill: skill.name,
 						copy: copyPath,
 						via: p.kind,
-						repo: repoUrl,
-						dir: skillDir(dirPath),
-						installed,
+						repo: t.repo,
+						dir: skillDir(t.path),
+						installed: t.installed,
 					});
 					byTarget.set(key, entry);
-				} else if (
-					p.kind === "git-checkout" &&
-					p.remote &&
-					p.branch &&
-					p.branch !== "HEAD"
-				) {
-					const entry = checkouts.get(p.repoRoot) ?? {
-						remote: p.remote,
-						branch: p.branch,
-						head: p.head,
+				} else if (t?.type === "git-branch") {
+					const entry = checkouts.get(t.repoRoot) ?? {
+						remote: t.remote,
+						branch: t.branch,
+						head: t.head,
 						items: [],
 					};
 					entry.items.push({
 						skill: skill.name,
 						copy: copyPath,
-						via: "git-checkout",
-						repo: p.remote,
-						installed: p.head,
+						via: p.kind,
+						repo: t.remote,
+						installed: t.head,
 					});
-					checkouts.set(p.repoRoot, entry);
+					checkouts.set(t.repoRoot, entry);
 				}
 			}
 		}

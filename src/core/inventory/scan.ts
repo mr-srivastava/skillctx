@@ -1,6 +1,7 @@
 import { gitTreeSha } from "../indexer/git-tree.ts";
 import { buildIndex, type Skill } from "../indexer/index.ts";
 import { toPortable } from "../paths.ts";
+import { installedTree } from "../provenance/kinds.ts";
 import {
 	claudeAppSyncedLookup,
 	claudePluginLookup,
@@ -12,7 +13,11 @@ import {
 	skillsManagerLookup,
 } from "../provenance/sources.ts";
 import { listPlainSkills } from "../sources/plain.ts";
-import { BUILTIN_ROOTS, configuredRoots } from "../sources/roots.ts";
+import {
+	BUILTIN_ROOTS,
+	configuredRoots,
+	PLUGIN_ROOT_PREFIX,
+} from "../sources/roots.ts";
 import type { SkillRoot } from "../sources/types.ts";
 import type { Workspace } from "../workspace.ts";
 import { type InventorySummary, sourceKinds } from "./format.ts";
@@ -27,7 +32,7 @@ export function scan(ws: Workspace, homeDir: string): ScanResult {
 	const warn = (msg: string) => warnings.push(msg);
 	const plugins = readClaudePlugins(homeDir, warn);
 	const pluginRoots: SkillRoot[] = plugins.map((p) => ({
-		id: `claude-plugin:${p.plugin}`,
+		id: `${PLUGIN_ROOT_PREFIX}${p.plugin}`,
 		label: `Claude plugin ${p.plugin}`,
 		path: toPortable(`${p.installPath}/skills`, homeDir),
 	}));
@@ -50,15 +55,7 @@ export function scan(ws: Workspace, homeDir: string): ScanResult {
 	for (const skill of skills) {
 		for (const copy of skill.copies) {
 			copy.provenance = lookup(copy.realPath);
-			const recorded = copy.provenance
-				.map((p) =>
-					p.kind === "skill-lock"
-						? p.folderHash
-						: p.kind === "gh-frontmatter"
-							? p.treeSha
-							: undefined,
-				)
-				.find(Boolean);
+			const recorded = copy.provenance.map(installedTree).find(Boolean);
 			if (recorded) {
 				copy.installState =
 					gitTreeSha(copy.realPath) === recorded ? "unchanged" : "modified";

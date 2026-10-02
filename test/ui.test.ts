@@ -201,4 +201,26 @@ describe("client code", () => {
 		}
 		expect(offenders).toEqual([]);
 	});
+
+	test("core modules the client imports have no runtime Node imports", async () => {
+		const glob = new Bun.Glob("**/*.{ts,tsx}");
+		const fromCore = new Set<string>();
+		for await (const file of glob.scan("src/ui/client")) {
+			const src = await Bun.file(`src/ui/client/${file}`).text();
+			// Type-only imports are erased, so only value imports count.
+			for (const m of src.matchAll(
+				/^import (?!type )[^;]*?from "((?:\.\.\/)+core\/[^"]+)"/gm,
+			))
+				if (m[1])
+					fromCore.add(path.normalize(`src/ui/client/${file}/../${m[1]}`));
+		}
+		expect(fromCore.size).toBeGreaterThan(0);
+		for (const file of fromCore) {
+			const src = await Bun.file(file).text();
+			expect([file, /^import (?!type )[^;]*from "node:/m.test(src)]).toEqual([
+				file,
+				false,
+			]);
+		}
+	});
 });
