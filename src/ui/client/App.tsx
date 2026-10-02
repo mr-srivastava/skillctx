@@ -117,6 +117,7 @@ export function App() {
 	}, []);
 
 	useEffect(() => {
+		// oxlint-disable-next-line react/set-state-in-effect -- load() sets state after its fetches resolve, not synchronously.
 		void load();
 	}, [load]);
 
@@ -922,6 +923,7 @@ function DiffView({ skill }: { skill: SkillRecord }) {
 
 	useEffect(() => {
 		if (a === b) {
+			// oxlint-disable-next-line react/set-state-in-effect -- clears the previous pair's diff.
 			setDiff(null);
 			return;
 		}
@@ -1000,6 +1002,7 @@ function Patch({ text }: { text: string }) {
 		.slice(4)
 		.map((line) => {
 			const key = offset;
+			// oxlint-disable-next-line react/immutability -- a local counter during render, not state.
 			offset += line.length + 1;
 			return { key, line };
 		});

@@ -73,7 +73,7 @@ function sortDeep(value: unknown): unknown {
 	if (Array.isArray(value)) return value.map(sortDeep);
 	if (value !== null && typeof value === "object") {
 		return Object.fromEntries(
-			Object.keys(value as object)
+			Object.keys(value)
 				.sort()
 				.map((k) => [k, sortDeep((value as Record<string, unknown>)[k])]),
 		);

@@ -160,7 +160,7 @@ describe("inventory files", () => {
 			"gamma.json",
 		]);
 		for (const f of [
-			...files.map((f) => `inventory/skills/${f}`),
+			...files.map((name) => `inventory/skills/${name}`),
 			"inventory/summary.json",
 		]) {
 			expect(readFileSync(path.join(workspace.root, f), "utf8")).not.toContain(

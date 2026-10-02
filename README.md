@@ -30,6 +30,7 @@ Status: Phase 0 (read-only inventory and local web UI) works. The compile engine
 | [010](docs/decisions/ADR-010-inventory-first-with-local-web-ui.md) | Phase 0 is a read-only cross-source inventory with a local web UI |
 | [011](docs/decisions/ADR-011-tailwind-for-the-web-ui.md) | Tailwind CSS v4 for the web UI, via Bun's plugin |
 | [012](docs/decisions/ADR-012-shadcn-components.md) | shadcn/ui components, themed with the existing palette |
+| [013](docs/decisions/ADR-013-oxlint-and-oxfmt.md) | Oxlint and Oxfmt instead of Biome |
 
 ## Usage
 
@@ -69,7 +70,8 @@ Every path stored in the workspace is relative to `~`, so you can commit it to a
 | Command | Does |
 | --- | --- |
 | `bun test` | Run tests |
-| `bun run lint` | Biome |
+| `bun run lint` | Oxlint (type-aware) and Oxfmt check |
+| `bun run format` | Format with Oxfmt |
 | `bun run typecheck` | tsc |
 | `bun run build` | Compile and ad-hoc sign `dist/skillctx` |
 
