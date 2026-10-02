@@ -14,7 +14,7 @@ Use Tailwind CSS v4 through `bun-plugin-tailwind`:
 
 - `src/ui/client/styles.css` imports Tailwind with `source("./")`, so only the client folder is scanned.
 - The palette and fonts stay plain custom properties (`--paper`, `--ink`, ...) switched by `prefers-color-scheme`. `@theme inline` exposes them as Tailwind names (`bg-paper`, `text-ink-soft`, `border-rule`, `font-mono`), so utilities follow dark mode without duplicated values.
-- Existing hand-written rules live in `@layer components`, so a utility on the same element wins.
+- Components are styled with utility classes. Pieces used in several places (buttons, form fields, presence table cells, notes) live in `src/ui/client/ui.tsx` as small components or class strings, not `@apply` rules. `styles.css` holds only tokens, the type scale (`text-caption`, `text-small`, `text-body`, ...), the `wide` breakpoint (720px) and a few base element rules.
 - `bunfig.toml` registers the plugin for the runtime bundler; `scripts/build.ts` passes it to `Bun.build` for the compiled binary, because the `bun build` CLI can't take plugins.
 
 ## Alternatives Considered
@@ -31,5 +31,6 @@ Use Tailwind CSS v4 through `bun-plugin-tailwind`:
 
 ## Consequences
 - Preflight resets browser defaults (margins, heading sizes, list styles). Bare elements need explicit styles.
-- Class names that match a Tailwind utility (`grid`, `hidden`, `block`) get that utility generated and applied over the component rule. The presence table class was renamed from `grid` to `presence` for this reason.
+- Class strings must be complete literals (`text-outdated`, not `text-${status}`) so the scanner finds them; status and presence colours are lookup tables for that reason.
+- Two utilities that set the same property on one element resolve by stylesheet order, not class order. Shared class strings in `ui.tsx` are written per slot so they never overlap.
 - `bun-plugin-tailwind` bundles its own Tailwind compiler version, which can lag the `tailwindcss` package in `package.json`.

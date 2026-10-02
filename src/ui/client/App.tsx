@@ -16,6 +16,20 @@ import {
 	toRows,
 	updateCommand,
 } from "./model.ts";
+import { Button, CELL, cx, FIELD, H2, HEADLINE, Notes, Path } from "./ui.tsx";
+
+const PAGE = "mx-auto max-w-[1180px] px-4 pb-16 wide:px-8 wide:pb-24";
+
+const STATUS_TEXT: Record<Status, string> = {
+	outdated: "text-outdated",
+	edited: "text-edited",
+	drift: "text-differs",
+	warnings: "text-problem",
+};
+
+const DESC = "mt-0.5 line-clamp-2 max-w-[64ch] text-caption text-ink-soft";
+const FACT =
+	"grid gap-0.5 border-b border-rule py-2.25 wide:grid-cols-[180px_1fr] wide:gap-4";
 
 interface Data {
 	summary: InventorySummary | null;
@@ -135,9 +149,9 @@ export function App() {
 
 	if (loadError) {
 		return (
-			<main className="page">
+			<main className={PAGE}>
 				{bar}
-				<p className="problem">
+				<p className="my-10 text-problem">
 					The inventory couldn't be loaded: {loadError}. Restart `skillctx ui`
 					and reload this page.
 				</p>
@@ -146,30 +160,29 @@ export function App() {
 	}
 	if (!data) {
 		return (
-			<main className="page">
+			<main className={PAGE}>
 				{bar}
-				<p className="quiet">Loading the inventory…</p>
+				<p className="my-10 text-ink-soft">Loading the inventory…</p>
 			</main>
 		);
 	}
 	if (!data.summary) {
 		return (
-			<main className="page">
+			<main className={PAGE}>
 				{bar}
-				<section className="empty">
-					<h1 className="headline">No inventory yet</h1>
-					<p>
+				<section className="max-w-[52ch] py-12">
+					<h1 className={cx(HEADLINE, "mb-7")}>No inventory yet</h1>
+					<p className="mb-5">
 						Scan your skill folders to see every skill on this machine and where
 						it lives.
 					</p>
-					<button
-						type="button"
-						className="primary"
+					<Button
+						variant="primary"
 						disabled={busy !== null}
 						onClick={() => refresh(false)}
 					>
 						{busy ? "Scanning…" : "Scan now"}
-					</button>
+					</Button>
 				</section>
 			</main>
 		);
@@ -180,7 +193,7 @@ export function App() {
 		: undefined;
 
 	return (
-		<main className="page">
+		<main className={PAGE}>
 			{bar}
 			{selected ? (
 				skill ? (
@@ -190,7 +203,7 @@ export function App() {
 						summary={data.summary}
 					/>
 				) : (
-					<p className="problem">
+					<p className="my-10 text-problem">
 						There's no skill named “{selected}” in the inventory.{" "}
 						<a href="#/">Show all skills</a>
 					</p>
@@ -219,12 +232,15 @@ function TopBar({
 	upstream: UpstreamReport | null;
 }) {
 	return (
-		<header className="topbar">
-			<a href="#/" className="wordmark">
+		<header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-rule py-4.5">
+			<a
+				href="#/"
+				className="text-lead font-semibold tracking-[-0.01em] no-underline"
+			>
 				skillctx
 			</a>
-			<div className="topbar-actions">
-				<span className="checked">
+			<div className="flex flex-wrap items-center gap-2 wide:flex-nowrap">
+				<span className="basis-full text-caption text-ink-soft wide:mr-2 wide:basis-auto">
 					{busy === "check"
 						? "Asking GitHub and git remotes…"
 						: busy === "scan"
@@ -233,27 +249,28 @@ function TopBar({
 								? `Checked for updates ${when(upstream.checkedAt)}`
 								: "Not checked for updates yet"}
 				</span>
-				<button
-					type="button"
+				<Button
 					disabled={busy !== null}
 					onClick={() => onRefresh(false)}
 					title="Re-read every skill folder on this machine"
 				>
 					Rescan
-				</button>
-				<button
-					type="button"
-					className="primary"
+				</Button>
+				<Button
+					variant="primary"
 					disabled={busy !== null}
 					onClick={() => onRefresh(true)}
 					title="Rescan, then compare with GitHub and git remotes. Uses the network."
 				>
 					Check for updates
-				</button>
+				</Button>
 			</div>
 			{result && (
 				<p
-					className={result.ok ? "result" : "result problem"}
+					className={cx(
+						"basis-full text-small",
+						result.ok ? "text-ink-soft" : "text-problem",
+					)}
 					role="status"
 					aria-live="polite"
 				>
@@ -300,7 +317,13 @@ function Headline({
 	const figure = (status: Status | "", label: string, meaning: string) => (
 		<button
 			type="button"
-			className={`figure ${status || "all"}${status && filters.status === status ? " on" : ""}`}
+			className={cx(
+				"cursor-pointer rounded px-[0.12em] font-semibold underline decoration-2 underline-offset-[0.18em] hover:decoration-current",
+				status ? STATUS_TEXT[status] : "text-ink",
+				status && filters.status === status
+					? "bg-current/12 decoration-current"
+					: "decoration-current/35",
+			)}
 			aria-pressed={status ? filters.status === status : undefined}
 			aria-label={
 				status
@@ -314,7 +337,7 @@ function Headline({
 	);
 
 	return (
-		<h1 className="headline">
+		<h1 className={cx(HEADLINE, "mt-7 mb-7 wide:mt-10")}>
 			{figure("", `${rows.length} skills`, "")} on this machine.
 			{parts.length === 0 ? (
 				" Nothing needs attention."
@@ -341,12 +364,21 @@ const PRESENCE_TEXT: Record<Presence, string> = {
 	absent: "Not here",
 };
 
+const SQUARE = "inline-block size-3.25 rounded-xs align-[-2px]";
+const PRESENCE_CELL: Record<Presence, string> = {
+	folder: `${SQUARE} bg-ink`,
+	link: `${SQUARE} border-[1.5px] border-ink`,
+	differs: `${SQUARE} bg-differs`,
+	absent: "m-1 inline-block size-1.25 rounded-full bg-rule align-[0]",
+};
+
 function Cell({ presence, root }: { presence: Presence; root?: string }) {
-	if (!root) return <span className={`cell ${presence}`} aria-hidden="true" />;
+	if (!root)
+		return <span className={PRESENCE_CELL[presence]} aria-hidden="true" />;
 	const text = `${PRESENCE_TEXT[presence]} in ${rootLabel(root)}`;
 	return (
-		<span className={`cell ${presence}`} title={text}>
-			<span className="sr">{text}</span>
+		<span className={PRESENCE_CELL[presence]} title={text}>
+			<span className="sr-only">{text}</span>
 		</span>
 	);
 }
@@ -395,16 +427,18 @@ function SkillList({
 				setStatus={(status) => set({ status })}
 			/>
 
-			<div className="controls">
+			<div className="mb-3.5 flex flex-wrap items-center gap-2">
 				<input
 					ref={search}
 					type="search"
 					placeholder="Find a skill  ( / )"
+					className={cx(FIELD, "max-w-[420px] flex-[1_1_260px]")}
 					value={filters.query}
 					onChange={(e) => set({ query: e.target.value })}
 					aria-label="Find a skill by name or description"
 				/>
 				<select
+					className={FIELD}
 					value={filters.source}
 					onChange={(e) => set({ source: e.target.value })}
 					aria-label="Installed by"
@@ -417,6 +451,7 @@ function SkillList({
 					))}
 				</select>
 				<select
+					className={FIELD}
 					value={filters.sort}
 					onChange={(e) => set({ sort: e.target.value as Filters["sort"] })}
 					aria-label="Sort"
@@ -425,32 +460,35 @@ function SkillList({
 					<option value="name">A to Z</option>
 				</select>
 				{filtered && (
-					<button
-						type="button"
-						className="plain"
+					<Button
+						variant="plain"
 						onClick={() => setFilters({ ...NO_FILTERS, sort: filters.sort })}
 					>
 						Clear filters
-					</button>
+					</Button>
 				)}
 			</div>
 
 			<Legend />
 
-			<div className="presence-wrap">
-				<table className="presence">
+			<div className="overflow-x-auto">
+				<table className="w-full">
 					<thead>
 						<tr>
-							<th scope="col" className="skill-col">
+							<th scope="col" className={cx(CELL.headSkill, "w-[46%]")}>
 								{visible.length === rows.length
 									? "Skill"
 									: `${visible.length} of ${rows.length} skills`}
 							</th>
 							{roots.map((r) => (
-								<th key={r.id} scope="col" className="loc">
+								<th key={r.id} scope="col" className={CELL.headLoc}>
 									<button
 										type="button"
-										className={filters.root === r.id ? "loc-btn on" : "loc-btn"}
+										className={cx(
+											"cursor-pointer rounded px-1 py-0.5 hover:text-ink",
+											filters.root === r.id &&
+												"bg-raised text-ink shadow-[inset_0_-2px_0_var(--ink)]",
+										)}
 										aria-pressed={filters.root === r.id}
 										title={`${r.path} holds ${r.entries} skills. ${filters.root === r.id ? "Showing only these; press to show all." : "Press to show only these."}`}
 										onClick={() =>
@@ -461,34 +499,40 @@ function SkillList({
 									</button>
 								</th>
 							))}
-							<th scope="col" className="state-col">
+							<th scope="col" className={CELL.headState}>
 								State
 							</th>
 						</tr>
 					</thead>
 					<tbody>
 						{visible.map((r) => (
-							<tr key={r.name}>
-								<th scope="row" className="skill-col">
+							<tr key={r.name} className="hover:bg-raised">
+								<th scope="row" className={cx(CELL.bodySkill, "w-[46%]")}>
 									<a
-										className="skill-name"
+										className="font-mono text-small font-semibold no-underline hover:underline"
 										href={`#/skill/${encodeURIComponent(r.name)}`}
 									>
 										{r.name}
 									</a>
-									<span className="skill-desc">{r.description}</span>
+									<span className={DESC}>{r.description}</span>
 								</th>
 								{roots.map((root) => (
-									<td key={root.id} className="loc">
+									<td key={root.id} className={CELL.bodyLoc}>
 										<Cell
 											presence={r.presence[root.id] ?? "absent"}
 											root={root.id}
 										/>
 									</td>
 								))}
-								<td className="state-col">
+								<td className={CELL.bodyState}>
 									{r.statuses.map((s) => (
-										<span key={s} className={`state ${s}`}>
+										<span
+											key={s}
+											className={cx(
+												"block text-caption font-medium whitespace-nowrap before:mr-1.75 before:inline-block before:size-1.5 before:rounded-full before:bg-current before:align-[2px]",
+												STATUS_TEXT[s],
+											)}
+										>
 											{STATUS_LABEL[s]}
 										</span>
 									))}
@@ -499,7 +543,7 @@ function SkillList({
 				</table>
 			</div>
 			{visible.length === 0 && (
-				<p className="quiet">
+				<p className="my-4 text-ink-soft">
 					No skills match. Try a shorter search, or clear the filters.
 				</p>
 			)}
@@ -510,9 +554,9 @@ function SkillList({
 function Legend() {
 	const kinds: Presence[] = ["folder", "link", "differs", "absent"];
 	return (
-		<p className="legend">
+		<p className="mb-2 flex flex-wrap gap-x-5 gap-y-1.5 text-caption text-ink-soft">
 			{kinds.map((k) => (
-				<span key={k}>
+				<span key={k} className="inline-flex items-center gap-1.75">
 					<Cell presence={k} /> {PRESENCE_TEXT[k].toLowerCase()}
 				</span>
 			))}
@@ -523,9 +567,8 @@ function Legend() {
 function CopyButton({ text }: { text: string }) {
 	const [done, setDone] = useState(false);
 	return (
-		<button
-			type="button"
-			className="plain"
+		<Button
+			variant="plain"
 			onClick={async () => {
 				await navigator.clipboard.writeText(text);
 				setDone(true);
@@ -533,7 +576,7 @@ function CopyButton({ text }: { text: string }) {
 			}}
 		>
 			{done ? "Copied" : "Copy"}
-		</button>
+		</Button>
 	);
 }
 
@@ -579,19 +622,21 @@ function Advice({ skill, row }: { skill: SkillRecord; row?: Row }) {
 	}
 	if (items.length === 0) return null;
 	return (
-		<ul className="advice">
+		<Notes>
 			{items.map((i) => (
 				<li key={i.key}>
 					{i.text}
 					{i.command && (
-						<div className="command">
-							<code>{i.command}</code>
+						<div className="mt-2 flex items-center gap-2">
+							<code className="overflow-x-auto rounded-md border border-rule bg-paper px-2.5 py-1.5 font-mono text-caption whitespace-nowrap">
+								{i.command}
+							</code>
 							<CopyButton text={i.command} />
 						</div>
 					)}
 				</li>
 			))}
-		</ul>
+		</Notes>
 	);
 }
 
@@ -609,36 +654,40 @@ function SkillDetail({
 		(a, b) => b.seenIn.length - a.seenIn.length,
 	)[0];
 	return (
-		<article className="detail">
-			<p className="back">
+		<article>
+			<p className="mt-7 text-small">
 				<a href="#/">All skills</a>
 			</p>
-			<h1 className="detail-name">{skill.name}</h1>
-			<p className="detail-desc">{skill.description}</p>
+			<h1 className="mt-2.5 mb-1.5 font-mono text-[clamp(24px,3vw,32px)] font-semibold tracking-[-0.02em] wrap-break-word">
+				{skill.name}
+			</h1>
+			<p className="mb-6 max-w-[68ch] text-ink-soft">{skill.description}</p>
 
 			<Advice skill={skill} row={row} />
 
-			<h2>Where it lives</h2>
-			<div className="presence-wrap">
-				<table className="presence where">
+			<h2 className={H2}>Where it lives</h2>
+			<div className="overflow-x-auto">
+				<table className="w-full">
 					<thead>
 						<tr>
-							<th scope="col" className="skill-col">
+							<th scope="col" className={CELL.headSkill}>
 								Folder on disk
 							</th>
 							{roots.map((r) => (
-								<th key={r.id} scope="col" className="loc">
-									<span className="loc-label">{rootLabel(r.id)}</span>
+								<th key={r.id} scope="col" className={CELL.headLoc}>
+									<span className="inline-block px-1 py-0.5">
+										{rootLabel(r.id)}
+									</span>
 								</th>
 							))}
 						</tr>
 					</thead>
 					<tbody>
 						{skill.copies.map((c, i) => (
-							<tr key={c.realPath}>
-								<th scope="row" className="skill-col">
-									<span className="path">{c.realPath}</span>
-									<span className="skill-desc">
+							<tr key={c.realPath} className="hover:bg-raised">
+								<th scope="row" className={CELL.bodySkill}>
+									<Path>{c.realPath}</Path>
+									<span className={DESC}>
 										Copy {i + 1}, {c.fileCount}{" "}
 										{c.fileCount === 1 ? "file" : "files"},{" "}
 										{(c.bytes / 1024).toFixed(1)} KB
@@ -655,7 +704,7 @@ function SkillDetail({
 												? "link"
 												: "folder";
 									return (
-										<td key={r.id} className="loc">
+										<td key={r.id} className={CELL.bodyLoc}>
 											<Cell presence={p} root={r.id} />
 										</td>
 									);
@@ -666,25 +715,27 @@ function SkillDetail({
 				</table>
 			</div>
 
-			<h2>Installed by</h2>
-			<dl className="facts">
+			<h2 className={H2}>Installed by</h2>
+			<dl className="max-w-[80ch]">
 				{skill.copies.flatMap((c, i) =>
 					c.provenance.map((p) => (
-						<div key={`${c.realPath}-${p.kind}`}>
-							<dt>{SOURCE_LABEL[p.kind] ?? p.kind}</dt>
-							<dd>
+						<div key={`${c.realPath}-${p.kind}`} className={FACT}>
+							<dt className="text-ink-soft">
+								{SOURCE_LABEL[p.kind] ?? p.kind}
+							</dt>
+							<dd className="wrap-break-word">
 								<ProvenanceText p={p} />
 								{skill.copies.length > 1 && (
-									<span className="quiet"> (copy {i + 1})</span>
+									<span className="text-ink-soft"> (copy {i + 1})</span>
 								)}
 							</dd>
 						</div>
 					)),
 				)}
 				{skill.copies.every((c) => c.provenance.length === 0) && (
-					<div>
-						<dt>Untracked</dt>
-						<dd className="quiet">
+					<div className={FACT}>
+						<dt className="text-ink-soft">Untracked</dt>
+						<dd className="text-ink-soft">
 							No installer recorded this skill, so it can't be checked for
 							updates.
 						</dd>
@@ -694,16 +745,16 @@ function SkillDetail({
 
 			{skill.copies.some((c) => c.diagnostics.length > 0) && (
 				<>
-					<h2>Problems</h2>
-					<ul className="advice problem">
+					<h2 className={H2}>Problems</h2>
+					<Notes tone="problem">
 						{skill.copies.flatMap((c) =>
 							c.diagnostics.map((d) => (
 								<li key={`${c.realPath}-${d}`}>
-									{d} in <span className="path">{c.realPath}</span>
+									{d} in <Path>{c.realPath}</Path>
 								</li>
 							)),
 						)}
-					</ul>
+					</Notes>
 				</>
 			)}
 
@@ -721,9 +772,9 @@ function ProvenanceText({
 		case "skill-lock":
 			return (
 				<>
-					<span className="path">{p.source}</span>
+					<Path>{p.source}</Path>
 					{p.updatedAt && (
-						<span className="quiet">
+						<span className="text-ink-soft">
 							, last updated {new Date(p.updatedAt).toLocaleDateString()}
 						</span>
 					)}
@@ -731,18 +782,17 @@ function ProvenanceText({
 			);
 		case "gh-frontmatter":
 			return (
-				<span className="path">
+				<Path>
 					{p.repo}
 					{p.ref ? `@${p.ref}` : ""}
-				</span>
+				</Path>
 			);
 		case "git-checkout":
 			return (
 				<>
-					<span className="path">{p.remote ?? p.repoRoot}</span>
-					<span className="quiet">
-						, branch {p.branch}, commit{" "}
-						<span className="path">{p.head.slice(0, 8)}</span>
+					<Path>{p.remote ?? p.repoRoot}</Path>
+					<span className="text-ink-soft">
+						, branch {p.branch}, commit <Path>{p.head.slice(0, 8)}</Path>
 					</span>
 				</>
 			);
@@ -753,7 +803,7 @@ function ProvenanceText({
 					{p.sourceRef && (
 						<>
 							{" "}
-							from <span className="path">{p.sourceRef}</span>
+							from <Path>{p.sourceRef}</Path>
 						</>
 					)}
 				</>
@@ -761,8 +811,10 @@ function ProvenanceText({
 		case "claude-plugin":
 			return (
 				<>
-					<span className="path">{p.plugin}</span>
-					{p.version && <span className="quiet">, version {p.version}</span>}
+					<Path>{p.plugin}</Path>
+					{p.version && (
+						<span className="text-ink-soft">, version {p.version}</span>
+					)}
 				</>
 			);
 		case "claude-app-synced":
@@ -802,6 +854,7 @@ function DiffView({ skill }: { skill: SkillRecord }) {
 		label: string,
 	) => (
 		<select
+			className={cx(FIELD, "max-w-full")}
 			value={value}
 			onChange={(e) => onChange(Number(e.target.value))}
 			aria-label={label}
@@ -816,21 +869,23 @@ function DiffView({ skill }: { skill: SkillRecord }) {
 
 	return (
 		<>
-			<h2>Compare copies</h2>
-			<div className="controls">
-				{pick(a, setA, "Compare")} <span className="quiet">with</span>{" "}
+			<h2 className={H2}>Compare copies</h2>
+			<div className="mb-3.5 flex flex-wrap items-center gap-2">
+				{pick(a, setA, "Compare")} <span className="text-ink-soft">with</span>{" "}
 				{pick(b, setB, "With")}
 			</div>
-			{a === b && <p className="quiet">Pick two different copies.</p>}
-			{error && <p className="problem">Couldn't compare: {error}</p>}
+			{a === b && (
+				<p className="my-4 text-ink-soft">Pick two different copies.</p>
+			)}
+			{error && <p className="my-4 text-problem">Couldn't compare: {error}</p>}
 			{diff && diff.files.length === 0 && (
-				<p className="quiet">These two copies are identical.</p>
+				<p className="my-4 text-ink-soft">These two copies are identical.</p>
 			)}
 			{diff?.files.map((f) => (
-				<section key={f.path} className="file">
-					<h3>
-						<span className="path">{f.path}</span>{" "}
-						<span className="quiet">
+				<section key={f.path}>
+					<h3 className="mt-5 mb-1.5 text-small font-medium">
+						<Path>{f.path}</Path>{" "}
+						<span className="text-ink-soft">
 							{f.status === "changed"
 								? "changed"
 								: f.status === "only-left"
@@ -858,19 +913,18 @@ function Patch({ text }: { text: string }) {
 			return { key, line };
 		});
 	return (
-		<pre className="patch">
+		<pre className="overflow-x-auto rounded-md border border-rule bg-raised py-2 font-mono text-code leading-normal">
 			{lines.map(({ key, line }) => (
 				<span
 					key={key}
-					className={
+					className={cx(
+						"block px-3.5 whitespace-pre-wrap wrap-anywhere",
 						line.startsWith("+")
-							? "add"
+							? "bg-add"
 							: line.startsWith("-")
-								? "del"
-								: line.startsWith("@@")
-									? "hunk"
-									: ""
-					}
+								? "bg-del"
+								: line.startsWith("@@") && "text-ink-soft",
+					)}
 				>
 					{line}
 					{"\n"}
