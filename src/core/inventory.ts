@@ -119,7 +119,9 @@ export function scan(ws: Workspace, homeDir: string): ScanResult {
 		withDiagnostics: skills.filter((s) =>
 			s.copies.some((c) => c.diagnostics.length > 0),
 		).length,
-		sources: Object.fromEntries(Object.entries(sources).sort()),
+		sources: Object.fromEntries(
+			Object.entries(sources).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)),
+		),
 		roots: roots.map((r) => ({
 			id: r.id,
 			label: r.label,

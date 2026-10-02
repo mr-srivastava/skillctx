@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils";
 
 function InputGroup({ className, ...props }: React.ComponentProps<"div">) {
 	return (
-		// biome-ignore lint/a11y/useSemanticElements: a fieldset would add form-group semantics and default styles to a single text field.
 		<div
 			data-slot="input-group"
 			role="group"
@@ -61,8 +60,8 @@ function InputGroupAddon({
 	...props
 }: React.ComponentProps<"div"> & VariantProps<typeof inputGroupAddonVariants>) {
 	return (
-		// biome-ignore lint/a11y/useSemanticElements: same as InputGroup.
-		// biome-ignore lint/a11y/useKeyWithClickEvents: clicking the addon focuses the input for mouse users; keyboard users tab to the input itself.
+		// Clicking the addon focuses the input for mouse users; keyboard users tab to the input itself.
+		// oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions
 		<div
 			role="group"
 			data-slot="input-group-addon"
