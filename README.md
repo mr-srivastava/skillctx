@@ -35,7 +35,7 @@ Status: Phase 0 (read-only inventory and local web UI) works. The compile engine
 
 ## Usage
 
-Requires [Bun](https://bun.sh) 1.3 or later.
+Requires [Bun](https://bun.sh) 1.4.2 or later.
 
 ```bash
 bun install
