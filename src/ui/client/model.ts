@@ -6,14 +6,40 @@ import type { SkillRecord } from "../data.ts";
 
 export type Status = "outdated" | "edited" | "drift" | "warnings";
 
+/** How a skill shows up in one location. */
+export type Presence = "folder" | "link" | "differs" | "absent";
+
 export interface Row {
 	name: string;
 	description: string;
 	sources: string[];
-	/** Agent roots (by id) the skill is visible in. */
+	/** Location ids (roots) the skill is visible in. */
 	roots: string[];
+	/** Presence per location id. */
+	presence: Record<string, Presence>;
 	statuses: Status[];
 	upstream: UpstreamResult[];
+}
+
+/**
+ * The copy most locations point at counts as the main one; locations that
+ * hold a copy with different content are marked "differs".
+ */
+function presenceOf(s: SkillRecord): Record<string, Presence> {
+	const main = [...s.copies].sort(
+		(a, b) => b.seenIn.length - a.seenIn.length,
+	)[0];
+	const out: Record<string, Presence> = {};
+	for (const copy of s.copies) {
+		for (const e of copy.seenIn) {
+			const here: Presence =
+				copy.hash !== main?.hash ? "differs" : e.symlink ? "link" : "folder";
+			const prev = out[e.root];
+			// A real folder or a differing copy says more than a symlink.
+			if (!prev || prev === "link") out[e.root] = here;
+		}
+	}
+	return out;
 }
 
 export function toRows(
@@ -33,24 +59,27 @@ export function toRows(
 		if (s.drift) statuses.push("drift");
 		if (s.copies.some((c) => c.diagnostics.length > 0))
 			statuses.push("warnings");
+		const presence = presenceOf(s);
 		return {
 			name: s.name,
 			description: s.description,
 			sources: s.sources.length > 0 ? s.sources : ["untracked"],
-			roots: [
-				...new Set(s.copies.flatMap((c) => c.seenIn.map((e) => e.root))),
-			].sort(),
+			roots: Object.keys(presence).sort(),
+			presence,
 			statuses,
 			upstream: up,
 		};
 	});
 }
 
+export type Sort = "attention" | "name";
+
 export interface Filters {
 	query: string;
 	source: string;
 	root: string;
 	status: Status | "";
+	sort: Sort;
 }
 
 export const NO_FILTERS: Filters = {
@@ -58,11 +87,23 @@ export const NO_FILTERS: Filters = {
 	source: "",
 	root: "",
 	status: "",
+	sort: "attention",
 };
+
+const WEIGHT: Record<Status, number> = {
+	outdated: 8,
+	drift: 4,
+	edited: 2,
+	warnings: 1,
+};
+
+function attention(r: Row): number {
+	return r.statuses.reduce((n, s) => n + WEIGHT[s], 0);
+}
 
 export function filterRows(rows: Row[], f: Filters): Row[] {
 	const q = f.query.trim().toLowerCase();
-	return rows.filter(
+	const out = rows.filter(
 		(r) =>
 			(!q ||
 				r.name.toLowerCase().includes(q) ||
@@ -71,6 +112,11 @@ export function filterRows(rows: Row[], f: Filters): Row[] {
 			(!f.root || r.roots.includes(f.root)) &&
 			(!f.status || r.statuses.includes(f.status)),
 	);
+	return f.sort === "attention"
+		? [...out].sort(
+				(a, b) => attention(b) - attention(a) || a.name.localeCompare(b.name),
+			)
+		: out;
 }
 
 export function countBy(rows: Row[], status: Status): number {
@@ -79,17 +125,53 @@ export function countBy(rows: Row[], status: Status): number {
 
 export const STATUS_LABEL: Record<Status, string> = {
 	outdated: "Outdated",
-	edited: "Edited since install",
+	edited: "Edited",
 	drift: "Copies differ",
 	warnings: "Warnings",
 };
 
 export const SOURCE_LABEL: Record<string, string> = {
 	"skill-lock": "npx skills / gh skill",
-	"gh-frontmatter": "gh skill metadata",
-	"git-checkout": "git checkout",
+	"gh-frontmatter": "gh skill",
+	"git-checkout": "Git checkout",
 	"skills-manager": "Skills Manager",
 	"claude-plugin": "Claude plugin",
 	"claude-app-synced": "Claude app",
 	untracked: "Untracked",
 };
+
+const ROOT_LABEL: Record<string, string> = {
+	agents: "Agents",
+	"claude-code": "Claude",
+	codex: "Codex",
+	cursor: "Cursor",
+	gemini: "Gemini",
+	opencode: "OpenCode",
+	"skills-manager": "Skills Mgr",
+};
+
+/** Short column label for a location. */
+export function rootLabel(id: string): string {
+	if (ROOT_LABEL[id]) return ROOT_LABEL[id];
+	if (id.startsWith("claude-plugin:"))
+		return id.slice("claude-plugin:".length).split("@")[0] ?? "Plugin";
+	if (id.startsWith("custom:")) return id.split("/").pop() ?? id;
+	return id;
+}
+
+/**
+ * A command that would resolve an outdated result, shown for the user to run.
+ * skillctx itself never installs or updates anything (ADR-010).
+ */
+export function updateCommand(r: UpstreamResult, skill: string): string | null {
+	if (r.status !== "outdated") return null;
+	if (r.via === "git-checkout") return `git -C ${repoRootHint(r)} pull`;
+	if (r.via === "gh-frontmatter") return `gh skill update ${skill}`;
+	return `npx skills update ${skill}`;
+}
+
+function repoRootHint(r: UpstreamResult): string {
+	// copy is "<repo>/.../skills/<name>"; the repo root is what the user pulls.
+	const i = r.copy.indexOf("/skills/");
+	return i > 0 ? r.copy.slice(0, i) : r.copy;
+}

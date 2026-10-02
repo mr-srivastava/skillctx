@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { InventorySummary } from "../../core/inventory.ts";
 import type { UpstreamReport } from "../../core/upstream/index.ts";
 import type { CopyDiff, SkillRecord } from "../data.ts";
@@ -7,11 +7,14 @@ import {
 	type Filters,
 	filterRows,
 	NO_FILTERS,
+	type Presence,
 	type Row,
+	rootLabel,
 	SOURCE_LABEL,
 	STATUS_LABEL,
 	type Status,
 	toRows,
+	updateCommand,
 } from "./model.ts";
 
 interface Data {
@@ -20,9 +23,11 @@ interface Data {
 	skills: SkillRecord[];
 }
 
+type Busy = null | "scan" | "check";
+
 async function getJson<T>(url: string): Promise<T> {
 	const res = await fetch(url);
-	if (!res.ok) throw new Error(`${url}: ${res.status}`);
+	if (!res.ok) throw new Error(`${url} returned ${res.status}`);
 	return (await res.json()) as T;
 }
 
@@ -34,18 +39,33 @@ function readHash(): string | null {
 function useHashRoute(): string | null {
 	const [name, setName] = useState(readHash);
 	useEffect(() => {
-		const onChange = () => setName(readHash());
+		const onChange = () => {
+			setName(readHash());
+			window.scrollTo(0, 0);
+		};
 		window.addEventListener("hashchange", onChange);
 		return () => window.removeEventListener("hashchange", onChange);
 	}, []);
 	return name;
 }
 
+function when(iso: string): string {
+	return new Date(iso).toLocaleString(undefined, {
+		day: "numeric",
+		month: "short",
+		hour: "2-digit",
+		minute: "2-digit",
+	});
+}
+
 export function App() {
 	const [data, setData] = useState<Data | null>(null);
-	const [error, setError] = useState<string | null>(null);
-	const [busy, setBusy] = useState<null | "scan" | "check">(null);
-	const [notice, setNotice] = useState<string | null>(null);
+	const [loadError, setLoadError] = useState<string | null>(null);
+	const [busy, setBusy] = useState<Busy>(null);
+	const [result, setResult] = useState<{ ok: boolean; text: string } | null>(
+		null,
+	);
+	const [filters, setFilters] = useState<Filters>(NO_FILTERS);
 	const selected = useHashRoute();
 
 	const load = useCallback(async () => {
@@ -56,9 +76,9 @@ export function App() {
 				getJson<SkillRecord[]>("/api/skills"),
 			]);
 			setData({ summary, upstream, skills });
-			setError(null);
+			setLoadError(null);
 		} catch (e) {
-			setError((e as Error).message);
+			setLoadError((e as Error).message);
 		}
 	}, []);
 
@@ -68,7 +88,7 @@ export function App() {
 
 	const refresh = async (check: boolean) => {
 		setBusy(check ? "check" : "scan");
-		setNotice(null);
+		setResult(null);
 		try {
 			const { token } = await getJson<{ token: string }>("/api/session");
 			const res = await fetch("/api/refresh", {
@@ -80,10 +100,20 @@ export function App() {
 				body: JSON.stringify({ check }),
 			});
 			const body = (await res.json()) as { message?: string; error?: string };
-			setNotice(body.message ?? body.error ?? null);
+			setResult(
+				res.ok
+					? { ok: true, text: body.message ?? "Done." }
+					: {
+							ok: false,
+							text: body.error ?? `Refresh failed (${res.status}).`,
+						},
+			);
 			await load();
 		} catch (e) {
-			setNotice((e as Error).message);
+			setResult({
+				ok: false,
+				text: `Couldn't reach skillctx. Check that \`skillctx ui\` is still running. (${(e as Error).message})`,
+			});
 		} finally {
 			setBusy(null);
 		}
@@ -94,23 +124,53 @@ export function App() {
 		[data],
 	);
 
-	if (error)
+	const bar = (
+		<TopBar
+			busy={busy}
+			onRefresh={refresh}
+			result={result}
+			upstream={data?.upstream ?? null}
+		/>
+	);
+
+	if (loadError) {
 		return (
 			<main className="page">
-				<p className="error">Could not load the inventory: {error}</p>
+				{bar}
+				<p className="problem">
+					The inventory couldn't be loaded: {loadError}. Restart `skillctx ui`
+					and reload this page.
+				</p>
 			</main>
 		);
-	if (!data)
+	}
+	if (!data) {
 		return (
 			<main className="page">
-				<p className="muted">Loading…</p>
+				{bar}
+				<p className="quiet">Loading the inventory…</p>
 			</main>
 		);
+	}
 	if (!data.summary) {
 		return (
 			<main className="page">
-				<Header busy={busy} onRefresh={refresh} />
-				<p>No inventory yet. Run a scan to build it.</p>
+				{bar}
+				<section className="empty">
+					<h1 className="headline">No inventory yet</h1>
+					<p>
+						Scan your skill folders to see every skill on this machine and where
+						it lives.
+					</p>
+					<button
+						type="button"
+						className="primary"
+						disabled={busy !== null}
+						onClick={() => refresh(false)}
+					>
+						{busy ? "Scanning…" : "Scan now"}
+					</button>
+				</section>
 			</main>
 		);
 	}
@@ -118,125 +178,238 @@ export function App() {
 	const skill = selected
 		? data.skills.find((s) => s.name === selected)
 		: undefined;
+
 	return (
 		<main className="page">
-			<Header busy={busy} onRefresh={refresh} />
-			{notice && <p className="notice">{notice}</p>}
+			{bar}
 			{selected ? (
 				skill ? (
 					<SkillDetail
 						skill={skill}
 						row={rows.find((r) => r.name === skill.name)}
+						summary={data.summary}
 					/>
 				) : (
-					<p>
-						No skill named “{selected}”. <a href="#/">Back to all skills</a>
+					<p className="problem">
+						There's no skill named “{selected}” in the inventory.{" "}
+						<a href="#/">Show all skills</a>
 					</p>
 				)
 			) : (
 				<SkillList
 					rows={rows}
 					summary={data.summary}
-					upstream={data.upstream}
+					filters={filters}
+					setFilters={setFilters}
 				/>
 			)}
 		</main>
 	);
 }
 
-function Header({
+function TopBar({
 	busy,
 	onRefresh,
+	result,
+	upstream,
 }: {
-	busy: null | "scan" | "check";
+	busy: Busy;
 	onRefresh: (check: boolean) => void;
+	result: { ok: boolean; text: string } | null;
+	upstream: UpstreamReport | null;
 }) {
 	return (
-		<header className="header">
-			<a href="#/" className="brand">
+		<header className="topbar">
+			<a href="#/" className="wordmark">
 				skillctx
 			</a>
-			<div className="actions">
+			<div className="topbar-actions">
+				<span className="checked">
+					{busy === "check"
+						? "Asking GitHub and git remotes…"
+						: busy === "scan"
+							? "Scanning skill folders…"
+							: upstream
+								? `Checked for updates ${when(upstream.checkedAt)}`
+								: "Not checked for updates yet"}
+				</span>
 				<button
 					type="button"
 					disabled={busy !== null}
 					onClick={() => onRefresh(false)}
+					title="Re-read every skill folder on this machine"
 				>
-					{busy === "scan" ? "Scanning…" : "Rescan"}
+					Rescan
 				</button>
 				<button
 					type="button"
+					className="primary"
 					disabled={busy !== null}
 					onClick={() => onRefresh(true)}
-					title="Compares with GitHub and git remotes (uses the network)"
+					title="Rescan, then compare with GitHub and git remotes. Uses the network."
 				>
-					{busy === "check" ? "Checking…" : "Check for updates"}
+					Check for updates
 				</button>
 			</div>
+			{result && (
+				<p
+					className={result.ok ? "result" : "result problem"}
+					role="status"
+					aria-live="polite"
+				>
+					{result.text}
+				</p>
+			)}
 		</header>
+	);
+}
+
+function Headline({
+	rows,
+	filters,
+	setStatus,
+}: {
+	rows: Row[];
+	filters: Filters;
+	setStatus: (s: Status | "") => void;
+}) {
+	const all: { status: Status; count: number; text: string }[] = [
+		{
+			status: "outdated",
+			count: countBy(rows, "outdated"),
+			text: "are outdated",
+		},
+		{
+			status: "edited",
+			count: countBy(rows, "edited"),
+			text: "were edited after install",
+		},
+		{
+			status: "drift",
+			count: countBy(rows, "drift"),
+			text: "have copies that differ",
+		},
+		{
+			status: "warnings",
+			count: countBy(rows, "warnings"),
+			text: "have broken frontmatter",
+		},
+	];
+	const parts = all.filter((p) => p.count > 0);
+
+	const figure = (status: Status | "", label: string, meaning: string) => (
+		<button
+			type="button"
+			className={`figure ${status || "all"}${status && filters.status === status ? " on" : ""}`}
+			aria-pressed={status ? filters.status === status : undefined}
+			aria-label={
+				status
+					? `${label} ${meaning}. ${filters.status === status ? "Showing only these; press to show all." : "Press to show only these."}`
+					: `${label}. Press to show all.`
+			}
+			onClick={() => setStatus(filters.status === status ? "" : status)}
+		>
+			{label}
+		</button>
+	);
+
+	return (
+		<h1 className="headline">
+			{figure("", `${rows.length} skills`, "")} on this machine.
+			{parts.length === 0 ? (
+				" Nothing needs attention."
+			) : (
+				<>
+					{" "}
+					{parts.map((p, i) => (
+						<span key={p.status}>
+							{i > 0 && (i === parts.length - 1 ? " and " : ", ")}
+							{figure(p.status, String(p.count), p.text)} {p.text}
+						</span>
+					))}
+					.
+				</>
+			)}
+		</h1>
+	);
+}
+
+const PRESENCE_TEXT: Record<Presence, string> = {
+	folder: "Real folder",
+	link: "Symlink",
+	differs: "Copy with different content",
+	absent: "Not here",
+};
+
+function Cell({ presence, root }: { presence: Presence; root?: string }) {
+	if (!root) return <span className={`cell ${presence}`} aria-hidden="true" />;
+	const text = `${PRESENCE_TEXT[presence]} in ${rootLabel(root)}`;
+	return (
+		<span className={`cell ${presence}`} title={text}>
+			<span className="sr">{text}</span>
+		</span>
 	);
 }
 
 function SkillList({
 	rows,
 	summary,
-	upstream,
+	filters,
+	setFilters,
 }: {
 	rows: Row[];
 	summary: InventorySummary;
-	upstream: UpstreamReport | null;
+	filters: Filters;
+	setFilters: (f: Filters | ((f: Filters) => Filters)) => void;
 }) {
-	const [filters, setFilters] = useState<Filters>(NO_FILTERS);
-	const visible = filterRows(rows, filters);
-	const sources = [...new Set(rows.flatMap((r) => r.sources))].sort();
-	const roots = summary.roots.filter((r) => r.present);
+	const search = useRef<HTMLInputElement>(null);
 	const set = (patch: Partial<Filters>) =>
 		setFilters((f) => ({ ...f, ...patch }));
+	const visible = filterRows(rows, filters);
+	const roots = summary.roots.filter((r) => r.present);
+	const sources = [...new Set(rows.flatMap((r) => r.sources))].sort();
 
-	const chips: { status: Status | ""; label: string; count: number }[] = [
-		{ status: "", label: "All", count: rows.length },
-		{ status: "outdated", label: "Outdated", count: countBy(rows, "outdated") },
-		{ status: "edited", label: "Edited", count: countBy(rows, "edited") },
-		{ status: "drift", label: "Copies differ", count: countBy(rows, "drift") },
-		{ status: "warnings", label: "Warnings", count: countBy(rows, "warnings") },
-	];
+	useEffect(() => {
+		const onKey = (e: KeyboardEvent) => {
+			const typing =
+				e.target instanceof HTMLInputElement ||
+				e.target instanceof HTMLSelectElement;
+			if (e.key === "/" && !typing) {
+				e.preventDefault();
+				search.current?.focus();
+			}
+		};
+		window.addEventListener("keydown", onKey);
+		return () => window.removeEventListener("keydown", onKey);
+	}, []);
+
+	const filtered = Boolean(
+		filters.query || filters.source || filters.root || filters.status,
+	);
 
 	return (
 		<section>
-			<p className="muted summary">
-				{summary.skills} skills in {summary.copies} folders, seen through{" "}
-				{summary.entries} entries across {roots.length} locations.{" "}
-				{upstream
-					? `Last update check ${new Date(upstream.checkedAt).toLocaleString()}.`
-					: "Never checked for updates."}
-			</p>
-			<fieldset className="chips" aria-label="Filter by status">
-				{chips.map((c) => (
-					<button
-						type="button"
-						key={c.label}
-						className={filters.status === c.status ? "chip active" : "chip"}
-						onClick={() => set({ status: c.status })}
-						disabled={c.count === 0 && c.status !== ""}
-					>
-						{c.label} <span className="count">{c.count}</span>
-					</button>
-				))}
-			</fieldset>
-			<div className="filters">
+			<Headline
+				rows={rows}
+				filters={filters}
+				setStatus={(status) => set({ status })}
+			/>
+
+			<div className="controls">
 				<input
+					ref={search}
 					type="search"
-					placeholder="Search name or description"
+					placeholder="Find a skill  ( / )"
 					value={filters.query}
 					onChange={(e) => set({ query: e.target.value })}
-					aria-label="Search skills"
+					aria-label="Find a skill by name or description"
 				/>
 				<select
 					value={filters.source}
 					onChange={(e) => set({ source: e.target.value })}
-					aria-label="Source"
+					aria-label="Installed by"
 				>
-					<option value="">All sources</option>
+					<option value="">Installed by anything</option>
 					{sources.map((s) => (
 						<option key={s} value={s}>
 							{SOURCE_LABEL[s] ?? s}
@@ -244,170 +417,298 @@ function SkillList({
 					))}
 				</select>
 				<select
-					value={filters.root}
-					onChange={(e) => set({ root: e.target.value })}
-					aria-label="Location"
+					value={filters.sort}
+					onChange={(e) => set({ sort: e.target.value as Filters["sort"] })}
+					aria-label="Sort"
 				>
-					<option value="">All locations</option>
-					{roots.map((r) => (
-						<option key={r.id} value={r.id}>
-							{r.path}
-						</option>
-					))}
+					<option value="attention">Needs attention first</option>
+					<option value="name">A to Z</option>
 				</select>
+				{filtered && (
+					<button
+						type="button"
+						className="plain"
+						onClick={() => setFilters({ ...NO_FILTERS, sort: filters.sort })}
+					>
+						Clear filters
+					</button>
+				)}
 			</div>
-			<table className="skills">
-				<thead>
-					<tr>
-						<th>Skill</th>
-						<th>Source</th>
-						<th>Locations</th>
-						<th>Status</th>
-					</tr>
-				</thead>
-				<tbody>
-					{visible.map((r) => (
-						<tr key={r.name}>
-							<td>
-								<a
-									href={`#/skill/${encodeURIComponent(r.name)}`}
-									className="name"
-								>
-									{r.name}
-								</a>
-								<div className="desc">{r.description}</div>
-							</td>
-							<td>
-								{r.sources.map((s) => (
-									<span key={s} className="tag">
-										{SOURCE_LABEL[s] ?? s}
-									</span>
+
+			<Legend />
+
+			<div className="grid-wrap">
+				<table className="grid">
+					<thead>
+						<tr>
+							<th scope="col" className="skill-col">
+								{visible.length === rows.length
+									? "Skill"
+									: `${visible.length} of ${rows.length} skills`}
+							</th>
+							{roots.map((r) => (
+								<th key={r.id} scope="col" className="loc">
+									<button
+										type="button"
+										className={filters.root === r.id ? "loc-btn on" : "loc-btn"}
+										aria-pressed={filters.root === r.id}
+										title={`${r.path} holds ${r.entries} skills. Click to show only these.`}
+										onClick={() =>
+											set({ root: filters.root === r.id ? "" : r.id })
+										}
+									>
+										{rootLabel(r.id)}
+									</button>
+								</th>
+							))}
+							<th scope="col" className="state-col">
+								State
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						{visible.map((r) => (
+							<tr key={r.name}>
+								<th scope="row" className="skill-col">
+									<a
+										className="skill-name"
+										href={`#/skill/${encodeURIComponent(r.name)}`}
+									>
+										{r.name}
+									</a>
+									<span className="skill-desc">{r.description}</span>
+								</th>
+								{roots.map((root) => (
+									<td key={root.id} className="loc">
+										<Cell
+											presence={r.presence[root.id] ?? "absent"}
+											root={root.id}
+										/>
+									</td>
 								))}
-							</td>
-							<td className="num" title={r.roots.join(", ")}>
-								{r.roots.length}
-							</td>
-							<td>
-								{r.statuses.length === 0 ? (
-									<span className="muted">OK</span>
-								) : (
-									r.statuses.map((s) => (
-										<span key={s} className={`badge ${s}`}>
+								<td className="state-col">
+									{r.statuses.map((s) => (
+										<span key={s} className={`state ${s}`}>
 											{STATUS_LABEL[s]}
 										</span>
-									))
-								)}
-							</td>
-						</tr>
-					))}
-				</tbody>
-			</table>
+									))}
+								</td>
+							</tr>
+						))}
+					</tbody>
+				</table>
+			</div>
 			{visible.length === 0 && (
-				<p className="muted">No skills match these filters.</p>
+				<p className="quiet">
+					No skills match. Try a shorter search, or clear the filters.
+				</p>
 			)}
 		</section>
 	);
 }
 
-function SkillDetail({ skill, row }: { skill: SkillRecord; row?: Row }) {
+function Legend() {
+	const kinds: Presence[] = ["folder", "link", "differs", "absent"];
 	return (
-		<section>
-			<p>
-				<a href="#/">← All skills</a>
+		<p className="legend">
+			{kinds.map((k) => (
+				<span key={k}>
+					<Cell presence={k} /> {PRESENCE_TEXT[k].toLowerCase()}
+				</span>
+			))}
+		</p>
+	);
+}
+
+function CopyButton({ text }: { text: string }) {
+	const [done, setDone] = useState(false);
+	return (
+		<button
+			type="button"
+			className="plain"
+			onClick={async () => {
+				await navigator.clipboard.writeText(text);
+				setDone(true);
+				setTimeout(() => setDone(false), 1500);
+			}}
+		>
+			{done ? "Copied" : "Copy"}
+		</button>
+	);
+}
+
+function shortRepo(url: string): string {
+	return url.replace(/^https:\/\/github\.com\//, "").replace(/\.git$/, "");
+}
+
+function Advice({ skill, row }: { skill: SkillRecord; row?: Row }) {
+	const items: { key: string; text: string; command?: string }[] = [];
+	for (const u of row?.upstream ?? []) {
+		const command = updateCommand(u, skill.name);
+		if (command) {
+			items.push({
+				key: `up-${u.copy}-${u.via}`,
+				text: `${shortRepo(u.repo)} has a newer version. To update:`,
+				command,
+			});
+		}
+		if (u.status === "error") {
+			items.push({
+				key: `err-${u.copy}`,
+				text: `Couldn't check for updates: ${u.error}`,
+			});
+		}
+	}
+	const edited = row?.statuses.includes("edited");
+	if (edited && row?.statuses.includes("outdated")) {
+		items.push({
+			key: "edited-outdated",
+			text: "You edited this skill after installing it. Updating replaces those edits, so save anything you want to keep first.",
+		});
+	} else if (edited) {
+		items.push({
+			key: "edited",
+			text: "You edited this skill after installing it. The next update will replace those edits.",
+		});
+	}
+	if (skill.drift) {
+		items.push({
+			key: "drift",
+			text: "Agents reading different locations see different versions of this skill. Compare the copies below.",
+		});
+	}
+	if (items.length === 0) return null;
+	return (
+		<ul className="advice">
+			{items.map((i) => (
+				<li key={i.key}>
+					{i.text}
+					{i.command && (
+						<div className="command">
+							<code>{i.command}</code>
+							<CopyButton text={i.command} />
+						</div>
+					)}
+				</li>
+			))}
+		</ul>
+	);
+}
+
+function SkillDetail({
+	skill,
+	row,
+	summary,
+}: {
+	skill: SkillRecord;
+	row?: Row;
+	summary: InventorySummary;
+}) {
+	const roots = summary.roots.filter((r) => r.present);
+	const main = [...skill.copies].sort(
+		(a, b) => b.seenIn.length - a.seenIn.length,
+	)[0];
+	return (
+		<article className="detail">
+			<p className="back">
+				<a href="#/">All skills</a>
 			</p>
-			<h1>{skill.name}</h1>
-			<p className="lead">{skill.description}</p>
-			<div>
-				{(row?.statuses ?? []).map((s) => (
-					<span key={s} className={`badge ${s}`}>
-						{STATUS_LABEL[s]}
-					</span>
-				))}
+			<h1 className="detail-name">{skill.name}</h1>
+			<p className="detail-desc">{skill.description}</p>
+
+			<Advice skill={skill} row={row} />
+
+			<h2>Where it lives</h2>
+			<div className="grid-wrap">
+				<table className="grid where">
+					<thead>
+						<tr>
+							<th scope="col" className="skill-col">
+								Folder on disk
+							</th>
+							{roots.map((r) => (
+								<th key={r.id} scope="col" className="loc">
+									<span className="loc-label">{rootLabel(r.id)}</span>
+								</th>
+							))}
+						</tr>
+					</thead>
+					<tbody>
+						{skill.copies.map((c, i) => (
+							<tr key={c.realPath}>
+								<th scope="row" className="skill-col">
+									<span className="path">{c.realPath}</span>
+									<span className="skill-desc">
+										Copy {i + 1}, {c.fileCount}{" "}
+										{c.fileCount === 1 ? "file" : "files"},{" "}
+										{(c.bytes / 1024).toFixed(1)} KB
+										{c.installState === "modified" && ", edited after install"}
+									</span>
+								</th>
+								{roots.map((r) => {
+									const e = c.seenIn.find((s) => s.root === r.id);
+									const p: Presence = !e
+										? "absent"
+										: c.hash !== main?.hash
+											? "differs"
+											: e.symlink
+												? "link"
+												: "folder";
+									return (
+										<td key={r.id} className="loc">
+											<Cell presence={p} root={r.id} />
+										</td>
+									);
+								})}
+							</tr>
+						))}
+					</tbody>
+				</table>
 			</div>
 
-			{row && row.upstream.length > 0 && (
-				<>
-					<h2>Upstream</h2>
-					<ul className="plain">
-						{row.upstream.map((u) => (
-							<li key={`${u.copy}-${u.via}`}>
-								<span
-									className={`badge ${u.status === "outdated" ? "outdated" : u.status === "error" ? "warnings" : "ok"}`}
-								>
-									{u.status}
-								</span>{" "}
-								{u.repo}{" "}
-								<span className="muted">
-									via {SOURCE_LABEL[u.via] ?? u.via}
-								</span>
-								{u.error && <div className="error">{u.error}</div>}
-								{u.latest && u.status === "outdated" && (
-									<div className="muted mono">
-										installed {u.installed.slice(0, 10)} → latest{" "}
-										{u.latest.slice(0, 10)}
-									</div>
+			<h2>Installed by</h2>
+			<dl className="facts">
+				{skill.copies.flatMap((c, i) =>
+					c.provenance.map((p) => (
+						<div key={`${c.realPath}-${p.kind}`}>
+							<dt>{SOURCE_LABEL[p.kind] ?? p.kind}</dt>
+							<dd>
+								<ProvenanceText p={p} />
+								{skill.copies.length > 1 && (
+									<span className="quiet"> (copy {i + 1})</span>
 								)}
-							</li>
-						))}
+							</dd>
+						</div>
+					)),
+				)}
+				{skill.copies.every((c) => c.provenance.length === 0) && (
+					<div>
+						<dt>Untracked</dt>
+						<dd className="quiet">
+							No installer recorded this skill, so it can't be checked for
+							updates.
+						</dd>
+					</div>
+				)}
+			</dl>
+
+			{skill.copies.some((c) => c.diagnostics.length > 0) && (
+				<>
+					<h2>Problems</h2>
+					<ul className="advice problem">
+						{skill.copies.flatMap((c) =>
+							c.diagnostics.map((d) => (
+								<li key={`${c.realPath}-${d}`}>
+									{d} in <span className="path">{c.realPath}</span>
+								</li>
+							)),
+						)}
 					</ul>
 				</>
 			)}
 
-			<h2>
-				{skill.copies.length === 1
-					? "Copy on disk"
-					: `${skill.copies.length} copies on disk`}
-			</h2>
-			{skill.copies.map((c, i) => (
-				<article key={c.realPath} className="copy">
-					<header>
-						<span className="mono">{c.realPath}</span>
-						<span className="muted mono" title={c.hash}>
-							{" "}
-							#{i + 1} · {c.hash.slice(3, 11)} · {c.fileCount} files ·{" "}
-							{(c.bytes / 1024).toFixed(1)} KB
-						</span>
-					</header>
-					{c.installState && (
-						<p className={c.installState === "modified" ? "warn" : "muted"}>
-							{c.installState === "modified"
-								? "Edited since it was installed."
-								: "Unchanged since install."}
-						</p>
-					)}
-					<ul className="plain">
-						{c.provenance.map((p) => (
-							<li key={JSON.stringify(p)}>
-								<span className="tag">{SOURCE_LABEL[p.kind] ?? p.kind}</span>{" "}
-								<ProvenanceText p={p} />
-							</li>
-						))}
-					</ul>
-					<details>
-						<summary>Visible in {c.seenIn.length} locations</summary>
-						<ul className="plain mono">
-							{c.seenIn.map((e) => (
-								<li key={e.path}>
-									{e.path}{" "}
-									<span className="muted">
-										{e.symlink ? "symlink" : "folder"}
-									</span>
-								</li>
-							))}
-						</ul>
-					</details>
-					{c.diagnostics.length > 0 && (
-						<ul className="warn">
-							{c.diagnostics.map((d) => (
-								<li key={d}>{d}</li>
-							))}
-						</ul>
-					)}
-				</article>
-			))}
-
 			{skill.versions > 1 && <DiffView skill={skill} />}
-		</section>
+		</article>
 	);
 }
 
@@ -419,64 +720,72 @@ function ProvenanceText({
 	switch (p.kind) {
 		case "skill-lock":
 			return (
-				<span>
-					{p.source}
-					{p.skillPath ? <span className="muted"> · {p.skillPath}</span> : null}
-					{p.updatedAt ? (
-						<span className="muted">
-							{" "}
-							· updated {new Date(p.updatedAt).toLocaleDateString()}
+				<>
+					<span className="path">{p.source}</span>
+					{p.updatedAt && (
+						<span className="quiet">
+							, last updated {new Date(p.updatedAt).toLocaleDateString()}
 						</span>
-					) : null}
-				</span>
+					)}
+				</>
 			);
 		case "gh-frontmatter":
 			return (
-				<span>
+				<span className="path">
 					{p.repo}
 					{p.ref ? `@${p.ref}` : ""}
 				</span>
 			);
 		case "git-checkout":
 			return (
-				<span>
-					{p.remote ?? p.repoRoot}{" "}
-					<span className="muted mono">
-						{p.branch} {p.head.slice(0, 8)}
+				<>
+					<span className="path">{p.remote ?? p.repoRoot}</span>
+					<span className="quiet">
+						, branch {p.branch}, commit{" "}
+						<span className="path">{p.head.slice(0, 8)}</span>
 					</span>
-				</span>
+				</>
 			);
 		case "skills-manager":
 			return (
-				<span>
-					{p.sourceType}
-					{p.sourceRef ? (
-						<span className="muted"> from {p.sourceRef}</span>
-					) : null}
-				</span>
+				<>
+					{p.sourceType === "import" ? "Imported" : p.sourceType}
+					{p.sourceRef && (
+						<>
+							{" "}
+							from <span className="path">{p.sourceRef}</span>
+						</>
+					)}
+				</>
 			);
 		case "claude-plugin":
 			return (
-				<span>
-					{p.plugin}
-					{p.version ? ` ${p.version}` : ""}
-				</span>
+				<>
+					<span className="path">{p.plugin}</span>
+					{p.version && <span className="quiet">, version {p.version}</span>}
+				</>
 			);
 		case "claude-app-synced":
-			return <span className="muted">Synced by the Claude desktop app</span>;
+			return <>Synced by the Claude desktop app</>;
 	}
 }
 
 function DiffView({ skill }: { skill: SkillRecord }) {
 	const [a, setA] = useState(0);
 	const [b, setB] = useState(() =>
-		skill.copies.findIndex((c) => c.hash !== skill.copies[0]?.hash),
+		Math.max(
+			1,
+			skill.copies.findIndex((c) => c.hash !== skill.copies[0]?.hash),
+		),
 	);
 	const [diff, setDiff] = useState<CopyDiff | null>(null);
 	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
-		if (a === b || b < 0) return setDiff(null);
+		if (a === b) {
+			setDiff(null);
+			return;
+		}
 		getJson<CopyDiff>(
 			`/api/skills/${encodeURIComponent(skill.name)}/diff?a=${a}&b=${b}`,
 		)
@@ -499,7 +808,7 @@ function DiffView({ skill }: { skill: SkillRecord }) {
 		>
 			{skill.copies.map((c, i) => (
 				<option key={c.realPath} value={i}>
-					#{i + 1} {c.realPath}
+					Copy {i + 1}: {c.realPath}
 				</option>
 			))}
 		</select>
@@ -507,30 +816,31 @@ function DiffView({ skill }: { skill: SkillRecord }) {
 
 	return (
 		<>
-			<h2>What differs between copies</h2>
-			<div className="filters">
-				{pick(a, setA, "First copy")} <span className="muted">vs</span>{" "}
-				{pick(b, setB, "Second copy")}
+			<h2>Compare copies</h2>
+			<div className="controls">
+				{pick(a, setA, "Compare")} <span className="quiet">with</span>{" "}
+				{pick(b, setB, "With")}
 			</div>
-			{error && <p className="error">{error}</p>}
+			{a === b && <p className="quiet">Pick two different copies.</p>}
+			{error && <p className="problem">Couldn't compare: {error}</p>}
 			{diff && diff.files.length === 0 && (
-				<p className="muted">These two copies are identical.</p>
+				<p className="quiet">These two copies are identical.</p>
 			)}
 			{diff?.files.map((f) => (
-				<div key={f.path} className="file">
-					<div className="mono">
-						{f.path}{" "}
-						<span className="muted">
+				<section key={f.path} className="file">
+					<h3>
+						<span className="path">{f.path}</span>{" "}
+						<span className="quiet">
 							{f.status === "changed"
 								? "changed"
 								: f.status === "only-left"
-									? `only in #${a + 1}`
-									: `only in #${b + 1}`}
-							{f.binary ? " · binary or large" : ""}
+									? `only in copy ${a + 1}`
+									: `only in copy ${b + 1}`}
+							{f.binary ? ", too large or binary to show" : ""}
 						</span>
-					</div>
+					</h3>
 					{f.patch && <Patch text={f.patch} />}
-				</div>
+				</section>
 			))}
 		</>
 	);
