@@ -1,0 +1,914 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`golden inventory inventory --check output is unchanged: .gitignore 1`] = `
+"# Rebuildable caches and per-machine settings (ADR-009)
+.cache/
+local.yaml
+"
+`;
+
+exports[`golden inventory inventory --check output is unchanged: inventory/skills/alpha.json 1`] = `
+"{
+  "format": 1,
+  "name": "alpha",
+  "description": "alpha skill",
+  "versions": 1,
+  "drift": false,
+  "sources": [
+    "skill-lock",
+    "skills-manager"
+  ],
+  "copies": [
+    {
+      "hash": "h2:c6b720dfa026b70b315d5b74296fdafe980f08d50b89ee8dce71dfddae81aaf2",
+      "realPath": "~/.agents/skills/alpha",
+      "fileCount": 2,
+      "bytes": 59,
+      "seenIn": [
+        {
+          "root": "agents",
+          "path": "~/.agents/skills/alpha",
+          "symlink": false
+        },
+        {
+          "root": "claude-code",
+          "path": "~/.claude/skills/alpha",
+          "symlink": true
+        }
+      ],
+      "installState": "unchanged",
+      "provenance": [
+        {
+          "kind": "skill-lock",
+          "source": "o/skills",
+          "sourceType": "github",
+          "sourceUrl": "https://github.com/o/skills.git",
+          "skillPath": "skills/alpha/SKILL.md",
+          "folderHash": "6366bc89b6945d0147ab648928f6bf12f5349582",
+          "installedAt": "2026-01-01T00:00:00Z"
+        }
+      ],
+      "diagnostics": []
+    },
+    {
+      "hash": "h2:c6b720dfa026b70b315d5b74296fdafe980f08d50b89ee8dce71dfddae81aaf2",
+      "realPath": "~/.cursor/skills/alpha",
+      "fileCount": 2,
+      "bytes": 59,
+      "seenIn": [
+        {
+          "root": "cursor",
+          "path": "~/.cursor/skills/alpha",
+          "symlink": false
+        }
+      ],
+      "provenance": [],
+      "diagnostics": []
+    },
+    {
+      "hash": "h2:c6b720dfa026b70b315d5b74296fdafe980f08d50b89ee8dce71dfddae81aaf2",
+      "realPath": "~/.skills-manager/skills/alpha",
+      "fileCount": 2,
+      "bytes": 59,
+      "seenIn": [
+        {
+          "root": "skills-manager",
+          "path": "~/.skills-manager/skills/alpha",
+          "symlink": false
+        }
+      ],
+      "provenance": [
+        {
+          "kind": "skills-manager",
+          "sourceType": "import",
+          "sourceRef": "~/.cursor/skills/alpha",
+          "updateStatus": "up_to_date"
+        }
+      ],
+      "diagnostics": []
+    }
+  ]
+}
+"
+`;
+
+exports[`golden inventory inventory --check output is unchanged: inventory/skills/bad.json 1`] = `
+"{
+  "format": 1,
+  "name": "bad",
+  "description": "",
+  "versions": 1,
+  "drift": false,
+  "sources": [],
+  "copies": [
+    {
+      "hash": "h2:fea7bc813c4a07e2f4aaa401398a814228efc7bda7359657142c72a4f8c695a0",
+      "realPath": "~/.agents/skills/bad",
+      "fileCount": 1,
+      "bytes": 20,
+      "seenIn": [
+        {
+          "root": "agents",
+          "path": "~/.agents/skills/bad",
+          "symlink": false
+        }
+      ],
+      "provenance": [],
+      "diagnostics": [
+        "SKILL.md has no YAML frontmatter"
+      ]
+    }
+  ]
+}
+"
+`;
+
+exports[`golden inventory inventory --check output is unchanged: inventory/skills/beta.json 1`] = `
+"{
+  "format": 1,
+  "name": "beta",
+  "description": "beta skill",
+  "versions": 2,
+  "drift": true,
+  "sources": [
+    "skill-lock"
+  ],
+  "copies": [
+    {
+      "hash": "h2:ab43dd55a568d1ae221516f48cd06eddefe34d79926da9a1227e8830c28a105e",
+      "realPath": "~/.gemini/skills/beta",
+      "fileCount": 1,
+      "bytes": 60,
+      "seenIn": [
+        {
+          "root": "gemini",
+          "path": "~/.gemini/skills/beta",
+          "symlink": false
+        }
+      ],
+      "provenance": [],
+      "diagnostics": []
+    },
+    {
+      "hash": "h2:dad6e6706cfe29b0b24dbd0cd98482bade9dbb1e11355f062900440525bc38f7",
+      "realPath": "~/.agents/skills/beta",
+      "fileCount": 1,
+      "bytes": 53,
+      "seenIn": [
+        {
+          "root": "agents",
+          "path": "~/.agents/skills/beta",
+          "symlink": false
+        },
+        {
+          "root": "claude-code",
+          "path": "~/.claude/skills/beta",
+          "symlink": true
+        }
+      ],
+      "installState": "modified",
+      "provenance": [
+        {
+          "kind": "skill-lock",
+          "source": "o/skills",
+          "sourceType": "github",
+          "sourceUrl": "https://github.com/o/skills.git",
+          "skillPath": "skills/beta/SKILL.md",
+          "folderHash": "0000000000000000000000000000000000000000"
+        }
+      ],
+      "diagnostics": []
+    }
+  ]
+}
+"
+`;
+
+exports[`golden inventory inventory --check output is unchanged: inventory/skills/delta.json 1`] = `
+"{
+  "format": 1,
+  "name": "delta",
+  "description": "delta skill",
+  "versions": 1,
+  "drift": false,
+  "sources": [
+    "gh-frontmatter"
+  ],
+  "copies": [
+    {
+      "hash": "h2:9f2884588d6153b54dd5dfb8b159f87d80b4abe49a43b6122f8a9dbd4acdf806",
+      "realPath": "~/.agents/skills/delta",
+      "fileCount": 1,
+      "bytes": 55,
+      "seenIn": [
+        {
+          "root": "agents",
+          "path": "~/.agents/skills/delta",
+          "symlink": false
+        }
+      ],
+      "installState": "modified",
+      "provenance": [
+        {
+          "kind": "gh-frontmatter",
+          "repo": "o/gh",
+          "ref": "v1",
+          "treeSha": "aaaa",
+          "path": "skills/delta",
+          "pinned": "v1"
+        }
+      ],
+      "diagnostics": []
+    }
+  ]
+}
+"
+`;
+
+exports[`golden inventory inventory --check output is unchanged: inventory/skills/design.json 1`] = `
+"{
+  "format": 1,
+  "name": "design",
+  "description": "design skill",
+  "versions": 1,
+  "drift": false,
+  "sources": [
+    "claude-plugin"
+  ],
+  "copies": [
+    {
+      "hash": "h2:c83a8cadac97a0df12664a7a71417df9c426382a9be9a2ae815cd7a1f4f0fef1",
+      "realPath": "~/.claude/plugins/cache/p/paper/0.1.0/skills/design",
+      "fileCount": 1,
+      "bytes": 57,
+      "seenIn": [
+        {
+          "root": "claude-plugin:paper@p",
+          "path": "~/.claude/plugins/cache/p/paper/0.1.0/skills/design",
+          "symlink": false
+        }
+      ],
+      "provenance": [
+        {
+          "kind": "claude-plugin",
+          "plugin": "paper@p",
+          "version": "0.1.0",
+          "gitCommitSha": "cd89"
+        }
+      ],
+      "diagnostics": []
+    }
+  ]
+}
+"
+`;
+
+exports[`golden inventory inventory --check output is unchanged: inventory/skills/epsilon.json 1`] = `
+"{
+  "format": 1,
+  "name": "epsilon",
+  "description": "epsilon skill",
+  "versions": 1,
+  "drift": false,
+  "sources": [
+    "skill-lock"
+  ],
+  "copies": [
+    {
+      "hash": "h2:7840b562ca6f7822f0af6be3f5d6ec54b7d5c5e33b91c60ea4a5a104f18deba0",
+      "realPath": "~/.agents/skills/epsilon",
+      "fileCount": 1,
+      "bytes": 59,
+      "seenIn": [
+        {
+          "root": "agents",
+          "path": "~/.agents/skills/epsilon",
+          "symlink": false
+        }
+      ],
+      "installState": "modified",
+      "provenance": [
+        {
+          "kind": "skill-lock",
+          "source": "o/gone",
+          "sourceType": "github",
+          "sourceUrl": "https://github.com/o/gone.git",
+          "skillPath": "skills/epsilon/SKILL.md",
+          "folderHash": "1111111111111111111111111111111111111111"
+        }
+      ],
+      "diagnostics": []
+    }
+  ]
+}
+"
+`;
+
+exports[`golden inventory inventory --check output is unchanged: inventory/skills/gamma.json 1`] = `
+"{
+  "format": 1,
+  "name": "gamma",
+  "description": "gamma skill",
+  "versions": 1,
+  "drift": false,
+  "sources": [
+    "claude-app-synced"
+  ],
+  "copies": [
+    {
+      "hash": "h2:4a025880565aa3681b31f1fccd39d72b4173613bdbf4ee9a725c9c96aac5b882",
+      "realPath": "~/.claude/skills/synced/abc/gamma",
+      "fileCount": 1,
+      "bytes": 55,
+      "seenIn": [
+        {
+          "root": "claude-code",
+          "path": "~/.claude/skills/synced/abc/gamma",
+          "symlink": false
+        }
+      ],
+      "provenance": [
+        {
+          "kind": "claude-app-synced"
+        }
+      ],
+      "diagnostics": []
+    }
+  ]
+}
+"
+`;
+
+exports[`golden inventory inventory --check output is unchanged: inventory/skills/nested.json 1`] = `
+"{
+  "format": 1,
+  "name": "nested",
+  "description": "nested skill",
+  "versions": 1,
+  "drift": false,
+  "sources": [],
+  "copies": [
+    {
+      "hash": "h2:76ac950b461e42bd044ef30f383f3d3f6b7b275dbb41174ef0d5e69fa893021f",
+      "realPath": "~/.agents/skills/group/nested",
+      "fileCount": 1,
+      "bytes": 57,
+      "seenIn": [
+        {
+          "root": "agents",
+          "path": "~/.agents/skills/group/nested",
+          "symlink": false
+        }
+      ],
+      "provenance": [],
+      "diagnostics": []
+    }
+  ]
+}
+"
+`;
+
+exports[`golden inventory inventory --check output is unchanged: inventory/skills/understand.json 1`] = `
+"{
+  "format": 1,
+  "name": "understand",
+  "description": "understand skill",
+  "versions": 1,
+  "drift": false,
+  "sources": [
+    "git-checkout"
+  ],
+  "copies": [
+    {
+      "hash": "h2:c77a8ad4c1ab3d577cdc0ae673de47080e114ed2a4fc5c06682a30cd9934d0ac",
+      "realPath": "~/src/understand/skills/understand",
+      "fileCount": 1,
+      "bytes": 65,
+      "seenIn": [
+        {
+          "root": "custom:~/src/understand/skills",
+          "path": "~/src/understand/skills/understand",
+          "symlink": false
+        }
+      ],
+      "provenance": [
+        {
+          "kind": "git-checkout",
+          "repoRoot": "~/src/understand",
+          "head": "03109fa446f0d70d5de6c1446bbb15586b5c5cf2",
+          "remote": "https://github.com/o/understand.git",
+          "branch": "main"
+        }
+      ],
+      "diagnostics": []
+    }
+  ]
+}
+"
+`;
+
+exports[`golden inventory inventory --check output is unchanged: inventory/skills/x_y-3a3d9574.json 1`] = `
+"{
+  "format": 1,
+  "name": "x_y",
+  "description": "x_y skill",
+  "versions": 1,
+  "drift": false,
+  "sources": [],
+  "copies": [
+    {
+      "hash": "h2:3a3d957476d9a066047fff04990dc5b38cfcf993876c82986c8ee6d84a9136e0",
+      "realPath": "~/.agents/skills/x-under",
+      "fileCount": 1,
+      "bytes": 51,
+      "seenIn": [
+        {
+          "root": "agents",
+          "path": "~/.agents/skills/x-under",
+          "symlink": false
+        }
+      ],
+      "provenance": [],
+      "diagnostics": []
+    }
+  ]
+}
+"
+`;
+
+exports[`golden inventory inventory --check output is unchanged: inventory/skills/x_y.json 1`] = `
+"{
+  "format": 1,
+  "name": "x/y",
+  "description": "slash",
+  "versions": 1,
+  "drift": false,
+  "sources": [],
+  "copies": [
+    {
+      "hash": "h2:caffe91f824bd76202fd908b9a2c191a23741891c62e9fd9b066f5589b3b9a96",
+      "realPath": "~/.agents/skills/x-slash",
+      "fileCount": 1,
+      "bytes": 47,
+      "seenIn": [
+        {
+          "root": "agents",
+          "path": "~/.agents/skills/x-slash",
+          "symlink": false
+        }
+      ],
+      "provenance": [],
+      "diagnostics": []
+    }
+  ]
+}
+"
+`;
+
+exports[`golden inventory inventory --check output is unchanged: inventory/summary.json 1`] = `
+"{
+  "format": 1,
+  "skills": 11,
+  "copies": 14,
+  "entries": 16,
+  "drifted": 1,
+  "modifiedSinceInstall": 3,
+  "withDiagnostics": 1,
+  "sources": {
+    "claude-app-synced": 1,
+    "claude-plugin": 1,
+    "gh-frontmatter": 1,
+    "git-checkout": 1,
+    "skill-lock": 3,
+    "skills-manager": 1,
+    "untracked": 4
+  },
+  "roots": [
+    {
+      "id": "agents",
+      "label": "~/.agents/skills (npx skills, Codex, Gemini, Cursor)",
+      "path": "~/.agents/skills",
+      "present": true,
+      "entries": 8
+    },
+    {
+      "id": "claude-code",
+      "label": "Claude Code",
+      "path": "~/.claude/skills",
+      "present": true,
+      "entries": 3
+    },
+    {
+      "id": "codex",
+      "label": "Codex",
+      "path": "~/.codex/skills",
+      "present": false,
+      "entries": 0
+    },
+    {
+      "id": "cursor",
+      "label": "Cursor",
+      "path": "~/.cursor/skills",
+      "present": true,
+      "entries": 1
+    },
+    {
+      "id": "gemini",
+      "label": "Gemini CLI",
+      "path": "~/.gemini/skills",
+      "present": true,
+      "entries": 1
+    },
+    {
+      "id": "opencode",
+      "label": "OpenCode",
+      "path": "~/.config/opencode/skills",
+      "present": false,
+      "entries": 0
+    },
+    {
+      "id": "skills-manager",
+      "label": "Skills Manager library",
+      "path": "~/.skills-manager/skills",
+      "present": true,
+      "entries": 1
+    },
+    {
+      "id": "claude-plugin:paper@p",
+      "label": "Claude plugin paper@p",
+      "path": "~/.claude/plugins/cache/p/paper/0.1.0/skills",
+      "present": true,
+      "entries": 1
+    },
+    {
+      "id": "custom:~/src/understand/skills",
+      "label": "~/src/understand/skills",
+      "path": "~/src/understand/skills",
+      "present": true,
+      "entries": 1
+    }
+  ],
+  "warnings": []
+}
+"
+`;
+
+exports[`golden inventory inventory --check output is unchanged: inventory/upstream.json 1`] = `
+"{
+  "format": 1,
+  "checkedAt": "2026-10-02T00:00:00.000Z",
+  "requests": 4,
+  "results": [
+    {
+      "skill": "alpha",
+      "copy": "~/.agents/skills/alpha",
+      "via": "skill-lock",
+      "repo": "https://github.com/o/skills.git",
+      "installed": "6366bc89b6945d0147ab648928f6bf12f5349582",
+      "latest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "status": "outdated"
+    },
+    {
+      "skill": "beta",
+      "copy": "~/.agents/skills/beta",
+      "via": "skill-lock",
+      "repo": "https://github.com/o/skills.git",
+      "installed": "0000000000000000000000000000000000000000",
+      "latest": "0000000000000000000000000000000000000000",
+      "status": "up-to-date"
+    },
+    {
+      "skill": "delta",
+      "copy": "~/.agents/skills/delta",
+      "via": "gh-frontmatter",
+      "repo": "o/gh",
+      "installed": "aaaa",
+      "latest": "aaaa",
+      "status": "up-to-date"
+    },
+    {
+      "skill": "epsilon",
+      "copy": "~/.agents/skills/epsilon",
+      "via": "skill-lock",
+      "repo": "https://github.com/o/gone.git",
+      "installed": "1111111111111111111111111111111111111111",
+      "status": "error",
+      "error": "Repository or ref not found: o/gone@HEAD"
+    },
+    {
+      "skill": "understand",
+      "copy": "~/src/understand/skills/understand",
+      "via": "git-checkout",
+      "repo": "https://github.com/o/understand.git",
+      "installed": "03109fa446f0d70d5de6c1446bbb15586b5c5cf2",
+      "latest": "ffffffffffffffffffffffffffffffffffffffff",
+      "status": "outdated"
+    }
+  ]
+}
+"
+`;
+
+exports[`golden inventory inventory --check output is unchanged: skillctx.yaml 1`] = `
+"version: 1
+roots:
+  - ~/src/understand/skills
+"
+`;
+
+exports[`golden inventory inventory --check output is unchanged: stdout 1`] = `
+"Scanned 16 skill folders in 7 roots:
+  ~/.agents/skills                              8
+  ~/.claude/skills                              3
+  ~/.codex/skills                               not found
+  ~/.cursor/skills                              1
+  ~/.gemini/skills                              1
+  ~/.config/opencode/skills                     not found
+  ~/.skills-manager/skills                      1
+  ~/.claude/plugins/cache/p/paper/0.1.0/skills  1
+  ~/src/understand/skills                       1
+
+11 skills, 14 distinct folders on disk.
+1 skills have copies with different content (drift).
+3 skills were edited after install.
+1 skills have warnings (missing name, bad frontmatter, ...).
+Sources: claude-app-synced 1, claude-plugin 1, gh-frontmatter 1, git-checkout 1, skill-lock 3, skills-manager 1, untracked 4
+
+Wrote ~/ws/inventory: 11 updated, 0 unchanged, 0 removed.
+
+Checking upstream...
+4 requests: 2 up to date, 2 outdated, 0 missing upstream, 1 errors.
+Outdated: alpha, understand"
+`;
+
+exports[`golden inventory inventory --check output is unchanged: stderr 1`] = `"error: Repository or ref not found: o/gone@HEAD"`;
+
+exports[`golden inventory inventory --check output is unchanged: ui rows 1`] = `
+[
+  {
+    "description": "alpha skill",
+    "name": "alpha",
+    "presence": {
+      "agents": "folder",
+      "claude-code": "link",
+      "cursor": "folder",
+      "skills-manager": "folder",
+    },
+    "roots": [
+      "agents",
+      "claude-code",
+      "cursor",
+      "skills-manager",
+    ],
+    "sources": [
+      "skill-lock",
+      "skills-manager",
+    ],
+    "statuses": [
+      "outdated",
+    ],
+    "upstream": [
+      {
+        "copy": "~/.agents/skills/alpha",
+        "installed": "6366bc89b6945d0147ab648928f6bf12f5349582",
+        "latest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "repo": "https://github.com/o/skills.git",
+        "skill": "alpha",
+        "status": "outdated",
+        "via": "skill-lock",
+      },
+    ],
+  },
+  {
+    "description": "",
+    "name": "bad",
+    "presence": {
+      "agents": "folder",
+    },
+    "roots": [
+      "agents",
+    ],
+    "sources": [
+      "untracked",
+    ],
+    "statuses": [
+      "warnings",
+    ],
+    "upstream": [],
+  },
+  {
+    "description": "beta skill",
+    "name": "beta",
+    "presence": {
+      "agents": "folder",
+      "claude-code": "link",
+      "gemini": "differs",
+    },
+    "roots": [
+      "agents",
+      "claude-code",
+      "gemini",
+    ],
+    "sources": [
+      "skill-lock",
+    ],
+    "statuses": [
+      "edited",
+      "drift",
+    ],
+    "upstream": [
+      {
+        "copy": "~/.agents/skills/beta",
+        "installed": "0000000000000000000000000000000000000000",
+        "latest": "0000000000000000000000000000000000000000",
+        "repo": "https://github.com/o/skills.git",
+        "skill": "beta",
+        "status": "up-to-date",
+        "via": "skill-lock",
+      },
+    ],
+  },
+  {
+    "description": "delta skill",
+    "name": "delta",
+    "presence": {
+      "agents": "folder",
+    },
+    "roots": [
+      "agents",
+    ],
+    "sources": [
+      "gh-frontmatter",
+    ],
+    "statuses": [
+      "edited",
+    ],
+    "upstream": [
+      {
+        "copy": "~/.agents/skills/delta",
+        "installed": "aaaa",
+        "latest": "aaaa",
+        "repo": "o/gh",
+        "skill": "delta",
+        "status": "up-to-date",
+        "via": "gh-frontmatter",
+      },
+    ],
+  },
+  {
+    "description": "design skill",
+    "name": "design",
+    "presence": {
+      "claude-plugin:paper@p": "folder",
+    },
+    "roots": [
+      "claude-plugin:paper@p",
+    ],
+    "sources": [
+      "claude-plugin",
+    ],
+    "statuses": [],
+    "upstream": [],
+  },
+  {
+    "description": "epsilon skill",
+    "name": "epsilon",
+    "presence": {
+      "agents": "folder",
+    },
+    "roots": [
+      "agents",
+    ],
+    "sources": [
+      "skill-lock",
+    ],
+    "statuses": [
+      "edited",
+    ],
+    "upstream": [
+      {
+        "copy": "~/.agents/skills/epsilon",
+        "error": "Repository or ref not found: o/gone@HEAD",
+        "installed": "1111111111111111111111111111111111111111",
+        "repo": "https://github.com/o/gone.git",
+        "skill": "epsilon",
+        "status": "error",
+        "via": "skill-lock",
+      },
+    ],
+  },
+  {
+    "description": "gamma skill",
+    "name": "gamma",
+    "presence": {
+      "claude-code": "folder",
+    },
+    "roots": [
+      "claude-code",
+    ],
+    "sources": [
+      "claude-app-synced",
+    ],
+    "statuses": [],
+    "upstream": [],
+  },
+  {
+    "description": "nested skill",
+    "name": "nested",
+    "presence": {
+      "agents": "folder",
+    },
+    "roots": [
+      "agents",
+    ],
+    "sources": [
+      "untracked",
+    ],
+    "statuses": [],
+    "upstream": [],
+  },
+  {
+    "description": "understand skill",
+    "name": "understand",
+    "presence": {
+      "custom:~/src/understand/skills": "folder",
+    },
+    "roots": [
+      "custom:~/src/understand/skills",
+    ],
+    "sources": [
+      "git-checkout",
+    ],
+    "statuses": [
+      "outdated",
+    ],
+    "upstream": [
+      {
+        "copy": "~/src/understand/skills/understand",
+        "installed": "03109fa446f0d70d5de6c1446bbb15586b5c5cf2",
+        "latest": "ffffffffffffffffffffffffffffffffffffffff",
+        "repo": "https://github.com/o/understand.git",
+        "skill": "understand",
+        "status": "outdated",
+        "via": "git-checkout",
+      },
+    ],
+  },
+  {
+    "description": "x_y skill",
+    "name": "x_y",
+    "presence": {
+      "agents": "folder",
+    },
+    "roots": [
+      "agents",
+    ],
+    "sources": [
+      "untracked",
+    ],
+    "statuses": [],
+    "upstream": [],
+  },
+  {
+    "description": "slash",
+    "name": "x/y",
+    "presence": {
+      "agents": "folder",
+    },
+    "roots": [
+      "agents",
+    ],
+    "sources": [
+      "untracked",
+    ],
+    "statuses": [],
+    "upstream": [],
+  },
+]
+`;
+
+exports[`golden inventory inventory --check output is unchanged: diff beta 0..1 1`] = `
+{
+  "files": [
+    {
+      "binary": false,
+      "patch": 
+"===================================================================
+--- ~/.gemini/skills/beta
++++ ~/.agents/skills/beta
+@@ -2,4 +2,4 @@
+ name: beta
+ description: beta skill
+ ---
+-Edited body.
++Body.
+"
+,
+      "path": "SKILL.md",
+      "status": "changed",
+    },
+  ],
+  "left": "~/.gemini/skills/beta",
+  "right": "~/.agents/skills/beta",
+}
+`;

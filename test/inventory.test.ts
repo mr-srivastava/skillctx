@@ -15,7 +15,14 @@ import { main } from "../src/cli/index.ts";
 import { hashFolder } from "../src/core/indexer/hash.ts";
 import { buildIndex } from "../src/core/indexer/index.ts";
 import { parseSkillMd } from "../src/core/indexer/parse.ts";
-import { scan, skillFileName, writeInventory } from "../src/core/inventory.ts";
+import { skillFileName } from "../src/core/inventory/format.ts";
+import { refreshInventory } from "../src/core/inventory/refresh.ts";
+import { scan } from "../src/core/inventory/scan.ts";
+import {
+	InventoryFormatError,
+	InventoryReader,
+	writeInventory,
+} from "../src/core/inventory/store.ts";
 import { listPlainSkills } from "../src/core/sources/plain.ts";
 import { BUILTIN_ROOTS } from "../src/core/sources/roots.ts";
 import { type Env, initWorkspace } from "../src/core/workspace.ts";
@@ -74,7 +81,6 @@ beforeEach(() => {
 	env = { homeDir: home, configDir: path.join(home, ".config/skillctx") };
 	mkdirSync(home, { recursive: true });
 	buildHome();
-	delete process.env.SKILLCTX_HOME;
 });
 
 afterEach(() => rmSync(tmp, { recursive: true, force: true }));
@@ -213,5 +219,88 @@ describe("inventory files", () => {
 		expect(out.join("\n")).toContain(
 			"1 skills have copies with different content",
 		);
+	});
+});
+
+describe("inventory format (ADR-014)", () => {
+	test("every file carries the format; the reader strips it", () => {
+		const { workspace } = initWorkspace("~/ws", env);
+		writeInventory(workspace, scan(workspace, home), home);
+		const raw = JSON.parse(
+			readFileSync(
+				path.join(workspace.root, "inventory/skills/alpha.json"),
+				"utf8",
+			),
+		);
+		expect(raw.format).toBe(1);
+		const alpha = new InventoryReader(workspace).skill("alpha");
+		expect(alpha?.name).toBe("alpha");
+		expect(alpha && "format" in alpha).toBe(false);
+	});
+
+	test("files without a format predate it and read as format 1", () => {
+		const { workspace } = initWorkspace("~/ws", env);
+		workspace.write(
+			"inventory/skills/old.json",
+			JSON.stringify({ name: "old", copies: [] }),
+		);
+		expect(new InventoryReader(workspace).skill("old")?.name).toBe("old");
+	});
+
+	test("a newer format is refused, not misread or overwritten", async () => {
+		const { workspace } = initWorkspace("~/ws", env);
+		const newer = `${JSON.stringify({ format: 99, skills: 1 })}\n`;
+		workspace.write("inventory/summary.json", newer);
+		expect(() => new InventoryReader(workspace).summary()).toThrow(
+			InventoryFormatError,
+		);
+		expect(() =>
+			writeInventory(workspace, scan(workspace, home), home),
+		).toThrow(/format 99/);
+		expect(workspace.read("inventory/summary.json")).toBe(newer);
+
+		const err: string[] = [];
+		const code = await main(
+			["inventory"],
+			{ out: () => {}, err: (l) => err.push(l) },
+			env,
+		);
+		expect(code).toBe(1);
+		expect(err[0]).toContain("Upgrade skillctx");
+	});
+});
+
+describe("refreshInventory", () => {
+	test("a plain refresh never asks for network deps", async () => {
+		const { workspace } = initWorkspace("~/ws", env);
+		const outcome = await refreshInventory(workspace, home, {
+			check: false,
+			upstream: () => {
+				throw new Error("must not be called");
+			},
+		});
+		expect(outcome.upstream).toBeUndefined();
+		expect(outcome.written.written).toBe(outcome.scan.skills.length);
+	});
+
+	test("with check, the scan is reported before the network is touched", async () => {
+		const { workspace } = initWorkspace("~/ws", env);
+		const order: string[] = [];
+		const outcome = await refreshInventory(workspace, home, {
+			check: true,
+			onScanned: () => order.push("scanned"),
+			upstream: () => {
+				order.push("network");
+				return {
+					fetch: (() => {
+						throw new Error("offline");
+					}) as unknown as typeof fetch,
+					lsRemote: () => undefined,
+				};
+			},
+		});
+		expect(order).toEqual(["scanned", "network"]);
+		expect(outcome.upstream?.checkedAt).toBeString();
+		expect(workspace.read("inventory/upstream.json")).toContain('"format": 1');
 	});
 });

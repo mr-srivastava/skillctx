@@ -1,6 +1,8 @@
 import path from "node:path";
 import type { Skill } from "../indexer/index.ts";
 import { toPortable } from "../paths.ts";
+import { upstreamTarget } from "../provenance/kinds.ts";
+import type { ProvenanceKind } from "../provenance/types.ts";
 
 export type UpstreamStatus =
 	| "up-to-date"
@@ -12,7 +14,8 @@ export interface UpstreamResult {
 	skill: string;
 	/** `~/` path of the copy that was checked. */
 	copy: string;
-	via: "skill-lock" | "gh-frontmatter" | "git-checkout";
+	/** The provenance kind that recorded what was installed. */
+	via: ProvenanceKind;
 	/** Repository URL or remote. */
 	repo: string;
 	/** What was installed: a tree SHA (lockfile/gh) or a commit (git checkout). */
@@ -144,48 +147,39 @@ export async function checkUpstream(
 		for (const copy of skill.copies) {
 			const copyPath = toPortable(copy.realPath, deps.homeDir);
 			for (const p of copy.provenance) {
-				if (p.kind === "skill-lock" || p.kind === "gh-frontmatter") {
-					const repoUrl = p.kind === "skill-lock" ? p.sourceUrl : p.repo;
-					const gh = parseGithub(repoUrl);
-					const installed = p.kind === "skill-lock" ? p.folderHash : p.treeSha;
-					const dirPath = p.kind === "skill-lock" ? p.skillPath : p.path;
-					if (!gh || !installed || dirPath === undefined) continue;
-					const ref =
-						(p.kind === "skill-lock" ? p.pinnedRef : p.pinned) ?? "HEAD";
-					const key = `${gh.owner}/${gh.repo}@${ref}`;
+				const t = upstreamTarget(p);
+				if (t?.type === "github-tree") {
+					const gh = parseGithub(t.repo);
+					if (!gh) continue;
+					const key = `${gh.owner}/${gh.repo}@${t.ref}`;
 					const entry = byTarget.get(key) ?? {
-						target: { ...gh, ref },
+						target: { ...gh, ref: t.ref },
 						items: [],
 					};
 					entry.items.push({
 						skill: skill.name,
 						copy: copyPath,
 						via: p.kind,
-						repo: repoUrl,
-						dir: skillDir(dirPath),
-						installed,
+						repo: t.repo,
+						dir: skillDir(t.path),
+						installed: t.installed,
 					});
 					byTarget.set(key, entry);
-				} else if (
-					p.kind === "git-checkout" &&
-					p.remote &&
-					p.branch &&
-					p.branch !== "HEAD"
-				) {
-					const entry = checkouts.get(p.repoRoot) ?? {
-						remote: p.remote,
-						branch: p.branch,
-						head: p.head,
+				} else if (t?.type === "git-branch") {
+					const entry = checkouts.get(t.repoRoot) ?? {
+						remote: t.remote,
+						branch: t.branch,
+						head: t.head,
 						items: [],
 					};
 					entry.items.push({
 						skill: skill.name,
 						copy: copyPath,
-						via: "git-checkout",
-						repo: p.remote,
-						installed: p.head,
+						via: p.kind,
+						repo: t.remote,
+						installed: t.head,
 					});
-					checkouts.set(p.repoRoot, entry);
+					checkouts.set(t.repoRoot, entry);
 				}
 			}
 		}
@@ -254,6 +248,46 @@ export async function checkUpstream(
 	};
 }
 
+export interface UpstreamTally {
+	/** Distinct skills per status. */
+	skills: Record<UpstreamStatus, number>;
+	/** Outdated skill names, each once, in report order. */
+	outdated: string[];
+	/** Distinct error messages. */
+	errors: string[];
+	/** Results (copy × source) that errored. */
+	errorResults: number;
+}
+
+/** Counts for reporting a check, shared by the CLI and the UI. */
+export function tallyUpstream(report: UpstreamReport): UpstreamTally {
+	const skillsWith = (status: UpstreamStatus) =>
+		new Set(
+			report.results.filter((r) => r.status === status).map((r) => r.skill),
+		);
+	return {
+		skills: {
+			"up-to-date": skillsWith("up-to-date").size,
+			outdated: skillsWith("outdated").size,
+			"missing-upstream": skillsWith("missing-upstream").size,
+			error: skillsWith("error").size,
+		},
+		outdated: [...skillsWith("outdated")],
+		errors: [
+			...new Set(report.results.flatMap((r) => (r.error ? [r.error] : []))),
+		],
+		errorResults: report.results.filter((r) => r.status === "error").length,
+	};
+}
+
+/** Network access for a check; injectable so tests never hit the network. */
+export type UpstreamDeps = Omit<CheckDeps, "homeDir">;
+
+/** The real network: fetch, the installed git, and a token from GITHUB_TOKEN or gh. */
+export function defaultUpstreamDeps(tokenFromEnv?: string): UpstreamDeps {
+	return { fetch, token: githubToken(tokenFromEnv), lsRemote: gitLsRemote };
+}
+
 /** `git ls-remote` via the installed git. */
 export function gitLsRemote(remote: string, ref: string): string | undefined {
 	const proc = Bun.spawnSync(["git", "ls-remote", remote, ref], {
@@ -265,9 +299,9 @@ export function gitLsRemote(remote: string, ref: string): string | undefined {
 	return proc.stdout.toString().split(/\s+/)[0] || undefined;
 }
 
-/** GITHUB_TOKEN, else `gh auth token` if gh is installed and logged in. */
-export function githubToken(): string | undefined {
-	if (process.env.GITHUB_TOKEN) return process.env.GITHUB_TOKEN;
+/** The given token (GITHUB_TOKEN), else `gh auth token` if gh is installed and logged in. */
+export function githubToken(fromEnv?: string): string | undefined {
+	if (fromEnv) return fromEnv;
 	try {
 		const proc = Bun.spawnSync(["gh", "auth", "token"], {
 			stdout: "pipe",

@@ -1,0 +1,18 @@
+{
+	"version": "0.0.1",
+	"configurations": [
+		{
+			"name": "skillctx-ui",
+			"runtimeExecutable": "bun",
+			"runtimeArgs": [
+				"run",
+				"src/cli/index.ts",
+				"ui",
+				"--no-open",
+				"--port",
+				"4317"
+			],
+			"port": 4317
+		}
+	]
+}

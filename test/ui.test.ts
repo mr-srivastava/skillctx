@@ -2,15 +2,16 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { makeRefresh } from "../src/cli/commands/ui.ts";
-import { scan, writeInventory } from "../src/core/inventory.ts";
+import type { SkillRecord } from "../src/core/inventory/format.ts";
+import { refreshInventory } from "../src/core/inventory/refresh.ts";
+import { scan } from "../src/core/inventory/scan.ts";
+import { writeInventory } from "../src/core/inventory/store.ts";
 import {
 	type Env,
 	initWorkspace,
 	type Workspace,
 } from "../src/core/workspace.ts";
 import { filterRows, NO_FILTERS, toRows } from "../src/ui/client/model.ts";
-import type { SkillRecord } from "../src/ui/data.ts";
 import { startUiServer, type UiServer } from "../src/ui/server.ts";
 
 let tmp: string;
@@ -40,7 +41,13 @@ beforeEach(() => {
 		ws,
 		homeDir: home,
 		port: 0,
-		refresh: makeRefresh(ws, home),
+		refresh: (check) =>
+			refreshInventory(ws, home, {
+				check,
+				upstream: () => {
+					throw new Error("no network in tests");
+				},
+			}),
 	});
 });
 
@@ -78,6 +85,15 @@ describe("ui server", () => {
 			["SKILL.md", "changed"],
 		]);
 		expect(diff.files[0]?.patch).toMatch(/[-+]Two\./);
+	});
+
+	test("an inventory from a newer skillctx comes back as a readable error", async () => {
+		ws.write("inventory/summary.json", JSON.stringify({ format: 99 }));
+		const res = await api("/api/summary");
+		expect(res.status).toBe(500);
+		expect(((await res.json()) as { error: string }).error).toContain(
+			"Upgrade skillctx",
+		);
 	});
 
 	test("rejects a foreign Host header (DNS rebinding)", async () => {
@@ -184,5 +200,27 @@ describe("client code", () => {
 			if (/from\s+["']cn["']/.test(src)) offenders.push(file);
 		}
 		expect(offenders).toEqual([]);
+	});
+
+	test("core modules the client imports have no runtime Node imports", async () => {
+		const glob = new Bun.Glob("**/*.{ts,tsx}");
+		const fromCore = new Set<string>();
+		for await (const file of glob.scan("src/ui/client")) {
+			const src = await Bun.file(`src/ui/client/${file}`).text();
+			// Type-only imports are erased, so only value imports count.
+			for (const m of src.matchAll(
+				/^import (?!type )[^;]*?from "((?:\.\.\/)+core\/[^"]+)"/gm,
+			))
+				if (m[1])
+					fromCore.add(path.normalize(`src/ui/client/${file}/../${m[1]}`));
+		}
+		expect(fromCore.size).toBeGreaterThan(0);
+		for (const file of fromCore) {
+			const src = await Bun.file(file).text();
+			expect([file, /^import (?!type )[^;]*from "node:/m.test(src)]).toEqual([
+				file,
+				false,
+			]);
+		}
 	});
 });

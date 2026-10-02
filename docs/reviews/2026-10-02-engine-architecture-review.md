@@ -68,6 +68,14 @@ Signal adapters (hooks, OTLP, our calls, flags) → Ingestion (manifest lookup, 
 - `search` is `context` with a small budget and no anchors; delete it from the agent interface. `verify` survives as a human command and publish check; `propose` waits for Phase 3 evidence.
 - Spec contradictions found: §10 put `context` in Phase 3 while §6 told Phase 2 agents to call it; §5 says five MCP tools while §12 claims the two-tool design.
 
+## Phase 0 code to revisit when the engine starts
+
+Added 2026-10-02, after a codebase-design pass over the inventory code (the other findings from that pass are done: refreshInventory, ADR-014, the provenance kinds table, shared file listing).
+
+- **`buildIndex` reads files while it groups.** `readCopy` in `src/core/indexer/index.ts` parses and hashes from disk inside the grouping step. That's fine for the inventory. The engine will want to index resolved text that isn't on disk (post-overlay sections) and to assign section IDs, so split it into reading (folder → parsed copy) and a pure grouping step over parsed copies. Do this when section IDs are designed, not before: only one caller exists today.
+- **The engine's reader of the inventory is `InventoryReader`** (`src/core/inventory/store.ts`). Section IDs and section hashes are added fields under ADR-014, so they don't bump the format.
+- **New core operations follow `refreshInventory`.** `build`, `context` and `get` should each be one core function the CLI, the UI and MCP call, with the network and the clock injected.
+
 ## Proposed ADR numbering when the engine is designed
 
 Resolution; stacked overlay semantics and composites; placement planner over shared roots; hook-first read capture with `cli` mode as fallback (supersedes a consequence in ADR-001); two agent operations. Number them after the current last ADR.

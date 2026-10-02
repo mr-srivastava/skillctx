@@ -1,42 +1,9 @@
 import { parseArgs } from "node:util";
-import { scan, writeInventory, writeUpstream } from "../../core/inventory.ts";
-import { checkUpstream } from "../../core/upstream/index.ts";
-import {
-	type Env,
-	resolveWorkspace,
-	type Workspace,
-} from "../../core/workspace.ts";
-import { type RefreshResult, startUiServer } from "../../ui/server.ts";
+import { refreshInventory } from "../../core/inventory/refresh.ts";
+import { defaultUpstreamDeps } from "../../core/upstream/index.ts";
+import { type Env, resolveWorkspace } from "../../core/workspace.ts";
+import { startUiServer } from "../../ui/server.ts";
 import type { Io } from "../io.ts";
-import { defaultUpstreamDeps, type UpstreamDeps } from "./inventory.ts";
-
-/** Rescan (and optionally check upstream), the same work `inventory [--check]` does. */
-export function makeRefresh(
-	ws: Workspace,
-	homeDir: string,
-	upstreamDeps: () => UpstreamDeps = defaultUpstreamDeps,
-): (check: boolean) => Promise<RefreshResult> {
-	return async (check) => {
-		const result = scan(ws, homeDir);
-		const written = writeInventory(ws, result, homeDir);
-		let message = `Scanned ${result.summary.skills} skills: ${written.written} updated, ${written.removed} removed.`;
-		if (check) {
-			const report = await checkUpstream(result.skills, {
-				...upstreamDeps(),
-				homeDir,
-			});
-			writeUpstream(ws, report);
-			const outdated = new Set(
-				report.results
-					.filter((r) => r.status === "outdated")
-					.map((r) => r.skill),
-			).size;
-			const errors = report.results.filter((r) => r.status === "error").length;
-			message += ` Checked upstream with ${report.requests} requests: ${outdated} outdated${errors ? `, ${errors} errors` : ""}.`;
-		}
-		return { ok: true, message };
-	};
-}
 
 function openBrowser(url: string): void {
 	const cmd =
@@ -71,7 +38,11 @@ export async function uiCommand(
 		ws,
 		homeDir: env.homeDir,
 		port: values.port ? Number(values.port) : 4317,
-		refresh: makeRefresh(ws, env.homeDir),
+		refresh: (check) =>
+			refreshInventory(ws, env.homeDir, {
+				check,
+				upstream: () => defaultUpstreamDeps(env.githubToken),
+			}),
 	});
 	io.out(
 		`skillctx UI running at ${server.url} (local only). Press Ctrl+C to stop.`,

@@ -15,7 +15,7 @@ import { inventoryCommand } from "../src/cli/commands/inventory.ts";
 import { main } from "../src/cli/index.ts";
 import { gitTreeSha } from "../src/core/indexer/git-tree.ts";
 import type { Skill } from "../src/core/indexer/index.ts";
-import { scan } from "../src/core/inventory.ts";
+import { scan } from "../src/core/inventory/scan.ts";
 import {
 	type CheckDeps,
 	checkUpstream,
@@ -33,7 +33,6 @@ beforeEach(() => {
 	home = path.join(tmp, "home");
 	env = { homeDir: home, configDir: path.join(home, ".config/skillctx") };
 	mkdirSync(home, { recursive: true });
-	delete process.env.SKILLCTX_HOME;
 });
 
 afterEach(() => rmSync(tmp, { recursive: true, force: true }));

@@ -1,27 +1,26 @@
 import { parseArgs } from "node:util";
-import { scan, writeInventory, writeUpstream } from "../../core/inventory.ts";
+import { refreshInventory } from "../../core/inventory/refresh.ts";
+import type { ScanResult } from "../../core/inventory/scan.ts";
+import type { WriteResult } from "../../core/inventory/store.ts";
 import { toPortable } from "../../core/paths.ts";
 import {
-	type CheckDeps,
-	checkUpstream,
-	githubToken,
-	gitLsRemote,
+	defaultUpstreamDeps,
+	tallyUpstream,
+	type UpstreamDeps,
+	type UpstreamReport,
 } from "../../core/upstream/index.ts";
-import { type Env, resolveWorkspace } from "../../core/workspace.ts";
+import {
+	type Env,
+	resolveWorkspace,
+	type Workspace,
+} from "../../core/workspace.ts";
 import type { Io } from "../io.ts";
-
-/** Network access for --check; injectable so tests never hit the network. */
-export type UpstreamDeps = Omit<CheckDeps, "homeDir">;
-
-export function defaultUpstreamDeps(): UpstreamDeps {
-	return { fetch, token: githubToken(), lsRemote: gitLsRemote };
-}
 
 export async function inventoryCommand(
 	args: string[],
 	io: Io,
 	env: Env,
-	upstreamDeps: () => UpstreamDeps = defaultUpstreamDeps,
+	upstreamDeps: () => UpstreamDeps = () => defaultUpstreamDeps(env.githubToken),
 ): Promise<number> {
 	const { values } = parseArgs({
 		args,
@@ -29,10 +28,34 @@ export async function inventoryCommand(
 		strict: true,
 	});
 	const ws = resolveWorkspace(env, values.home);
-	const result = scan(ws, env.homeDir);
-	const written = writeInventory(ws, result, env.homeDir);
-	const s = result.summary;
+	let token: string | undefined;
+	const { upstream } = await refreshInventory(ws, env.homeDir, {
+		check: Boolean(values.check),
+		upstream: () => {
+			const deps = upstreamDeps();
+			token = deps.token;
+			return deps;
+		},
+		onScanned: (result, written) => {
+			printScan(io, ws, env, result, written);
+			if (values.check) {
+				io.out("");
+				io.out("Checking upstream...");
+			}
+		},
+	});
+	if (upstream) printCheck(io, upstream, Boolean(token));
+	return 0;
+}
 
+function printScan(
+	io: Io,
+	ws: Workspace,
+	env: Env,
+	result: ScanResult,
+	written: WriteResult,
+): void {
+	const s = result.summary;
 	io.out(
 		`Scanned ${s.entries} skill folders in ${s.roots.filter((r) => r.present).length} roots:`,
 	);
@@ -61,35 +84,17 @@ export async function inventoryCommand(
 	io.out(
 		`Wrote ${toPortable(ws.resolve("inventory"), env.homeDir)}: ${written.written} updated, ${written.unchanged} unchanged, ${written.removed} removed.`,
 	);
+}
 
-	if (!values.check) return 0;
-
-	io.out("");
-	io.out("Checking upstream...");
-	const deps = upstreamDeps();
-	const report = await checkUpstream(result.skills, {
-		...deps,
-		homeDir: env.homeDir,
-	});
-	writeUpstream(ws, report);
-	const count = (status: string) =>
-		new Set(
-			report.results.filter((r) => r.status === status).map((r) => r.skill),
-		).size;
+function printCheck(
+	io: Io,
+	report: UpstreamReport,
+	authenticated: boolean,
+): void {
+	const t = tallyUpstream(report);
 	io.out(
-		`${report.requests} requests${deps.token ? "" : " (unauthenticated)"}: ${count("up-to-date")} up to date, ${count("outdated")} outdated, ${count("missing-upstream")} missing upstream, ${count("error")} errors.`,
+		`${report.requests} requests${authenticated ? "" : " (unauthenticated)"}: ${t.skills["up-to-date"]} up to date, ${t.skills.outdated} outdated, ${t.skills["missing-upstream"]} missing upstream, ${t.skills.error} errors.`,
 	);
-	const outdated = [
-		...new Set(
-			report.results.filter((r) => r.status === "outdated").map((r) => r.skill),
-		),
-	];
-	if (outdated.length > 0) io.out(`Outdated: ${outdated.join(", ")}`);
-	const errors = [
-		...new Set(
-			report.results.filter((r) => r.error).map((r) => r.error as string),
-		),
-	];
-	for (const e of errors) io.err(`error: ${e}`);
-	return 0;
+	if (t.outdated.length > 0) io.out(`Outdated: ${t.outdated.join(", ")}`);
+	for (const e of t.errors) io.err(`error: ${e}`);
 }

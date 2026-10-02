@@ -35,6 +35,12 @@ version: ${WORKSPACE_VERSION}
 roots: []
 `;
 
+/** What skillctx.yaml says. Grows as later phases add settings. */
+export interface WorkspaceConfig {
+	/** Extra skill roots to scan, as `~/` or absolute paths. */
+	roots: string[];
+}
+
 export class WorkspaceError extends Error {
 	override name = "WorkspaceError";
 }
@@ -44,6 +50,10 @@ export interface Env {
 	homeDir: string;
 	/** Directory holding the pointer file (config.json). */
 	configDir: string;
+	/** SKILLCTX_HOME: overrides the pointer file. */
+	skillctxHome?: string;
+	/** GITHUB_TOKEN for upstream checks. */
+	githubToken?: string;
 }
 
 export function defaultEnv(): Env {
@@ -52,6 +62,8 @@ export function defaultEnv(): Env {
 	return {
 		homeDir,
 		configDir: path.join(xdg || path.join(homeDir, ".config"), "skillctx"),
+		skillctxHome: process.env.SKILLCTX_HOME || undefined,
+		githubToken: process.env.GITHUB_TOKEN || undefined,
 	};
 }
 
@@ -87,6 +99,26 @@ export class Workspace {
 		if (!existsSync(target)) return false;
 		rmSync(target);
 		return true;
+	}
+
+	/** Text of a workspace file, or undefined if it doesn't exist. */
+	read(relPath: string): string | undefined {
+		const target = this.resolve(relPath);
+		return existsSync(target) ? readFileSync(target, "utf8") : undefined;
+	}
+
+	/** Parsed skillctx.yaml. Unknown or malformed keys fall back to defaults. */
+	config(): WorkspaceConfig {
+		const text = this.read(WORKSPACE_FILE);
+		const parsed = (text ? Bun.YAML.parse(text) : null) as {
+			roots?: unknown;
+		} | null;
+		const roots = Array.isArray(parsed?.roots) ? parsed.roots : [];
+		return {
+			roots: roots.filter(
+				(r): r is string => typeof r === "string" && r.length > 0,
+			),
+		};
 	}
 
 	/** File names directly inside a workspace folder; empty if the folder is missing. */
@@ -139,10 +171,9 @@ function writePointer(root: string, env: Env): void {
 	writeFileSync(pointerPath(env), body);
 }
 
-/** Find the active workspace: explicit flag, then SKILLCTX_HOME, then the pointer file. */
+/** Find the active workspace: explicit flag, then env.skillctxHome, then the pointer file. */
 export function resolveWorkspace(env: Env, flag?: string): Workspace {
-	const fromEnv = process.env.SKILLCTX_HOME;
-	let candidate = flag ?? fromEnv;
+	let candidate = flag ?? env.skillctxHome;
 	if (!candidate && existsSync(pointerPath(env))) {
 		const parsed = JSON.parse(readFileSync(pointerPath(env), "utf8")) as {
 			home?: string;

@@ -31,6 +31,7 @@ Status: Phase 0 (read-only inventory and local web UI) works. The compile engine
 | [011](docs/decisions/ADR-011-tailwind-for-the-web-ui.md) | Tailwind CSS v4 for the web UI, via Bun's plugin |
 | [012](docs/decisions/ADR-012-shadcn-components.md) | shadcn/ui components, themed with the existing palette |
 | [013](docs/decisions/ADR-013-oxlint-and-oxfmt.md) | Oxlint and Oxfmt instead of Biome |
+| [014](docs/decisions/ADR-014-versioned-inventory-format.md) | A versioned inventory format, owned by one core module |
 
 ## Usage
 
@@ -74,5 +75,7 @@ Every path stored in the workspace is relative to `~`, so you can commit it to a
 | `bun run format` | Format with Oxfmt |
 | `bun run typecheck` | tsc |
 | `bun run build` | Compile and ad-hoc sign `dist/skillctx` |
+
+CI (`.github/workflows/ci.yml`) runs lint, typecheck and tests on every pull request and on pushes to `main`, with the Bun version pinned by `packageManager` in `package.json`. If a change alters the inventory output on purpose, update `test/__snapshots__/` with `bun test --update-snapshots` in the same commit.
 
 The UI server builds the client bundle at startup, so restart `skillctx ui` after editing `src/ui/client/`. Styles use Tailwind v4; theme tokens are in `src/ui/client/styles.css` (ADR-011). Add shadcn components with `bunx shadcn@latest add <name>`, then change its `cn` import to `@/lib/utils` (ADR-012).
