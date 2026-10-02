@@ -1,55 +1,17 @@
 import { FolderSearchIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { BusySpinner, HEADLINE } from "@/components/display";
+import { Problem } from "@/components/problem";
 import { Button } from "@/components/ui/button";
+import { SkillDetail } from "@/features/skill-detail/SkillDetail";
+import { SkillList } from "@/features/skill-list/SkillList";
+import * as api from "@/lib/api";
+import { type Filters, NO_FILTERS, toRows } from "@/lib/model";
 import { cn } from "@/lib/utils";
-import * as api from "./api.ts";
-import { BusySpinner, HEADLINE } from "./display.tsx";
-import { type Filters, NO_FILTERS, toRows } from "./model.ts";
-import { Problem } from "./problem.tsx";
-import { type DetailTab, SkillDetail } from "./SkillDetail.tsx";
-import { SkillList } from "./SkillList.tsx";
 import { type Busy, TopBar } from "./TopBar.tsx";
+import { useHashRoute } from "./useHashRoute.ts";
 
 const PAGE = "mx-auto max-w-[1180px] px-4 pb-16 wide:px-8 wide:pb-24";
-
-interface Route {
-	/** The skill shown, or null for the list. */
-	name: string | null;
-	tab: DetailTab;
-}
-
-const TABS: readonly DetailTab[] = ["contents", "where", "copies"];
-
-/** `#/skill/<name>` opens Contents; `#/skill/<name>/<tab>` opens a tab. */
-function readHash(): Route {
-	const m = /^#\/skill\/([^/]+)(?:\/([a-z]+))?$/.exec(window.location.hash);
-	const tab = TABS.find((t) => t === m?.[2]) ?? "contents";
-	return { name: m?.[1] ? decodeURIComponent(m[1]) : null, tab };
-}
-
-function useHashRoute(): [Route, (tab: DetailTab) => void] {
-	const [route, setRoute] = useState(readHash);
-	useEffect(() => {
-		const onChange = () => {
-			setRoute(readHash());
-			window.scrollTo(0, 0);
-		};
-		window.addEventListener("hashchange", onChange);
-		return () => window.removeEventListener("hashchange", onChange);
-	}, []);
-	// Switching tabs replaces the URL so Back still returns to the list.
-	const setTab = (tab: DetailTab) => {
-		if (!route.name) return;
-		const base = `#/skill/${encodeURIComponent(route.name)}`;
-		history.replaceState(
-			null,
-			"",
-			tab === "contents" ? base : `${base}/${tab}`,
-		);
-		setRoute({ ...route, tab });
-	};
-	return [route, setTab];
-}
 
 export function App() {
 	const [data, setData] = useState<api.Inventory | null>(null);

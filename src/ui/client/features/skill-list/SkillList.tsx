@@ -1,5 +1,7 @@
 import { SearchIcon, XIcon } from "lucide-react";
 import { Fragment, useEffect, useRef } from "react";
+import { HEADLINE, STATUS_ICON, STATUS_TEXT } from "@/components/display";
+import { DiffersDot, LocationIcons, rootIcon } from "@/components/presence";
 import { Button } from "@/components/ui/button";
 import {
 	InputGroup,
@@ -23,11 +25,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
-import type { InventorySummary } from "../../core/inventory/format.ts";
-import { sourceLabel } from "../../core/provenance/kinds.ts";
-import { rootLabel } from "../../core/sources/roots.ts";
-import { DiffersDot, HEADLINE, STATUS_ICON, STATUS_TEXT } from "./display.tsx";
 import {
 	countBy,
 	type Filters,
@@ -36,8 +33,11 @@ import {
 	type Row,
 	STATUS_LABEL,
 	type Status,
-} from "./model.ts";
-import { LocationIcons, rootIcon } from "./presence.tsx";
+} from "@/lib/model";
+import { cn } from "@/lib/utils";
+import type { InventorySummary } from "../../../../core/inventory/format.ts";
+import { sourceLabel } from "../../../../core/provenance/kinds.ts";
+import { rootLabel } from "../../../../core/sources/roots.ts";
 
 function Headline({
 	rows,

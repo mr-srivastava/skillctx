@@ -1,8 +1,8 @@
 import { BotIcon, FolderIcon, LibraryIcon, PlugIcon } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
+import type { Presence } from "@/lib/model";
 import { cn } from "@/lib/utils";
-import { PLUGIN_ROOT_PREFIX, rootLabel } from "../../core/sources/roots.ts";
-import { DiffersDot } from "./display.tsx";
+import { PLUGIN_ROOT_PREFIX, rootLabel } from "../../../core/sources/roots.ts";
 import {
 	ClaudeLogo,
 	CodexLogo,
@@ -10,7 +10,19 @@ import {
 	GeminiLogo,
 	OpenCodeLogo,
 } from "./logos.tsx";
-import type { Presence } from "./model.ts";
+
+/** Marks a location whose copy differs from the one most locations hold. */
+export function DiffersDot({ className }: { className?: string }) {
+	return (
+		<span
+			aria-hidden
+			className={cn(
+				"size-2 rounded-full bg-differs ring-2 ring-background",
+				className,
+			)}
+		/>
+	);
+}
 
 const HEAD =
 	"border-b border-ink py-2 align-bottom text-caption font-medium whitespace-nowrap text-ink-soft";

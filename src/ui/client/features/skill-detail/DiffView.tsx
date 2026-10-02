@@ -5,6 +5,8 @@ import {
 	type LucideIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Path } from "@/components/display";
+import { Problem } from "@/components/problem";
 import {
 	Select,
 	SelectContent,
@@ -12,13 +14,11 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import * as api from "@/lib/api";
 import { cn } from "@/lib/utils";
-import type { SkillRecord } from "../../core/inventory/format.ts";
-import type { CopyDiff } from "../data.ts";
-import * as api from "./api.ts";
+import type { SkillRecord } from "../../../../core/inventory/format.ts";
+import type { CopyDiff } from "../../../data.ts";
 import { copyItems } from "./copy-items.tsx";
-import { Path } from "./display.tsx";
-import { Problem } from "./problem.tsx";
 
 export function DiffView({ skill }: { skill: SkillRecord }) {
 	const [a, setA] = useState(0);

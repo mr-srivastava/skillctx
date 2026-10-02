@@ -4,11 +4,11 @@ import {
 	CircleCheckIcon,
 	FolderSyncIcon,
 } from "lucide-react";
+import { BusySpinner } from "@/components/display";
+import { Hint } from "@/components/Hint";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { UpstreamReport } from "../../core/upstream/index.ts";
-import { BusySpinner } from "./display.tsx";
-import { Hint } from "./Hint.tsx";
+import type { UpstreamReport } from "../../../core/upstream/index.ts";
 
 export type Busy = null | "scan" | "check";
 

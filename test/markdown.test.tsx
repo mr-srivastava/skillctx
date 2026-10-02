@@ -5,7 +5,7 @@ import {
 	parseMarkdown,
 	resolveLink,
 	splitFrontmatter,
-} from "../src/ui/client/markdown.tsx";
+} from "../src/ui/client/lib/markdown.tsx";
 
 function render(md: string, files: string[] = [], file = "SKILL.md"): string {
 	return renderToStaticMarkup(

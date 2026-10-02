@@ -14,7 +14,7 @@ Lucide has no brand logos, so following that layout needs a second icon source.
 ## Decision
 - The skill list renders shadcn `Item` rows in an `ItemGroup`: name and description on the left, the locations as logos, then the states. The name link stretches over the row, so the row is the click target.
 - Only locations that hold the skill are shown. Past five, the rest fold into "+N", whose hint names them.
-- Agent logos come from Lobe Icons (MIT), inlined as React components in `src/ui/client/logos.tsx`: Claude, Codex, Cursor, Gemini, OpenCode. Mono logos draw in `currentColor`; colour logos keep their brand colours. Locations no single agent owns use Lucide: `~/.agents` (Bot), Skills Manager (Library), plugins (Plug), folders from `skillctx.yaml` (Folder). The mapping is `ROOT_ICON` in `ui.tsx`.
+- Agent logos come from Lobe Icons (MIT), inlined as React components in `src/ui/client/components/logos.tsx`: Claude, Codex, Cursor, Gemini, OpenCode. Mono logos draw in `currentColor`; colour logos keep their brand colours. Locations no single agent owns use Lucide: `~/.agents` (Bot), Skills Manager (Library), plugins (Plug), folders from `skillctx.yaml` (Folder). The mapping is `ROOT_ICON` in `components/presence.tsx`.
 - A copy that differs from the main one gets a small dot in the differs colour on its logo (or on "+N" when that location is folded). Real folder versus symlink is in the logo's hint and `sr-only` text, not drawn.
 - Filtering by location moves from the column headers to a "In any location" `Select`, with the same logos.
 

@@ -6,26 +6,33 @@ import {
 	type LucideIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import {
+	DESC,
+	H2,
+	Notes,
+	Path,
+	STATUS_ICON,
+	STATUS_TEXT,
+} from "@/components/display";
+import { Hint } from "@/components/Hint";
+import { CELL, Cell } from "@/components/presence";
+import { Problem } from "@/components/problem";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { Presence, Row } from "@/lib/model";
 import { cn } from "@/lib/utils";
 import type {
 	InventorySummary,
 	SkillRecord,
-} from "../../core/inventory/format.ts";
+} from "../../../../core/inventory/format.ts";
 import {
 	provenanceDetails,
 	sourceLabel,
 	updateCommand,
-} from "../../core/provenance/kinds.ts";
-import { rootLabel } from "../../core/sources/roots.ts";
+} from "../../../../core/provenance/kinds.ts";
+import { rootLabel } from "../../../../core/sources/roots.ts";
 import { Contents } from "./Contents.tsx";
 import { DiffView } from "./DiffView.tsx";
-import { DESC, H2, Notes, Path, STATUS_ICON, STATUS_TEXT } from "./display.tsx";
-import { Hint } from "./Hint.tsx";
-import type { Presence, Row } from "./model.ts";
-import { CELL, Cell } from "./presence.tsx";
-import { Problem } from "./problem.tsx";
 
 const FACT =
 	"grid gap-0.5 border-b border-rule py-2.25 wide:grid-cols-[180px_1fr] wide:gap-4";

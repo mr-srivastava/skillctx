@@ -19,7 +19,7 @@ import { gitTreeSha } from "../src/core/indexer/git-tree.ts";
 import { InventoryReader } from "../src/core/inventory/store.ts";
 import type { UpstreamDeps } from "../src/core/upstream/index.ts";
 import { type Env, initWorkspace } from "../src/core/workspace.ts";
-import { toRows } from "../src/ui/client/model.ts";
+import { toRows } from "../src/ui/client/lib/model.ts";
 import { copyDiff } from "../src/ui/data.ts";
 
 /*

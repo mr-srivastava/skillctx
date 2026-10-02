@@ -1,5 +1,5 @@
-import type { SkillRecord } from "../../core/inventory/format.ts";
-import { Path } from "./display.tsx";
+import { Path } from "@/components/display";
+import type { SkillRecord } from "../../../../core/inventory/format.ts";
 
 export function copyItems(copies: SkillRecord["copies"]) {
 	return copies.map((copy, index) => ({

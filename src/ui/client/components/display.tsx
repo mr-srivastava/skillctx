@@ -7,8 +7,7 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { Spinner } from "@/components/ui/spinner";
-import { cn } from "@/lib/utils";
-import type { Status } from "./model.ts";
+import type { Status } from "@/lib/model";
 
 /** A file path, repo or hash: the only things set in monospace. */
 export function Path({ children }: { children: ReactNode }) {
@@ -53,14 +52,3 @@ export const DESC =
 	"mt-0.5 line-clamp-2 max-w-[64ch] text-caption text-ink-soft";
 
 /** Marks a logo whose copy differs from the one most locations hold. */
-export function DiffersDot({ className }: { className?: string }) {
-	return (
-		<span
-			aria-hidden
-			className={cn(
-				"size-2 rounded-full bg-differs ring-2 ring-background",
-				className,
-			)}
-		/>
-	);
-}

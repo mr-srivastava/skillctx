@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { Path } from "@/components/display";
+import { Problem } from "@/components/problem";
 import {
 	Select,
 	SelectContent,
@@ -6,20 +8,18 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
-import type { SkillRecord } from "../../core/inventory/format.ts";
-import type { CopyFiles, FileText } from "../data.ts";
-import * as api from "./api.ts";
-import { copyItems } from "./copy-items.tsx";
-import { Path } from "./display.tsx";
+import * as api from "@/lib/api";
 import {
 	goToAnchor,
 	type Heading,
 	Markdown,
 	parseMarkdown,
 	splitFrontmatter,
-} from "./markdown.tsx";
-import { Problem } from "./problem.tsx";
+} from "@/lib/markdown";
+import { cn } from "@/lib/utils";
+import type { SkillRecord } from "../../../../core/inventory/format.ts";
+import type { CopyFiles, FileText } from "../../../data.ts";
+import { copyItems } from "./copy-items.tsx";
 
 function size(bytes: number): string {
 	return bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;

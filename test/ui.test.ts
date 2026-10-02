@@ -11,7 +11,7 @@ import {
 	initWorkspace,
 	type Workspace,
 } from "../src/core/workspace.ts";
-import { filterRows, NO_FILTERS, toRows } from "../src/ui/client/model.ts";
+import { filterRows, NO_FILTERS, toRows } from "../src/ui/client/lib/model.ts";
 import { startUiServer, type UiServer } from "../src/ui/server.ts";
 
 let tmp: string;
