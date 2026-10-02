@@ -13,6 +13,19 @@
 				"4317"
 			],
 			"port": 4317
+		},
+		{
+			"name": "skillctx-ui-baseui",
+			"runtimeExecutable": "bun",
+			"runtimeArgs": [
+				"run",
+				"src/cli/index.ts",
+				"ui",
+				"--no-open",
+				"--port",
+				"4391"
+			],
+			"port": 4391
 		}
 	]
 }

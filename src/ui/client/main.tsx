@@ -7,7 +7,7 @@ const root = document.getElementById("root");
 // while the pointer crosses the presence table.
 if (root)
 	createRoot(root).render(
-		<TooltipProvider delayDuration={250}>
+		<TooltipProvider delay={250}>
 			<App />
 		</TooltipProvider>,
 	);

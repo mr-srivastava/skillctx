@@ -99,42 +99,66 @@ export function Contents({
 	// hidden until its replacement arrives.
 	const current = shown && shown.path === file ? shown : null;
 
+	// Select items double as the trigger's labels (SelectValue reads them).
+	const copyItems = skill.copies.map((c, i) => ({
+		value: i,
+		label: (
+			<>
+				Copy {i + 1}: <Path>{c.realPath}</Path>
+			</>
+		),
+	}));
+	const fileItems = (listing?.files ?? []).map((f) => ({
+		value: f.path,
+		label: (
+			<>
+				<Path>{f.path}</Path>
+				<span className="text-ink-soft">{size(f.bytes)}</span>
+			</>
+		),
+	}));
+
 	return (
 		<div className="mt-6 grid gap-x-12 split:grid-cols-[minmax(0,1fr)_220px]">
 			<div className="min-w-0">
 				<div className="mb-2 flex flex-wrap items-center gap-2">
 					{skill.copies.length > 1 && (
 						<Select
-							value={String(copy)}
+							items={copyItems}
+							value={copy}
 							onValueChange={(v) => {
+								if (v === null) return;
 								setListing(null);
 								setFile(null);
 								setShown(null);
-								setCopy(Number(v));
+								setCopy(v);
 							}}
 						>
 							<SelectTrigger aria-label="Copy" className="max-w-full">
 								<SelectValue />
 							</SelectTrigger>
 							<SelectContent>
-								{skill.copies.map((c, i) => (
-									<SelectItem key={c.realPath} value={String(i)}>
-										Copy {i + 1}: <Path>{c.realPath}</Path>
+								{copyItems.map((it) => (
+									<SelectItem key={it.value} value={it.value}>
+										{it.label}
 									</SelectItem>
 								))}
 							</SelectContent>
 						</Select>
 					)}
 					{listing && listing.files.length > 1 && file && (
-						<Select value={file} onValueChange={open}>
+						<Select
+							items={fileItems}
+							value={file}
+							onValueChange={(v) => v !== null && open(v)}
+						>
 							<SelectTrigger aria-label="File" className="max-w-full">
 								<SelectValue />
 							</SelectTrigger>
 							<SelectContent>
-								{listing.files.map((f) => (
-									<SelectItem key={f.path} value={f.path}>
-										<Path>{f.path}</Path>
-										<span className="text-ink-soft">{size(f.bytes)}</span>
+								{fileItems.map((it) => (
+									<SelectItem key={it.value} value={it.value}>
+										{it.label}
 									</SelectItem>
 								))}
 							</SelectContent>

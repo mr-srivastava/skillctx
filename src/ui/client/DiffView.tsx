@@ -44,19 +44,33 @@ export function DiffView({ skill }: { skill: SkillRecord }) {
 			.catch((e: Error) => setError(e.message));
 	}, [skill.name, a, b]);
 
+	// Select items double as the trigger's labels (SelectValue reads them).
+	const copyItems = skill.copies.map((c, i) => ({
+		value: i,
+		label: (
+			<>
+				Copy {i + 1}: <Path>{c.realPath}</Path>
+			</>
+		),
+	}));
+
 	const pick = (
 		value: number,
 		onChange: (n: number) => void,
 		label: string,
 	) => (
-		<Select value={String(value)} onValueChange={(v) => onChange(Number(v))}>
+		<Select
+			items={copyItems}
+			value={value}
+			onValueChange={(v) => v !== null && onChange(v)}
+		>
 			<SelectTrigger aria-label={label} className="max-w-full">
 				<SelectValue />
 			</SelectTrigger>
 			<SelectContent>
-				{skill.copies.map((c, i) => (
-					<SelectItem key={c.realPath} value={String(i)}>
-						Copy {i + 1}: <Path>{c.realPath}</Path>
+				{copyItems.map((it) => (
+					<SelectItem key={it.value} value={it.value}>
+						{it.label}
 					</SelectItem>
 				))}
 			</SelectContent>

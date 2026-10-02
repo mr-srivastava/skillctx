@@ -50,7 +50,7 @@ export function Notes({ children }: { children: ReactNode }) {
 }
 
 /**
- * A tooltip on hover and keyboard focus. Radix tooltips don't open on touch,
+ * A tooltip on hover and keyboard focus. Base UI tooltips don't open on touch,
  * so anything a phone user needs must also be visible or in sr-only text.
  */
 export function Hint({
@@ -62,7 +62,7 @@ export function Hint({
 }) {
 	return (
 		<Tooltip>
-			<TooltipTrigger asChild>{children}</TooltipTrigger>
+			<TooltipTrigger render={children} />
 			<TooltipContent>{text}</TooltipContent>
 		</Tooltip>
 	);

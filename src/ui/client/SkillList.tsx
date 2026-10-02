@@ -45,8 +45,6 @@ import {
 	STATUS_TEXT,
 } from "./ui.tsx";
 
-const ANY = "any";
-
 function Headline({
 	rows,
 	filters,
@@ -141,6 +139,32 @@ export function SkillList({
 	const roots = summary.roots.filter((r) => r.present);
 	const sources = [...new Set(rows.flatMap((r) => r.sources))].sort();
 
+	// Select items double as the trigger's labels (SelectValue reads them).
+	// "" is the no-filter value, as in Filters.
+	const sourceItems = [
+		{ value: "", label: "Installed by anything" },
+		...sources.map((s) => ({ value: s, label: sourceLabel(s) })),
+	];
+	const rootItems = [
+		{ value: "", label: "In any location" },
+		...roots.map((r) => {
+			const Logo = rootIcon(r.id);
+			return {
+				value: r.id,
+				label: (
+					<>
+						<Logo aria-hidden />
+						In {rootLabel(r.id)} ({r.entries})
+					</>
+				),
+			};
+		}),
+	];
+	const sortItems: { value: Filters["sort"]; label: string }[] = [
+		{ value: "attention", label: "Needs attention first" },
+		{ value: "name", label: "A to Z" },
+	];
+
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
 			const typing =
@@ -187,52 +211,51 @@ export function SkillList({
 					</InputGroupAddon>
 				</InputGroup>
 				<Select
-					// Radix Select can't use "" as an item value; ANY stands for no filter.
-					value={filters.source || ANY}
-					onValueChange={(v) => set({ source: v === ANY ? "" : v })}
+					items={sourceItems}
+					value={filters.source}
+					onValueChange={(v) => set({ source: v ?? "" })}
 				>
 					<SelectTrigger aria-label="Installed by">
 						<SelectValue />
 					</SelectTrigger>
 					<SelectContent>
-						<SelectItem value={ANY}>Installed by anything</SelectItem>
-						{sources.map((s) => (
-							<SelectItem key={s} value={s}>
-								{sourceLabel(s)}
+						{sourceItems.map((it) => (
+							<SelectItem key={it.value} value={it.value}>
+								{it.label}
 							</SelectItem>
 						))}
 					</SelectContent>
 				</Select>
 				<Select
-					value={filters.root || ANY}
-					onValueChange={(v) => set({ root: v === ANY ? "" : v })}
+					items={rootItems}
+					value={filters.root}
+					onValueChange={(v) => set({ root: v ?? "" })}
 				>
 					<SelectTrigger aria-label="Location">
 						<SelectValue />
 					</SelectTrigger>
 					<SelectContent>
-						<SelectItem value={ANY}>In any location</SelectItem>
-						{roots.map((r) => {
-							const Logo = rootIcon(r.id);
-							return (
-								<SelectItem key={r.id} value={r.id}>
-									<Logo aria-hidden />
-									In {rootLabel(r.id)} ({r.entries})
-								</SelectItem>
-							);
-						})}
+						{rootItems.map((it) => (
+							<SelectItem key={it.value} value={it.value}>
+								{it.label}
+							</SelectItem>
+						))}
 					</SelectContent>
 				</Select>
 				<Select
+					items={sortItems}
 					value={filters.sort}
-					onValueChange={(v) => set({ sort: v as Filters["sort"] })}
+					onValueChange={(v) => v !== null && set({ sort: v })}
 				>
 					<SelectTrigger aria-label="Sort">
 						<SelectValue />
 					</SelectTrigger>
 					<SelectContent>
-						<SelectItem value="attention">Needs attention first</SelectItem>
-						<SelectItem value="name">A to Z</SelectItem>
+						{sortItems.map((it) => (
+							<SelectItem key={it.value} value={it.value}>
+								{it.label}
+							</SelectItem>
+						))}
 					</SelectContent>
 				</Select>
 				{filtered && (

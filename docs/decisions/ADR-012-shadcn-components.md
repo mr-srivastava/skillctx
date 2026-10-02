@@ -1,7 +1,7 @@
 # ADR-012: shadcn/ui for UI components
 
 ## Status
-Accepted
+Accepted in part. The primitive library is superseded by ADR-017: components use Base UI, not Radix. Notes below about Radix (`Select` sentinel, `radix-ui` dependency) are historical.
 
 ## Date
 2026-10-02
