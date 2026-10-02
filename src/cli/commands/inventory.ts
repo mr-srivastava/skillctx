@@ -36,6 +36,11 @@ export async function inventoryCommand(
 		io.out(
 			`${s.withDiagnostics} skills have warnings (missing name, bad frontmatter, ...).`,
 		);
+	const sources = Object.entries(s.sources)
+		.map(([k, n]) => `${k} ${n}`)
+		.join(", ");
+	io.out(`Sources: ${sources}`);
+	for (const w of s.warnings) io.err(`warning: ${w}`);
 	io.out("");
 	io.out(
 		`Wrote ${toPortable(ws.resolve("inventory"), env.homeDir)}: ${written.written} updated, ${written.unchanged} unchanged, ${written.removed} removed.`,

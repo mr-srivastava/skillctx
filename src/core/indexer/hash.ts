@@ -1,20 +1,30 @@
 import { createHash } from "node:crypto";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
-import { stripKeys } from "./parse.ts";
+import { canonicalSkillMd } from "./parse.ts";
 
 /**
  * Hash scheme version. Bump when normalization changes, since stored hashes
  * from an older scheme can no longer be compared.
  */
-export const HASH_SCHEME = "h1";
+export const HASH_SCHEME = "h2";
 
 /**
- * Top-level frontmatter keys that record where a copy came from rather than
- * what it says. Stripped before hashing so the same skill installed by two
- * tools hashes the same. Filled in as provenance adapters land (Task 7).
+ * Frontmatter keys (dotted paths) that record where a copy came from rather
+ * than what it says. Stripped before hashing so the same skill installed by
+ * two tools hashes the same. `gh skill` injects these under `metadata`
+ * (cli/cli internal/skills/frontmatter/frontmatter.go).
  */
-export const PROVENANCE_KEYS: ReadonlySet<string> = new Set<string>();
+export const PROVENANCE_KEYS: ReadonlySet<string> = new Set([
+	"metadata.github-repo",
+	"metadata.github-ref",
+	"metadata.github-tree-sha",
+	"metadata.github-path",
+	"metadata.github-pinned",
+	"metadata.github-sha",
+	"metadata.github-owner",
+	"metadata.local-path",
+]);
 
 const IGNORED = new Set([".git", "node_modules", ".DS_Store"]);
 
@@ -52,9 +62,9 @@ export function hashFolder(
 	const files = listFiles(folder);
 	for (const rel of files) {
 		let content: Buffer = readFileSync(path.join(folder, rel));
-		if (rel === "SKILL.md" && provenanceKeys.size > 0) {
+		if (rel === "SKILL.md") {
 			content = Buffer.from(
-				stripKeys(content.toString("utf8"), provenanceKeys),
+				canonicalSkillMd(content.toString("utf8"), provenanceKeys),
 			);
 		}
 		bytes += content.length;

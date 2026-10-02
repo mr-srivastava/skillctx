@@ -77,8 +77,8 @@ Plan: `tasks/plan.md`. Commands assume Bun: `bun test`, `bun run build`, `bun ru
 
 ## Checkpoint B: real-machine run
 - [x] `skillctx inventory` on the author's machine collapses ~590 entries into ~100 skills
-- [ ] Skills Manager copies group with their `~/.agents/skills` originals (or show as drift) — moved to Task 8; its root is not scanned yet
-- [ ] Review output with the user before adding provenance
+- [x] Skills Manager copies group with their `~/.agents/skills` originals (or show as drift) — done in Task 8; 3 skills show real drift (older Skills Manager copies)
+- [x] Review output with the user before adding provenance
 
 ## Provenance
 
@@ -86,8 +86,8 @@ Plan: `tasks/plan.md`. Commands assume Bun: `bun test`, `bun run build`, `bun ru
 **Description:** Read `~/.agents/.skill-lock.json` (v3) and attach `{source, sourceUrl, skillPath, skillFolderHash, installedAt, updatedAt}` to matching instances. Unknown versions degrade to no provenance.
 
 **Acceptance criteria:**
-- [ ] 83 lock entries attach to the right skills on the author's machine; the 14 unlisted ones show "untracked"
-- [ ] Malformed or missing lockfile produces a warning, not a failure
+- [x] 83 lock entries attach to the right skills on the author's machine; the 14 unlisted ones show "untracked"
+- [x] Malformed or missing lockfile produces a warning, not a failure
 
 **Verification:** fixture tests with a recorded lockfile; manual run.
 **Dependencies:** 5
@@ -98,9 +98,9 @@ Plan: `tasks/plan.md`. Commands assume Bun: `bun test`, `bun run build`, `bun ru
 **Description:** For instances whose realpath sits inside a git work tree, record origin URL, branch and HEAD. For `SKILL.md` frontmatter written by `gh skill` (repository, ref, tree SHA), record those.
 
 **Acceptance criteria:**
-- [ ] The 8 `understand-*` skills show the origin repo and HEAD of `~/.understand-anything/repo`
-- [ ] A fixture with gh-style frontmatter yields repo/ref/tree provenance
-- [ ] Provenance keys are excluded from the content hash (hash unchanged when only they differ)
+- [x] The 8 `understand-*` skills show the origin repo and HEAD of `~/.understand-anything/repo`
+- [x] A fixture with gh-style frontmatter yields repo/ref/tree provenance
+- [x] Provenance keys are excluded from the content hash (hash unchanged when only they differ)
 
 **Verification:** fixture tests (temp git repo); manual run.
 **Dependencies:** 5
@@ -111,8 +111,8 @@ Plan: `tasks/plan.md`. Commands assume Bun: `bun test`, `bun run build`, `bun ru
 **Description:** Enumerate `~/.skills-manager/skills` and read its `skills` table read-only (`source_type`, `source_ref`, `source_revision`, `remote_revision`, `content_hash`). Skip if the DB or expected columns are missing.
 
 **Acceptance criteria:**
-- [ ] The 100 Skills Manager copies appear as instances with `source_type=import` provenance
-- [ ] DB opened read-only; schema mismatch logs a warning and falls back to plain enumeration
+- [x] The 100 Skills Manager copies appear as instances with `source_type=import` provenance
+- [x] DB opened read-only; schema mismatch logs a warning and falls back to plain enumeration
 
 **Verification:** fixture DB test; manual run.
 **Dependencies:** 5
@@ -123,7 +123,7 @@ Plan: `tasks/plan.md`. Commands assume Bun: `bun test`, `bun run build`, `bun ru
 **Description:** Enumerate skills under `~/.claude/plugins/cache/**/skills/` using `installed_plugins.json` for plugin name and version.
 
 **Acceptance criteria:**
-- [ ] The 2 paper-desktop skills appear with plugin name and version
+- [x] The 2 paper-desktop skills appear with plugin name and version
 
 **Verification:** fixture test; manual run.
 **Dependencies:** 5
@@ -131,8 +131,8 @@ Plan: `tasks/plan.md`. Commands assume Bun: `bun test`, `bun run build`, `bun ru
 **Scope:** S
 
 ## Checkpoint C
-- [ ] Every skill on the author's machine shows a source or "untracked"
-- [ ] Tests and lint pass
+- [x] Every skill on the author's machine shows a source or "untracked"
+- [x] Tests and lint pass
 
 ## Outdated check
 

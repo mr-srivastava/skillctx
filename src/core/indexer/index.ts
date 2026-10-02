@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
+import type { Provenance } from "../provenance/types.ts";
 import type { SkillEntry } from "../sources/types.ts";
 import { hashFolder } from "./hash.ts";
 import { parseSkillMd } from "./parse.ts";
@@ -13,6 +14,8 @@ export interface SkillCopy {
 	description: string;
 	entries: SkillEntry[];
 	diagnostics: string[];
+	/** Filled in after indexing by the provenance lookups. */
+	provenance: Provenance[];
 }
 
 /** All copies sharing a name. More than one distinct hash means drift. */
@@ -56,7 +59,15 @@ function readCopy(
 	} catch (error) {
 		diagnostics.push(`Cannot hash folder: ${(error as Error).message}`);
 	}
-	return { name, realPath, description, entries, diagnostics, ...digest };
+	return {
+		name,
+		realPath,
+		description,
+		entries,
+		diagnostics,
+		provenance: [],
+		...digest,
+	};
 }
 
 const byString = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);

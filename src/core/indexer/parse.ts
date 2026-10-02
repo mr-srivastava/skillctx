@@ -35,14 +35,64 @@ export function parseSkillMd(text: string): ParseResult {
 	};
 }
 
-/** Re-join frontmatter without the given top-level keys. Used only for hashing. */
-export function stripKeys(text: string, keys: ReadonlySet<string>): string {
+/**
+ * Remove keys given as dotted paths ("metadata.github-repo"). A parent map
+ * left empty is removed too, so a copy with injected metadata and a copy
+ * without it end up identical.
+ */
+export function withoutKeys(
+	data: Record<string, unknown>,
+	keys: ReadonlySet<string>,
+): Record<string, unknown> {
+	const out: Record<string, unknown> = {};
+	for (const [key, value] of Object.entries(data)) {
+		if (keys.has(key)) continue;
+		const prefix = `${key}.`;
+		const nested = [...keys]
+			.filter((k) => k.startsWith(prefix))
+			.map((k) => k.slice(prefix.length));
+		if (
+			nested.length > 0 &&
+			value !== null &&
+			typeof value === "object" &&
+			!Array.isArray(value)
+		) {
+			const inner = withoutKeys(
+				value as Record<string, unknown>,
+				new Set(nested),
+			);
+			if (Object.keys(inner).length > 0) out[key] = inner;
+		} else {
+			out[key] = value;
+		}
+	}
+	return out;
+}
+
+function sortDeep(value: unknown): unknown {
+	if (Array.isArray(value)) return value.map(sortDeep);
+	if (value !== null && typeof value === "object") {
+		return Object.fromEntries(
+			Object.keys(value as object)
+				.sort()
+				.map((k) => [k, sortDeep((value as Record<string, unknown>)[k])]),
+		);
+	}
+	return value;
+}
+
+/**
+ * Canonical SKILL.md text for hashing: frontmatter parsed, provenance keys
+ * removed, keys sorted and serialized as JSON, then the body. Formatting
+ * differences in frontmatter (quoting, key order, injected tracking fields)
+ * don't change the hash. Unparseable files hash as-is.
+ */
+export function canonicalSkillMd(
+	text: string,
+	provenanceKeys: ReadonlySet<string>,
+): string {
 	const parsed = parseSkillMd(text);
-	if (!parsed.ok || keys.size === 0) return text;
-	const kept = Object.fromEntries(
-		Object.entries(parsed.value.data).filter(([k]) => !keys.has(k)),
-	);
-	if (Object.keys(kept).length === Object.keys(parsed.value.data).length)
-		return text;
-	return `---\n${Bun.YAML.stringify(kept, null, 2)}\n---\n${parsed.value.body}`;
+	if (!parsed.ok) return text;
+	const data = sortDeep(withoutKeys(parsed.value.data, provenanceKeys));
+	return `${JSON.stringify(data)}\n---\n${parsed.value.body}`;
 }

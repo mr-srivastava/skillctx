@@ -18,6 +18,11 @@ export const BUILTIN_ROOTS: readonly SkillRoot[] = [
 	{ id: "cursor", label: "Cursor", path: "~/.cursor/skills" },
 	{ id: "gemini", label: "Gemini CLI", path: "~/.gemini/skills" },
 	{ id: "opencode", label: "OpenCode", path: "~/.config/opencode/skills" },
+	{
+		id: "skills-manager",
+		label: "Skills Manager library",
+		path: "~/.skills-manager/skills",
+	},
 ];
 
 /** Extra roots listed under `roots:` in the workspace's skillctx.yaml. */

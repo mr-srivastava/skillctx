@@ -1,5 +1,16 @@
 import { buildIndex, type Skill } from "./indexer/index.ts";
 import { toPortable } from "./paths.ts";
+import {
+	claudeAppSyncedLookup,
+	claudePluginLookup,
+	combine,
+	ghFrontmatterLookup,
+	gitCheckoutLookup,
+	readClaudePlugins,
+	skillLockLookup,
+	skillsManagerLookup,
+} from "./provenance/sources.ts";
+import type { Provenance, ProvenanceKind } from "./provenance/types.ts";
 import { listPlainSkills } from "./sources/plain.ts";
 import { BUILTIN_ROOTS, configuredRoots } from "./sources/roots.ts";
 import type { SkillRoot } from "./sources/types.ts";
@@ -23,7 +34,11 @@ export interface InventorySummary {
 	entries: number;
 	drifted: number;
 	withDiagnostics: number;
+	/** Skills per provenance kind; a skill counts once per kind it has. */
+	sources: Partial<Record<ProvenanceKind | "untracked", number>>;
 	roots: RootSummary[];
+	/** Problems reading other tools' files (lockfile, databases). */
+	warnings: string[];
 }
 
 export interface ScanResult {
@@ -32,13 +47,45 @@ export interface ScanResult {
 }
 
 export function scan(ws: Workspace, homeDir: string): ScanResult {
-	const roots: SkillRoot[] = [...BUILTIN_ROOTS, ...configuredRoots(ws.root)];
+	const warnings: string[] = [];
+	const warn = (msg: string) => warnings.push(msg);
+	const plugins = readClaudePlugins(homeDir, warn);
+	const pluginRoots: SkillRoot[] = plugins.map((p) => ({
+		id: `claude-plugin:${p.plugin}`,
+		label: `Claude plugin ${p.plugin}`,
+		path: toPortable(`${p.installPath}/skills`, homeDir),
+	}));
+	const roots: SkillRoot[] = [
+		...BUILTIN_ROOTS,
+		...pluginRoots,
+		...configuredRoots(ws.root),
+	];
 	const entries = listPlainSkills(roots, homeDir);
 	const skills = buildIndex(entries);
+
+	const lookup = combine([
+		skillLockLookup(homeDir, warn),
+		ghFrontmatterLookup,
+		gitCheckoutLookup(homeDir),
+		skillsManagerLookup(homeDir, warn),
+		claudePluginLookup(plugins),
+		claudeAppSyncedLookup(homeDir),
+	]);
+	for (const skill of skills) {
+		for (const copy of skill.copies) copy.provenance = lookup(copy.realPath);
+	}
 
 	const perRoot = new Map<string, number>();
 	for (const e of entries)
 		perRoot.set(e.rootId, (perRoot.get(e.rootId) ?? 0) + 1);
+
+	const sources: InventorySummary["sources"] = {};
+	for (const skill of skills) {
+		const kinds = sourceKinds(skill);
+		for (const k of kinds.length > 0 ? kinds : (["untracked"] as const)) {
+			sources[k] = (sources[k] ?? 0) + 1;
+		}
+	}
 
 	const summary: InventorySummary = {
 		skills: skills.length,
@@ -48,6 +95,7 @@ export function scan(ws: Workspace, homeDir: string): ScanResult {
 		withDiagnostics: skills.filter((s) =>
 			s.copies.some((c) => c.diagnostics.length > 0),
 		).length,
+		sources: Object.fromEntries(Object.entries(sources).sort()),
 		roots: roots.map((r) => ({
 			id: r.id,
 			label: r.label,
@@ -55,8 +103,30 @@ export function scan(ws: Workspace, homeDir: string): ScanResult {
 			present: perRoot.has(r.id),
 			entries: perRoot.get(r.id) ?? 0,
 		})),
+		warnings,
 	};
 	return { skills, summary };
+}
+
+/** Distinct provenance kinds across a skill's copies, sorted. */
+export function sourceKinds(skill: Skill): ProvenanceKind[] {
+	return [
+		...new Set(skill.copies.flatMap((c) => c.provenance.map((p) => p.kind))),
+	].sort();
+}
+
+/**
+ * Provenance comes from other tools' files, which store absolute paths
+ * (Skills Manager's source_ref, git repo roots, local remotes). Every string
+ * that is an absolute path under home becomes `~/...` (ADR-009).
+ */
+export function portableProvenance(p: Provenance, homeDir: string): Provenance {
+	return Object.fromEntries(
+		Object.entries(p).map(([k, v]) => [
+			k,
+			typeof v === "string" && v.startsWith("/") ? toPortable(v, homeDir) : v,
+		]),
+	) as Provenance;
 }
 
 /** File name for a skill's inventory record; names are user-controlled, so keep it filesystem-safe. */
@@ -72,6 +142,7 @@ export function toRecord(skill: Skill, homeDir: string) {
 		description: skill.description,
 		versions: skill.versions,
 		drift: skill.drift,
+		sources: sourceKinds(skill),
 		copies: skill.copies.map((c) => ({
 			hash: c.hash,
 			realPath: toPortable(c.realPath, homeDir),
@@ -82,6 +153,7 @@ export function toRecord(skill: Skill, homeDir: string) {
 				path: toPortable(e.entryPath, homeDir),
 				symlink: e.viaSymlink,
 			})),
+			provenance: c.provenance.map((p) => portableProvenance(p, homeDir)),
 			diagnostics: c.diagnostics,
 		})),
 	};
