@@ -452,7 +452,7 @@ function SkillList({
 										type="button"
 										className={filters.root === r.id ? "loc-btn on" : "loc-btn"}
 										aria-pressed={filters.root === r.id}
-										title={`${r.path} holds ${r.entries} skills. Click to show only these.`}
+										title={`${r.path} holds ${r.entries} skills. ${filters.root === r.id ? "Showing only these; press to show all." : "Press to show only these."}`}
 										onClick={() =>
 											set({ root: filters.root === r.id ? "" : r.id })
 										}

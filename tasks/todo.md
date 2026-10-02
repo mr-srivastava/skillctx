@@ -201,9 +201,9 @@ Plan: `tasks/plan.md`. Commands assume Bun: `bun test`, `bun run build`, `bun ru
 **Scope:** S
 
 ## Checkpoint D: Phase 0 complete
-- [ ] `init`, `inventory`, `inventory --check`, `ui` work end to end on the author's machine
-- [ ] Workspace `git init` + commit shows only portable plain files
-- [ ] README usage section updated; spec open questions resolved or carried forward
+- [x] `init`, `inventory`, `inventory --check`, `ui` work end to end on the author's machine
+- [x] Workspace `git init` + commit shows only portable plain files
+- [x] README usage section updated; spec open questions resolved or carried forward
 - [ ] Review with the user
 
 ### Task 15 (optional): Workspace backup helper

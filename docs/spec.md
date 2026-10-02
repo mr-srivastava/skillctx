@@ -1,6 +1,6 @@
 # skillctx spec
 
-Status: draft v0.4 · 2026-10-02 · Owner: Aadarsh Srivastava
+Status: draft v0.5 · 2026-10-02 · Owner: Aadarsh Srivastava
 Live doc: https://claude.ai/code/artifact/2a245a34-da36-4c90-867e-1cceca1ae294
 Decisions: [docs/decisions/](decisions/) · Research: [docs/research/community-research.md](research/community-research.md) · Engine review notes: [docs/reviews/](reviews/)
 
@@ -320,12 +320,16 @@ The MVP is Phase 0, a read-only inventory (ADR-010). It is useful on its own, an
 - [x] Language: TypeScript + Bun single binary ([ADR-004](decisions/ADR-004-typescript-with-bun-binary.md))
 - [ ] Success metric for the context engine: tokens, tool calls, or task results first?
 - [x] Where project overrides live: workspace by default, opt-in to the repo (ADR-009).
-- [ ] Skills Manager integration: read disk, or only its `--json` CLI?
+- [x] Skills Manager integration: read its folders plus its SQLite database, read-only (Phase 0).
 - [ ] Commit compiled output in the workspace repo, or regenerate it?
 - [ ] Default read mode: `files` or `cli`?
 - [ ] First `build` targets: Claude Code + `.agents/skills` only, or Cursor too? (Cursor reads both folders; see engine review.)
 - [ ] How do compiled skills in `<home>/compiled/` reach agent folders: symlink, copy, or agent config?
 - [ ] Cloud storage backup: which provider first, and when?
+- [ ] Skillshare adapter: listed in ADR-010 but not built in Phase 0, because no Skillshare install was available to test against. Add it when someone has one.
+- [ ] Project-level skill roots (`<repo>/.claude/skills` and similar): deferred from Phase 0; needed once project overrides exist.
+
+The unchecked questions carry into Phase 1. Phase 0 settled none of them except the Skills Manager one.
 
 ## 12. Prior art
 

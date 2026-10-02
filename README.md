@@ -2,13 +2,13 @@
 
 A local, tool-agnostic skill compiler for coding agents. It reads skills installed by other tools (`npx skills`, `gh skill`, Skills Manager) without modifying them, applies your personal variants and per-project patches, and produces lean, project-scoped skills for Claude Code, Codex and Cursor. All its data lives in one workspace folder you choose and can back up to your own GitHub repo. "skillctx" is a working name.
 
-Status: planning. No code yet.
+Status: Phase 0 (read-only inventory and local web UI) works. The compile engine is not designed yet.
 
 ## Docs
 
 | Doc | Purpose |
 | --- | --- |
-| [docs/spec.md](docs/spec.md) | Product and architecture spec (v0.4) |
+| [docs/spec.md](docs/spec.md) | Product and architecture spec (v0.5) |
 | [docs/research/community-research.md](docs/research/community-research.md) | What the community says about the five problems, and existing tools |
 | [docs/decisions/](docs/decisions/) | Architecture Decision Records |
 | [docs/reviews/](docs/reviews/) | Architecture review notes (inputs, not decisions) |
@@ -29,6 +29,46 @@ Status: planning. No code yet.
 | [009](docs/decisions/ADR-009-workspace-at-user-chosen-home.md) | One workspace at a user-chosen path holds all skillctx data; git-backable |
 | [010](docs/decisions/ADR-010-inventory-first-with-local-web-ui.md) | Phase 0 is a read-only cross-source inventory with a local web UI |
 
-## MVP (Phase 0)
+## Usage
 
-`skillctx init --home <path>` creates the workspace. `skillctx inventory` scans every skill source (npx skills, gh skill, Skills Manager, Skillshare, plain folders), dedupes copies by content hash, and writes the results to `<home>/inventory/`. `skillctx inventory --check` compares against upstream on demand. `skillctx ui` shows it all in a local web page. The compile engine comes next; its design is still open.
+Requires [Bun](https://bun.sh) 1.3 or later.
+
+```bash
+bun install
+bun run build            # writes dist/skillctx, a single binary
+```
+
+```bash
+skillctx init --home ~/skillctx   # create a workspace and make it active
+skillctx inventory                # scan every skill folder, write <home>/inventory/
+skillctx inventory --check        # also compare with GitHub and git remotes
+skillctx ui                       # open the inventory at http://127.0.0.1:4317
+```
+
+During development, use `bun run dev <command>` instead of the binary.
+
+`inventory` reads skill folders for Agents (`~/.agents/skills`), Claude Code, Codex, Cursor, Gemini, OpenCode, Skills Manager and Claude plugins. It never writes to them. Provenance comes from the `npx skills`/`gh skill` lockfile, `gh skill` frontmatter, git checkouts, the Skills Manager database and Claude's plugin list. Only `--check` (or "Check for updates" in the UI) touches the network: one GitHub request per repository, using `GITHUB_TOKEN` or `gh auth token` if available.
+
+Point at a different workspace with `--home <path>` or `SKILLCTX_HOME`. The active workspace is recorded in `~/.config/skillctx/config.json`.
+
+### The workspace
+
+```
+<home>/
+  skillctx.yaml        # workspace settings
+  inventory/           # one JSON file per skill, plus summary.json and upstream.json
+  .cache/              # rebuildable, git-ignored
+```
+
+Every path stored in the workspace is relative to `~`, so you can commit it to a private GitHub repo and use it on another machine.
+
+## Development
+
+| Command | Does |
+| --- | --- |
+| `bun test` | Run tests |
+| `bun run lint` | Biome |
+| `bun run typecheck` | tsc |
+| `bun run build` | Compile and ad-hoc sign `dist/skillctx` |
+
+The UI server builds the client bundle at startup, so restart `skillctx ui` after editing `src/ui/client/`.
