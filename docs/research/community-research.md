@@ -67,6 +67,27 @@ What's missing: a tool that actually does this. It's the clearest gap of the fiv
 
 Existing: [Skillshare](https://github.com/runkids/skillshare), [Skills Manager](https://github.com/xingkongliang/skills-manager), lockfiles, [SkillSpector](https://github.com/nvidia/skillspector), Snyk Agent Scan.
 
+### Skills Manager compared with skillctx
+
+Checked 2026-10-03 against [skillsmanager.dev](https://skillsmanager.dev/) and the repo at `def946d`. It's an MIT-licensed Tauri desktop app with a Rust CLI. It copies skills into a central library (`~/.skills-manager/skills`) and deploys them out to agent folders. skillctx reads skills where they already are and never writes to them.
+
+| Feature | Skills Manager | skillctx (Phase 0) |
+| --- | --- | --- |
+| Agents | ~56 adapters (`tool_adapters.rs`; the site says 52), with custom global and project paths | 8 locations |
+| Install | git, local folder, ZIP, skills.sh marketplace | None (non-goal) |
+| Deploy | Symlink (recommended) or copy, global and per project | None; delivery of compiled output is still open |
+| Presets, tags, bulk actions | Yes | No; presets will be reused as profiles |
+| Backup | GitHub sign-in, auto-created private repo, merges per skill that never overwrite on conflict | Plain workspace you push yourself |
+| Content hash | Yes. Ignores `.git`, `.DS_Store` and `*.pyc`; a second hash that ignores line endings is used for update checks (`content_hash.rs`) | Yes |
+| Duplicates | Groups same name with the same hash, only when importing (`scanner.rs`) | Ongoing view across sources, by real path and content hash |
+| Drift | Per-project status: in sync / project newer / center newer / diverged, with reset | Offline edit detection against the recorded hash |
+| Updates | git and skills.sh skills checked against upstream, with a source diff | `inventory --check` for repos named in provenance |
+| Provenance | Only for skills it installed itself (`source_type`: `git`, `skillssh`, `local`); skills found in agent folders become `local`/`import` | Read in place from lockfiles, `gh skill` frontmatter, git checkouts, its database, Claude plugins |
+| Content view | Main document only (SKILL.md), as markdown; no editing | Every file in the skill, read-only, with Shiki highlighting |
+| Compile, patches, lenses, analytics | None | Planned (Phases 1–4) |
+
+Takeaway: it covers the management layer more fully than we should try to, and its hashing and drift handling are as good as ours or better. Its line-ending and dependency-folder rules are worth adopting. Where it can't compete is in seeing skills it didn't install: cross-tool provenance and a standing view across sources come from reading in place, and those are what the inventory should lean on.
+
 What's missing: nothing we should own. The one useful hook is running a scanner during `build`.
 
 ## 5. No feedback
