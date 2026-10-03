@@ -94,10 +94,15 @@ export function portableProvenance(p: Provenance, homeDir: string): Provenance {
 	) as Provenance;
 }
 
-/** File name for a skill's inventory record; names are user-controlled, so keep it filesystem-safe. */
-export function skillFileName(name: string): string {
+/** A skill name as a file or folder name; names are user-controlled, so keep them filesystem-safe. */
+export function safeName(name: string): string {
 	const safe = name.replace(/[^A-Za-z0-9._-]/g, "_").replace(/^\.+/, "_");
-	return `${safe || "_"}.json`;
+	return safe || "_";
+}
+
+/** File name for a skill's inventory record. */
+export function skillFileName(name: string): string {
+	return `${safeName(name)}.json`;
 }
 
 /** The committed shape of one skill: no absolute home paths, stable key order. */
