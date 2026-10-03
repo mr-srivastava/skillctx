@@ -1,23 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { CodeBlock } from "@/components/code-block";
 import { Path, Toolbar } from "@/components/display";
 import { Picker, type PickerItem } from "@/components/picker";
-import { Problem } from "@/components/problem";
 import { formatBytes } from "@/lib/format";
-import { CodeText, grammarForFile, useHighlight } from "@/lib/highlight";
-import {
-	goToAnchor,
-	type Heading,
-	Markdown,
-	parseMarkdown,
-	splitFrontmatter,
-} from "@/lib/markdown";
 import { copyFileQuery, copyFilesQuery } from "@/lib/queries";
-import { cn } from "@/lib/utils";
 import type { SkillRecord } from "../../../../core/inventory/format.ts";
 import type { CopyFiles } from "../../../data.ts";
 import { copyItems } from "./copy-items.tsx";
+import { FileBody } from "./FileBody.tsx";
+import { Outline } from "./Outline.tsx";
+import { useFileDocument } from "./use-file-document.ts";
 
 /** The file a skill opens on: SKILL.md, or the first file if it's missing. */
 function entryFile(files: CopyFiles["files"]): string | null {
@@ -47,30 +39,7 @@ export function Contents({
 	// Keyed by copy and path, so only the current selection's file shows.
 	const current = fileQuery.data ?? null;
 	const error = listingQuery.error?.message ?? fileQuery.error?.message ?? null;
-
-	const isMarkdown = current ? /\.(md|markdown)$/i.test(current.path) : false;
-	const doc = useMemo(() => {
-		if (!current?.text || !isMarkdown) return null;
-		const { frontmatter, body } = splitFrontmatter(current.text);
-		return { frontmatter, parsed: parseMarkdown(body) };
-	}, [current, isMarkdown]);
-
-	// Grammars this file needs: its fences and frontmatter, or the file itself.
-	const fileGrammar =
-		current && !isMarkdown ? grammarForFile(current.path) : null;
-	const languages = useMemo(
-		() =>
-			doc
-				? [
-						...doc.parsed.languages,
-						...(doc.frontmatter !== null ? ["yaml"] : []),
-					]
-				: fileGrammar
-					? [fileGrammar]
-					: [],
-		[doc, fileGrammar],
-	);
-	const highlight = useHighlight(languages);
+	const doc = useFileDocument(current);
 
 	const paths = useMemo(
 		() => new Set(listing?.files.map((f) => f.path)),
@@ -127,97 +96,16 @@ export function Contents({
 								: ". The copies differ; most locations use another one.")}
 					</p>
 				)}
-
-				{error ? (
-					<Problem title="Couldn't read this skill's files">{error}</Problem>
-				) : listing && listing.files.length === 0 ? (
-					<p className="text-ink-soft">
-						This copy's folder is empty or can't be read. Rescan to update the
-						inventory.
-					</p>
-				) : !current ? (
-					<p className="text-ink-soft">Loading…</p>
-				) : current.text === null ? (
-					<p className="text-ink-soft">
-						This file is binary or larger than 256 KB, so it isn't shown.
-					</p>
-				) : doc ? (
-					<>
-						{doc.frontmatter !== null && (
-							<details className="mb-6 rounded-md border border-rule bg-raised">
-								<summary className="cursor-pointer px-3.5 py-2 text-small text-ink-soft hover:text-ink">
-									Frontmatter
-								</summary>
-								<pre className="overflow-x-auto border-t border-rule px-3.5 py-2.5 font-mono text-code leading-relaxed">
-									<CodeText
-										code={doc.frontmatter}
-										lang="yaml"
-										highlight={highlight}
-									/>
-								</pre>
-							</details>
-						)}
-						<div className="max-w-reading leading-[1.6]">
-							<Markdown
-								parsed={doc.parsed}
-								file={current.path}
-								files={paths}
-								onOpenFile={open}
-								highlight={highlight}
-							/>
-						</div>
-					</>
-				) : (
-					<CodeBlock>
-						<CodeText
-							code={current.text}
-							lang={fileGrammar}
-							highlight={highlight}
-						/>
-					</CodeBlock>
-				)}
+				<FileBody
+					error={error}
+					empty={listing?.files.length === 0}
+					file={current}
+					doc={doc}
+					files={paths}
+					onOpenFile={open}
+				/>
 			</div>
-			{doc && <Outline headings={doc.parsed.headings} />}
+			{doc.markdown && <Outline headings={doc.markdown.parsed.headings} />}
 		</div>
-	);
-}
-
-/**
- * The file's headings, for jumping around long skills. Shown beside the text
- * on wide screens only; on narrow ones the text reads top to bottom.
- */
-function Outline({ headings }: { headings: Heading[] }) {
-	const inner = headings.filter((h) => h.depth === 2 || h.depth === 3);
-	const items = inner.length > 0 ? inner : headings.filter((h) => h.depth <= 3);
-	if (items.length < 2) return null;
-	const top = Math.min(...items.map((h) => h.depth));
-	return (
-		<nav
-			aria-labelledby="outline-label"
-			className="sticky top-4 hidden max-h-[calc(100vh-2rem)] self-start overflow-y-auto split:block"
-		>
-			<h2
-				id="outline-label"
-				className="mb-2 text-caption font-medium text-ink-soft"
-			>
-				On this page
-			</h2>
-			<ul className="border-l border-rule">
-				{items.map((h) => (
-					<li key={h.id}>
-						<button
-							type="button"
-							className={cn(
-								"-ml-px block w-full cursor-pointer border-l border-transparent py-1 pr-1 text-left text-small leading-snug text-ink-soft hover:border-ink hover:text-ink",
-								h.depth > top ? "pl-6" : "pl-3",
-							)}
-							onClick={() => goToAnchor(h.id)}
-						>
-							{h.text}
-						</button>
-					</li>
-				))}
-			</ul>
-		</nav>
 	);
 }

@@ -5,7 +5,8 @@ import { BusySpinner, PageHeading } from "@/components/display";
 import { Problem } from "@/components/problem";
 import { Button } from "@/components/ui/button";
 import { SkillDetail } from "@/features/skill-detail/SkillDetail";
-import { SkillList, type SkillView } from "@/features/skill-list/SkillList";
+import { SkillList } from "@/features/skill-list/SkillList";
+import type { SkillView } from "@/features/skill-list/ViewToggle";
 import type { Inventory } from "@/lib/api";
 import { type Filters, NO_FILTERS, toRows } from "@/lib/model";
 import { inventoryQuery, useRefresh } from "@/lib/queries";
@@ -106,18 +107,18 @@ export function App() {
 		);
 	}
 
-	const skill = selected
-		? data.skills.find((s) => s.name === selected)
-		: undefined;
+	// Rows come from the skills one for one, so a skill found has its row.
+	const skill = data.skills.find((s) => s.name === selected);
+	const row = rows.find((r) => r.name === selected);
 
 	return (
 		<main className={PAGE}>
 			{bar}
 			{selected ? (
-				skill ? (
+				skill && row ? (
 					<SkillDetail
 						skill={skill}
-						row={rows.find((r) => r.name === skill.name)}
+						row={row}
 						summary={data.summary}
 						tab={route.tab}
 						onTab={setTab}

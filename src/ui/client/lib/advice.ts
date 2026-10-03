@@ -22,10 +22,10 @@ function shortRepo(url: string): string {
  */
 export function adviceFor(
 	skill: Pick<SkillRecord, "name" | "drift">,
-	row: Row | undefined,
+	row: Row,
 ): Advice[] {
 	const items: Advice[] = [];
-	for (const u of row?.upstream ?? []) {
+	for (const u of row.upstream) {
 		const command =
 			u.status === "outdated"
 				? updateCommand(u.via, skill.name, u.copy)
@@ -46,8 +46,8 @@ export function adviceFor(
 			});
 		}
 	}
-	const edited = row?.statuses.includes("edited");
-	if (edited && row?.statuses.includes("outdated")) {
+	const edited = row.statuses.includes("edited");
+	if (edited && row.statuses.includes("outdated")) {
 		items.push({
 			key: "edited-outdated",
 			kind: "edited",
