@@ -103,12 +103,19 @@ function git(cwd: string, args: string[]): string | undefined {
 /**
  * Skills that live inside a git work tree (e.g. a cloned plugin repo that
  * ~/.agents/skills symlinks into). Stops at the home directory so a dotfiles
- * repo at ~ doesn't claim every skill. One git call set per repo.
+ * repo at ~ doesn't claim every skill. Paths under `exclude` are skipped: the
+ * workspace is often a git repo itself, and its builds aren't checkouts of it.
+ * One git call set per repo.
  */
-export function gitCheckoutLookup(homeDir: string): ProvenanceLookup {
+export function gitCheckoutLookup(
+	homeDir: string,
+	exclude: readonly string[] = [],
+): ProvenanceLookup {
 	const cache = new Map<string, Provenance | null>();
 	const home = tryRealpath(homeDir) ?? homeDir;
+	const skipped = exclude.map((p) => tryRealpath(p) ?? p);
 	return (real) => {
+		if (skipped.some((p) => isInside(p, real))) return [];
 		let dir = real;
 		while (isInside(home, dir) && dir !== home) {
 			if (existsSync(path.join(dir, ".git"))) {

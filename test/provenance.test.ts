@@ -145,6 +145,29 @@ describe("git checkout", () => {
 		expect(p?.kind === "git-checkout" && p.head).toMatch(/^[0-9a-f]{40}$/);
 	});
 
+	test("excluded folders are skipped even inside a repo", () => {
+		const ws = path.join(home, "skillctx");
+		const real = skill(path.join(ws, "build"), "x");
+		Bun.spawnSync(["git", "init", "-q"], { cwd: ws });
+		Bun.spawnSync(
+			[
+				"git",
+				"-c",
+				"user.email=t@t",
+				"-c",
+				"user.name=t",
+				"commit",
+				"-q",
+				"--allow-empty",
+				"-m",
+				"init",
+			],
+			{ cwd: ws },
+		);
+		expect(gitCheckoutLookup(home)(real)[0]?.kind).toBe("git-checkout");
+		expect(gitCheckoutLookup(home, [ws])(real)).toEqual([]);
+	});
+
 	test("skills outside any repo get nothing", () => {
 		expect(gitCheckoutLookup(home)(skill(path.join(home, "x"), "x"))).toEqual(
 			[],

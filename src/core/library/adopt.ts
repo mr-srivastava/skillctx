@@ -100,8 +100,16 @@ function adoptLocked(
 				copy: index,
 			};
 		}
+		// Same folder means it changed after adopting (usually an upstream
+		// update); another folder means a drifted copy.
+		const sameFolder =
+			copy.realPath === existing.adoptedFrom ||
+			copy.seenIn.some((s) => s.path === existing.adoptedFrom);
+		const why = sameFolder
+			? `it was adopted from ${existing.adoptedFrom} on ${existing.adoptedAt.slice(0, 10)}, and that folder has changed since (an upstream update or an edit)`
+			: `copy ${index + 1} (${copy.realPath}) differs from the one adopted from ${existing.adoptedFrom}`;
 		throw new AdoptError(
-			`"${opts.name}" is already in the library with different content. Updating an adopted skill arrives in Phase 2.`,
+			`"${opts.name}" is already in the library, but ${why}. The library keeps the adopted version; updating it arrives in Phase 2.`,
 		);
 	}
 	const clash = Object.keys(lock.skills).find(
