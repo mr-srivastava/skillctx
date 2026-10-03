@@ -10,6 +10,7 @@ Gate: the author manages their own machine's skills through skillctx, with no wr
 - Agents: the folders the inventory already reads, except Skills Manager's library, which stays a source.
 - Skills Manager import: its library now; presets and tags stored in the lockfile for Phase 3.
 - Commands are top-level verbs: `adopt`, `deploy`, `undeploy`, `import`.
+- ADR-025 (2026-10-04) sets the direction for Phases 2 and 3: versions, the update inbox, project targets, harness adapters with capabilities. Nothing in this plan changes, but new core code should stay free of harness names, and the agent table in `src/core/deploy/agents.ts` is where the harness adapter layer will grow.
 
 ## Architecture
 

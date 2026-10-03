@@ -14,18 +14,33 @@ Domain terms for skillctx. Architecture terms (module, interface, seam, adapter,
 - **Outdated**: upstream has a newer revision than the installed instance. Checked only on explicit refresh.
 - **Drift**: two instances of one skill (same name) with different content hashes.
 - **Agent**: a harness that loads skills from its own folders (Claude Code, Codex, Cursor, Gemini CLI). Called "Consumer" in the borrowed SkillRoot/Consumer vocabulary.
+- **Harness adapter**: one agent's facts and mechanisms: its global and project folders and its capabilities. Core never names a harness; it plans from adapters (ADR-025).
+- **Capability**: something a harness adapter declares an agent supports or does, such as per-project hide, same-name precedence or a description budget. Any capability can be unknown, which makes core take a generic fallback.
+- **Support tier**: how much a harness adapter knows. Full (every capability verified, with date and method), basic (folders only) or custom (an agent defined in `skillctx.yaml`).
 - **Managed skill**: a skill in skillctx's library, as opposed to one only read from another tool's folder (ADR-021).
 - **Snapshot**: the immutable files of a managed skill as installed or adopted. Recorded in the lockfile with source, revision and content hash.
 - **Adopt**: take a snapshot of a skill another tool installed into the library, leaving the original untouched.
-- **Edit**: your change to a managed skill, stored as a diff against its snapshot and merged 3-way on update.
+- **Version**: a named form of a managed skill. `upstream` is the snapshot; every other version (`mine`, `convex-app`) is a diff against its parent version, rebased 3-way when the parent changes. Versions belong to the skill, and several targets can use one (ADR-025).
+- **Revision**: a point in upstream's history (a git commit). "Version" always means yours.
+- **Version chain**: versions forked from versions (`upstream → mine → convex-app`). Updates flow down the chain as proposals, resolved top-down.
+- **Edit**: a change to a version, made in a working copy and stored as part of that version's diff.
+- **Working copy**: a folder skillctx opens for editing or forking a version or resolving a conflict. You, your editor or an agent change it; saving stores the diff.
+- **Outside edit**: a change to a build or a copy-mode deployment that skillctx didn't make. Captured into a version, discarded or detached, never overwritten.
+- **Update inbox**: the list of upstream changes found by an explicit update check, each showing which versions it affects and whether they rebase cleanly. Nothing rebases until accepted.
+- **Pin**: holding a skill at one revision; updates show but stay out of the inbox. The default is **track**, following the branch.
+- **Orphaned**: a managed skill whose upstream is gone, private, moved or rewritten. It keeps working until its source is re-pointed.
 - **Workspace lock**: `local/workspace.lock`, held by whichever skillctx process is writing the workspace. Another writer is refused with the holder's pid; a lock left by a process that exited is taken over (ADR-024).
 - **Library**: the workspace folder holding the lockfile, edits, and snapshots that can't be fetched again.
-- **Build**: a snapshot with its edit applied, in `<home>/build/`. Regenerated, never committed.
-- **Deployment**: a symlink or copy in an agent's skill folder pointing at a build. Listed in the per-machine deployment record; skillctx only modifies entries in that record (ADR-022).
+- **Build**: a version with its diffs applied, in `<home>/build/`. Regenerated, never committed, and never over an outside edit.
+- **Target**: a place a skill appears: global (an agent's global folders) or a registered project (the project folders of the agents chosen for it). One version of a skill per target.
+- **Project**: a folder registered with skillctx, identified by its git remote URL, with its path stored per machine.
+- **Deployment**: one version in one target: a symlink or copy in a skill folder pointing at a build, or a settings key a harness adapter declares. Listed in the per-machine deployment record; skillctx only modifies entries in that record (ADR-022, ADR-025).
+- **Share with repo**: deploying a version into a project in copy mode, so teammates get a plain skill without skillctx.
+- **Detach**: turning deployments of a skill into plain copies skillctx no longer manages.
 - **Deployment plan**: the list of writes a deploy, undeploy or update would make, shown before anything is applied. The UI applies a plan only if planning again gives the one the person reviewed (ADR-024).
 - **Takeover**: replacing another tool's symlink in an agent folder with a deployment, after confirmation. The replaced link is restored on undeploy. Real folders are never taken over (ADR-023).
 - **Taken back**: a recorded deployment that another tool has since rewritten. skillctx reports it and stops treating it as its own.
 - **Parity**: Skills Manager's users can switch to skillctx without missing anything day to day. Defined by a checklist, not by Skills Manager's changelog.
 - **Skills Manager**: the desktop app xingkongliang/skills-manager. Not udayvarmora07/skills-manager, which the spec borrows vocabulary from.
-- **Profile**: a named set of skills; Skills Manager presets import as profiles (Phase 3).
-- **Section**, **variant**, **composite**, **project lens**, **project patch**, **lens rule**: see spec §4. Phase 5, not built yet.
+- **Profile**: a named set of skill and version pairs, applied to a target; Skills Manager presets import as profiles (Phase 3).
+- **Section**, **variant**, **composite**, **project lens**, **project patch**, **lens rule**: see spec §4. Phase 5, not built yet. Variants and project patches are versions stored as section ops.

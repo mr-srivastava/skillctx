@@ -1,7 +1,7 @@
 # ADR-021: skillctx becomes a skill manager, with safe edits, provenance and analytics
 
 ## Status
-Accepted. Supersedes ADR-007 and ADR-010 where they make installing, updating, deploying or syncing a non-goal. Amends ADR-002 (diffs come before section ops). Deploying into agent folders is decided in ADR-022.
+Accepted. Supersedes ADR-007 and ADR-010 where they make installing, updating, deploying or syncing a non-goal. Amends ADR-002 (diffs come before section ops). Deploying into agent folders is decided in ADR-022. Amended by ADR-025: Phase 2 and 3 scope (versions, update inbox, project targets), and snapshots of skills with versions or shared into a repo are always committed.
 
 ## Date
 2026-10-03

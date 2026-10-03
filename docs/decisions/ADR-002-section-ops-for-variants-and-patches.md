@@ -1,7 +1,7 @@
 # ADR-002: Represent variants and patches as section operations
 
 ## Status
-Accepted. Amended by ADR-021: edits are first stored as line diffs against an immutable snapshot and merged 3-way on update (Phase 2). Section ops replace diffs as the main format when the section parser exists (Phase 5); the raw-diff op below is that first format.
+Accepted. Amended by ADR-021: edits are first stored as line diffs against an immutable snapshot and merged 3-way on update (Phase 2). Section ops replace diffs as the main format when the section parser exists (Phase 5); the raw-diff op below is that first format. Amended by ADR-025: project variants (now project versions) also ship first as line diffs, in Phase 3.
 
 ## Date
 2026-10-02
