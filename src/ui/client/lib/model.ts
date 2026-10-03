@@ -103,6 +103,8 @@ export interface Filters {
 	source: string;
 	root: string;
 	status: Status | "";
+	/** In skillctx's library, not in it, or "" for either. */
+	library: "" | "managed" | "unmanaged";
 	sort: Sort;
 }
 
@@ -111,6 +113,7 @@ export const NO_FILTERS: Filters = {
 	source: "",
 	root: "",
 	status: "",
+	library: "",
 	sort: "attention",
 };
 
@@ -125,7 +128,12 @@ function attention(r: Row): number {
 	return r.statuses.reduce((n, s) => n + WEIGHT[s], 0);
 }
 
-export function filterRows(rows: Row[], f: Filters): Row[] {
+/** `managed` is the names of the skills in the library. */
+export function filterRows(
+	rows: Row[],
+	f: Filters,
+	managed: ReadonlySet<string> = new Set(),
+): Row[] {
 	const q = f.query.trim().toLowerCase();
 	const out = rows.filter(
 		(r) =>
@@ -134,7 +142,8 @@ export function filterRows(rows: Row[], f: Filters): Row[] {
 				r.description.toLowerCase().includes(q)) &&
 			(!f.source || r.sources.includes(f.source)) &&
 			(!f.root || r.roots.includes(f.root)) &&
-			(!f.status || r.statuses.includes(f.status)),
+			(!f.status || r.statuses.includes(f.status)) &&
+			(!f.library || managed.has(r.name) === (f.library === "managed")),
 	);
 	return f.sort === "attention"
 		? [...out].sort(

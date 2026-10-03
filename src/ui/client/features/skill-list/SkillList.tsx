@@ -1,9 +1,11 @@
+import { useQuery } from "@tanstack/react-query";
 import { Fragment } from "react";
 import { ListLegend } from "@/components/presence";
 import { ItemGroup, ItemSeparator } from "@/components/ui/item";
 import type { InventorySummary } from "@/lib/core";
 import { plural } from "@/lib/format";
 import { type Filters, filterRows, type Row } from "@/lib/model";
+import { libraryQuery } from "@/lib/queries";
 import { FilterBar } from "./FilterBar.tsx";
 import { Headline } from "./Headline.tsx";
 import { SkillCard, SkillRow } from "./SkillItem";
@@ -25,7 +27,9 @@ export function SkillList({
 	view: SkillView;
 	setView: (view: SkillView) => void;
 }) {
-	const visible = filterRows(rows, filters);
+	const library = useQuery(libraryQuery).data;
+	const managed = new Set(Object.keys(library ?? {}));
+	const visible = filterRows(rows, filters, managed);
 	const roots = summary.roots.filter((r) => r.present);
 	const rootIds = roots.map((r) => r.id);
 
@@ -39,6 +43,7 @@ export function SkillList({
 			<FilterBar
 				rows={rows}
 				roots={roots}
+				managed={managed}
 				filters={filters}
 				setFilters={setFilters}
 				view={view}

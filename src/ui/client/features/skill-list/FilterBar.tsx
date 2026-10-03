@@ -40,6 +40,7 @@ function useSlashToFocus(input: RefObject<HTMLInputElement | null>) {
 export function FilterBar({
 	rows,
 	roots,
+	managed,
 	filters,
 	setFilters,
 	view,
@@ -48,6 +49,8 @@ export function FilterBar({
 	rows: Row[];
 	/** Locations present on this machine, in display order. */
 	roots: RootSummary[];
+	/** Names of the skills in skillctx's library. */
+	managed: ReadonlySet<string>;
 	filters: Filters;
 	setFilters: (f: Filters | ((f: Filters) => Filters)) => void;
 	view: SkillView;
@@ -79,13 +82,26 @@ export function FilterBar({
 			};
 		}),
 	];
+	const inLibrary = rows.filter((r) => managed.has(r.name)).length;
+	const libraryItems: PickerItem<Filters["library"]>[] = [
+		{ value: "", label: "In the library or not" },
+		{ value: "managed", label: `In your library (${inLibrary})` },
+		{
+			value: "unmanaged",
+			label: `Not in your library (${rows.length - inLibrary})`,
+		},
+	];
 	const sortItems: PickerItem<Filters["sort"]>[] = [
 		{ value: "attention", label: "Needs attention first" },
 		{ value: "name", label: "A to Z" },
 	];
 
 	const filtered = Boolean(
-		filters.query || filters.source || filters.root || filters.status,
+		filters.query ||
+		filters.source ||
+		filters.root ||
+		filters.status ||
+		filters.library,
 	);
 
 	return (
@@ -120,6 +136,13 @@ export function FilterBar({
 				value={filters.root}
 				onChange={(root) => set({ root })}
 				label="Location"
+				shrink
+			/>
+			<Picker
+				items={libraryItems}
+				value={filters.library}
+				onChange={(library) => set({ library })}
+				label="Library"
 				shrink
 			/>
 			<Picker
