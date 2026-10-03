@@ -6,8 +6,12 @@
  * (also checked there).
  */
 
-export type { AgentId } from "../../../core/deploy/agents.ts";
-export type { Plan } from "../../../core/deploy/plan.ts";
+export {
+	AGENTS,
+	type AgentId,
+	foldersOf,
+} from "../../../core/deploy/agents.ts";
+export type { Op, Plan } from "../../../core/deploy/plan.ts";
 export type { DeployMode } from "../../../core/deploy/record.ts";
 export type { AdoptResult } from "../../../core/library/adopt.ts";
 export type { LockEntry } from "../../../core/library/format.ts";
@@ -27,7 +31,11 @@ export {
 	updateCommand,
 } from "../../../core/provenance/kinds.ts";
 export type { Provenance } from "../../../core/provenance/types.ts";
-export { PLUGIN_ROOT_PREFIX, rootLabel } from "../../../core/sources/roots.ts";
+export {
+	BUILTIN_ROOTS,
+	PLUGIN_ROOT_PREFIX,
+	rootLabel,
+} from "../../../core/sources/roots.ts";
 export type {
 	UpstreamReport,
 	UpstreamResult,

@@ -1,8 +1,13 @@
-import type {
-	CopyRecord,
-	SkillRecord,
-	UpstreamReport,
-	UpstreamResult,
+import {
+	AGENTS,
+	type AgentId,
+	BUILTIN_ROOTS,
+	type CopyRecord,
+	type DeploymentStatus,
+	foldersOf,
+	type SkillRecord,
+	type UpstreamReport,
+	type UpstreamResult,
 } from "@/lib/core";
 
 /**
@@ -140,4 +145,23 @@ export function filterRows(rows: Row[], f: Filters): Row[] {
 
 export function countBy(rows: Row[], status: Status): number {
 	return rows.filter((r) => r.statuses.includes(status)).length;
+}
+
+/**
+ * Agents that see a skill through skillctx's own deployments: those reading
+ * any folder where its deployment is still ours. One folder can serve
+ * several agents (Cursor also reads ~/.claude/skills).
+ */
+export function deployedAgents(
+	skill: string,
+	deployments: readonly DeploymentStatus[],
+): AgentId[] {
+	const folders = new Set(
+		deployments
+			.filter((d) => d.skill === skill && d.state === "ours")
+			.map((d) => BUILTIN_ROOTS.find((r) => r.path === d.folder)?.id),
+	);
+	return AGENTS.map((a) => a.id).filter((id) =>
+		foldersOf(id).some((f) => folders.has(f)),
+	);
 }

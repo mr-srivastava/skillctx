@@ -27,6 +27,7 @@ import {
 import { adviceFor } from "../src/ui/client/lib/advice.ts";
 import { formatBytes, plural } from "../src/ui/client/lib/format.ts";
 import {
+	deployedAgents,
 	filterRows,
 	NO_FILTERS,
 	type Row,
@@ -346,6 +347,44 @@ describe("ui mutations", () => {
 			JSON.stringify({ pid: process.ppid, since: "earlier" }),
 		);
 		expect((await post("/api/skills/beta/adopt", {})).status).toBe(409);
+	});
+});
+
+describe("deployed agents", () => {
+	const at = (
+		folder: string,
+		state: DeploymentStatus["state"],
+		skillName = "beta",
+	): DeploymentStatus => ({
+		skill: skillName,
+		folder,
+		entry: `${folder}/${skillName}`,
+		mode: "symlink",
+		hash: "h",
+		deployedAt: "t",
+		state,
+	});
+
+	test("every agent reading a folder where the deployment is still ours", () => {
+		expect(deployedAgents("beta", [at("~/.claude/skills", "ours")])).toEqual([
+			"claude",
+			"cursor",
+		]);
+		expect(deployedAgents("beta", [at("~/.agents/skills", "ours")])).toEqual([
+			"codex",
+			"cursor",
+			"gemini",
+		]);
+	});
+
+	test("taken-back or missing entries and other skills don't count", () => {
+		expect(
+			deployedAgents("beta", [
+				at("~/.claude/skills", "taken-back"),
+				at("~/.gemini/skills", "missing"),
+				at("~/.config/opencode/skills", "ours", "alpha"),
+			]),
+		).toEqual([]);
 	});
 });
 

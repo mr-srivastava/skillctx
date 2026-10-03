@@ -49,7 +49,11 @@ export function App() {
 			) : !data ? (
 				<p className="my-10 text-ink-soft">Loading the inventory…</p>
 			) : data.summary ? (
-				<Pages data={data} summary={data.summary} />
+				<Pages
+					data={data}
+					summary={data.summary}
+					rescan={() => refresh(false)}
+				/>
 			) : (
 				<NoInventory busy={busy} onScan={() => refresh(false)} />
 			)}
@@ -78,7 +82,15 @@ function NoInventory({ busy, onScan }: { busy: Busy; onScan: () => void }) {
  * The Library or a skill, by the address. Filters and the list's view live
  * here, above both, so they survive a visit to a skill and back.
  */
-function Pages({ data, summary }: { data: Loaded; summary: InventorySummary }) {
+function Pages({
+	data,
+	summary,
+	rescan,
+}: {
+	data: Loaded;
+	summary: InventorySummary;
+	rescan: () => void;
+}) {
 	const [filters, setFilters] = useState<Filters>(NO_FILTERS);
 	const [view, setView] = useState<SkillView>("list");
 	const [route, setTab] = useHashRoute();
@@ -115,6 +127,7 @@ function Pages({ data, summary }: { data: Loaded; summary: InventorySummary }) {
 			summary={summary}
 			tab={route.tab}
 			onTab={setTab}
+			onDeployed={rescan}
 		/>
 	);
 }
