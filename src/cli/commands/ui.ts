@@ -30,6 +30,7 @@ export async function uiCommand(
 			home: { type: "string" },
 			port: { type: "string" },
 			"no-open": { type: "boolean" },
+			dev: { type: "boolean" },
 		},
 		strict: true,
 	});
@@ -38,6 +39,7 @@ export async function uiCommand(
 		ws,
 		homeDir: env.homeDir,
 		port: values.port ? Number(values.port) : 4317,
+		dev: values.dev,
 		refresh: (check) =>
 			refreshInventory(ws, env.homeDir, {
 				check,

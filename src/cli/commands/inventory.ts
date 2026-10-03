@@ -79,6 +79,16 @@ function printScan(
 		.map(([k, n]) => `${k} ${n}`)
 		.join(", ");
 	io.out(`Sources: ${sources}`);
+	const d = s.deployments;
+	if (d) {
+		const parts = [`${d.deployed} deployed`];
+		if (d.takenBack > 0)
+			parts.push(`${d.takenBack} taken back by another tool`);
+		if (d.missing > 0) parts.push(`${d.missing} missing`);
+		io.out(
+			`Deployments: ${parts.join(", ")}.${d.takenBack + d.missing > 0 ? " Run `skillctx deploy` to see which." : ""}`,
+		);
+	}
 	for (const w of s.warnings) io.err(`warning: ${w}`);
 	io.out("");
 	io.out(

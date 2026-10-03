@@ -1,5 +1,4 @@
-import { Tabs as TabsPrimitive } from "radix-ui";
-import type * as React from "react";
+import { Tabs as TabsPrimitive } from "@base-ui/react/tabs";
 import { cn } from "@/lib/utils";
 
 /*
@@ -9,10 +8,7 @@ import { cn } from "@/lib/utils";
  * without overflowing the scrollable list.
  */
 
-function Tabs({
-	className,
-	...props
-}: React.ComponentProps<typeof TabsPrimitive.Root>) {
+function Tabs({ className, ...props }: TabsPrimitive.Root.Props) {
 	return (
 		<TabsPrimitive.Root
 			data-slot="tabs"
@@ -22,13 +18,16 @@ function Tabs({
 	);
 }
 
+// activateOnFocus keeps Radix's behaviour: arrow keys switch tabs.
 function TabsList({
 	className,
+	activateOnFocus = true,
 	...props
-}: React.ComponentProps<typeof TabsPrimitive.List>) {
+}: TabsPrimitive.List.Props) {
 	return (
 		<TabsPrimitive.List
 			data-slot="tabs-list"
+			activateOnFocus={activateOnFocus}
 			className={cn(
 				"flex max-w-full gap-5 overflow-x-auto shadow-[inset_0_-1px_0_var(--rule)]",
 				className,
@@ -38,15 +37,12 @@ function TabsList({
 	);
 }
 
-function TabsTrigger({
-	className,
-	...props
-}: React.ComponentProps<typeof TabsPrimitive.Trigger>) {
+function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
 	return (
-		<TabsPrimitive.Trigger
+		<TabsPrimitive.Tab
 			data-slot="tabs-trigger"
 			className={cn(
-				"inline-flex cursor-pointer items-center gap-1.5 border-b-2 border-transparent py-2 text-small font-medium whitespace-nowrap text-ink-soft hover:text-ink data-[state=active]:border-ink data-[state=active]:text-ink [&_svg]:size-3.5 [&_svg]:shrink-0",
+				"inline-flex cursor-pointer items-center gap-1.5 border-b-2 border-transparent py-2 text-small font-medium whitespace-nowrap text-ink-soft hover:text-ink data-active:border-ink data-active:text-ink [&_svg]:size-3.5 [&_svg]:shrink-0",
 				className,
 			)}
 			{...props}
@@ -54,12 +50,9 @@ function TabsTrigger({
 	);
 }
 
-function TabsContent({
-	className,
-	...props
-}: React.ComponentProps<typeof TabsPrimitive.Content>) {
+function TabsContent({ className, ...props }: TabsPrimitive.Panel.Props) {
 	return (
-		<TabsPrimitive.Content
+		<TabsPrimitive.Panel
 			data-slot="tabs-content"
 			className={cn("outline-none", className)}
 			{...props}

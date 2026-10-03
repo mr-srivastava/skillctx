@@ -1,4 +1,5 @@
 import {
+	copyFileSync,
 	existsSync,
 	mkdirSync,
 	readdirSync,
@@ -14,9 +15,12 @@ import { fromPortable, isInside, toPortable } from "./paths.ts";
 export const WORKSPACE_FILE = "skillctx.yaml";
 export const WORKSPACE_VERSION = 1;
 
-/** Directories every workspace has (ADR-009). Most stay empty until later phases. */
+/** Directories every workspace has (ADR-009, ADR-023). Some stay empty until later phases. */
 export const LAYOUT = [
 	"inventory",
+	"library",
+	"build",
+	"local",
 	"variants",
 	"profiles",
 	"projects",
@@ -24,9 +28,17 @@ export const LAYOUT = [
 	".cache",
 ] as const;
 
-const GITIGNORE = `# Rebuildable caches and per-machine settings (ADR-009)
-.cache/
-local.yaml
+/** Lines every workspace's .gitignore must contain (ADR-009, ADR-023). */
+export const IGNORED = [
+	".cache/",
+	"local.yaml",
+	"local/",
+	"build/",
+	"library/fetched/",
+] as const;
+
+const GITIGNORE = `# Rebuildable caches and per-machine state (ADR-009, ADR-023)
+${IGNORED.join("\n")}
 `;
 
 const WORKSPACE_YAML = `# skillctx workspace (ADR-009). Plain text, safe to commit.
@@ -93,6 +105,47 @@ export class Workspace {
 		return true;
 	}
 
+	/**
+	 * Replace the folder `relDir` with copies of `files` (relative paths) from
+	 * `sourceDir`. The copy is written next to the target and renamed into place,
+	 * so a failure leaves the old folder intact.
+	 */
+	replaceFolder(
+		relDir: string,
+		sourceDir: string,
+		files: readonly string[],
+	): void {
+		const target = this.resolve(relDir);
+		const tmp = this.resolve(`${relDir}.tmp-${process.pid}`);
+		rmSync(tmp, { recursive: true, force: true });
+		try {
+			mkdirSync(tmp, { recursive: true });
+			for (const rel of files) {
+				const dest = path.join(tmp, rel);
+				if (!isInside(tmp, dest))
+					throw new WorkspaceError(
+						`Refusing to copy outside the workspace: ${rel}`,
+					);
+				mkdirSync(path.dirname(dest), { recursive: true });
+				copyFileSync(path.join(sourceDir, rel), dest);
+			}
+		} catch (error) {
+			rmSync(tmp, { recursive: true, force: true });
+			throw error;
+		}
+		rmSync(target, { recursive: true, force: true });
+		mkdirSync(path.dirname(target), { recursive: true });
+		renameSync(tmp, target);
+	}
+
+	/** Delete a folder inside the workspace and everything in it. */
+	removeFolder(relDir: string): boolean {
+		const target = this.resolve(relDir);
+		if (!existsSync(target)) return false;
+		rmSync(target, { recursive: true });
+		return true;
+	}
+
 	/** Delete a file inside the workspace. Returns false if it didn't exist. */
 	remove(relPath: string): boolean {
 		const target = this.resolve(relPath);
@@ -128,6 +181,25 @@ export class Workspace {
 	}
 }
 
+/**
+ * Add any missing layout folders and .gitignore lines. Workspaces made by an
+ * older skillctx gain what later phases need; existing lines and user
+ * additions are kept. Running it again changes nothing.
+ */
+export function ensureLayout(ws: Workspace): void {
+	for (const dir of LAYOUT) mkdirSync(ws.resolve(dir), { recursive: true });
+	const current = ws.read(".gitignore");
+	if (current === undefined) {
+		ws.write(".gitignore", GITIGNORE);
+		return;
+	}
+	const have = new Set(current.split("\n").map((l) => l.trim()));
+	const missing = IGNORED.filter((line) => !have.has(line));
+	if (missing.length === 0) return;
+	const sep = current.endsWith("\n") || current === "" ? "" : "\n";
+	ws.write(".gitignore", `${current}${sep}${missing.join("\n")}\n`);
+}
+
 export function isWorkspace(dir: string): boolean {
 	return existsSync(path.join(dir, WORKSPACE_FILE));
 }
@@ -153,9 +225,8 @@ export function initWorkspace(homeArg: string, env: Env): InitResult {
 
 	mkdirSync(root, { recursive: true });
 	const ws = new Workspace(root);
-	for (const dir of LAYOUT) mkdirSync(ws.resolve(dir), { recursive: true });
 	if (!existed) ws.write(WORKSPACE_FILE, WORKSPACE_YAML);
-	if (!existsSync(ws.resolve(".gitignore"))) ws.write(".gitignore", GITIGNORE);
+	ensureLayout(ws);
 
 	writePointer(root, env);
 	return { workspace: ws, created: !existed };

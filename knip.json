@@ -1,0 +1,10 @@
+{
+	"$schema": "https://unpkg.com/knip@6/schema.json",
+	"entry": ["src/ui/client/main.tsx", "scripts/*.ts"],
+	"project": ["src/**/*.{ts,tsx}", "scripts/**/*.ts", "test/**/*.{ts,tsx}"],
+	"ignoreDependencies": ["tailwindcss", "tw-animate-css"],
+	"ignoreExportsUsedInFile": true,
+	"ignoreIssues": {
+		"src/ui/client/components/ui/**": ["exports", "types"]
+	}
+}

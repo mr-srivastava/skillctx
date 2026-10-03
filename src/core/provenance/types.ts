@@ -46,6 +46,12 @@ export type Provenance =
 			version?: string;
 			gitCommitSha?: string;
 	  }
-	| { kind: "claude-app-synced" };
+	| { kind: "claude-app-synced" }
+	| {
+			kind: "skillctx";
+			/** The managed skill this copy is a deployment of. */
+			skill: string;
+			mode: "symlink" | "copy";
+	  };
 
 export type ProvenanceKind = Provenance["kind"];

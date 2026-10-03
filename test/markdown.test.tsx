@@ -1,19 +1,31 @@
 import { describe, expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
+	grammarFor,
+	grammarForFile,
+	type Highlight,
+	loadHighlight,
+} from "../src/ui/client/lib/highlight.ts";
+import {
 	Markdown,
 	parseMarkdown,
 	resolveLink,
 	splitFrontmatter,
-} from "../src/ui/client/markdown.tsx";
+} from "../src/ui/client/lib/markdown.tsx";
 
-function render(md: string, files: string[] = [], file = "SKILL.md"): string {
+function render(
+	md: string,
+	files: string[] = [],
+	file = "SKILL.md",
+	highlight: Highlight | null = null,
+): string {
 	return renderToStaticMarkup(
 		<Markdown
 			parsed={parseMarkdown(md)}
 			file={file}
 			files={new Set(files)}
 			onOpenFile={() => {}}
+			highlight={highlight}
 		/>,
 	);
 }
@@ -79,5 +91,43 @@ describe("skill markdown", () => {
 			body: "# A\n",
 		});
 		expect(splitFrontmatter("# A\n").frontmatter).toBeNull();
+	});
+});
+
+describe("code highlighting", () => {
+	test("fence names and extensions map to the bundled grammars", () => {
+		expect(grammarFor("sh")).toBe("bash");
+		expect(grammarFor("TS")).toBe("tsx");
+		expect(grammarFor("javascript")).toBe("tsx");
+		expect(grammarFor("cobol")).toBeNull();
+		expect(grammarFor(undefined)).toBeNull();
+		expect(grammarForFile("scripts/run.py")).toBe("python");
+		expect(grammarForFile("LICENSE")).toBeNull();
+	});
+
+	test("the parse lists the languages its fences name", () => {
+		const { languages } = parseMarkdown(
+			"```sh\nls\n```\n\n- item\n\n  ```py\n  x = 1\n  ```\n\n```sh\npwd\n```\n\n```\nplain\n```\n",
+		);
+		expect(languages).toEqual(["sh", "py"]);
+	});
+
+	test("fenced code is coloured with palette variables once loaded", async () => {
+		const md = '```bash\necho "hi" # greet\n```\n\n```cobol\nDISPLAY.\n```\n';
+		expect(render(md)).not.toContain("--code-token");
+		const html = render(md, [], "SKILL.md", await loadHighlight(["bash"]));
+		expect(html).toContain("var(--code-token-function)");
+		expect(html).toContain("var(--code-token-comment)");
+		expect(html).toContain('class="line"');
+		// No grammar: the block stays as written.
+		expect(html).toContain('wrap-break-word">DISPLAY.\n</code>');
+		// Shiki's own <pre> and colours don't leak in; ours wraps the lines.
+		expect(html).not.toContain("shiki");
+	});
+
+	test("a grammar that wasn't loaded leaves code plain", async () => {
+		const highlight = await loadHighlight(["yaml"]);
+		expect(highlight("x = 1", "toml")).toBeNull();
+		expect(highlight("a: 1", "yml")).not.toBeNull();
 	});
 });

@@ -1,4 +1,5 @@
 import type { UpstreamReport } from "../upstream/index.ts";
+import { parseVersioned, serializeVersioned } from "../versioned.ts";
 import { type Workspace, WorkspaceError } from "../workspace.ts";
 import {
 	INVENTORY_FORMAT,
@@ -26,27 +27,18 @@ function tooNew(rel: string, format: number): InventoryFormatError {
 
 /** Serialize with `format` as the first key. */
 function serialize(value: object): string {
-	return `${JSON.stringify({ format: INVENTORY_FORMAT, ...value }, null, 2)}\n`;
+	return serializeVersioned(INVENTORY_FORMAT, value);
 }
 
 /**
  * Parse an inventory file and drop its `format` key. A missing or unreadable
- * file is undefined. Files without `format` predate ADR-014 and have the
- * format-1 shape. A newer format throws rather than being misread.
+ * file is undefined. A newer format throws rather than being misread.
  */
 function parse<T>(ws: Workspace, rel: string): T | undefined {
-	const text = ws.read(rel);
-	if (text === undefined) return undefined;
-	let value: unknown;
-	try {
-		value = JSON.parse(text);
-	} catch {
-		return undefined;
-	}
-	if (value === null || typeof value !== "object") return undefined;
-	const { format = 1, ...rest } = value as { format?: number };
-	if (format > INVENTORY_FORMAT) throw tooNew(rel, format);
-	return rest as T;
+	const parsed = parseVersioned(ws.read(rel));
+	if (!parsed) return undefined;
+	if (parsed.format > INVENTORY_FORMAT) throw tooNew(rel, parsed.format);
+	return parsed.value as T;
 }
 
 /** Refuse to overwrite an inventory a newer skillctx wrote. */

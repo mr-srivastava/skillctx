@@ -23,11 +23,16 @@ export function toPortable(
 }
 
 function homeBases(homeDir: string): string[] {
+	const real = tryRealpath(homeDir);
+	return real === undefined || real === homeDir ? [homeDir] : [homeDir, real];
+}
+
+/** The real path, or undefined when it doesn't exist or can't be read. */
+export function tryRealpath(p: string): string | undefined {
 	try {
-		const real = realpathSync(homeDir);
-		return real === homeDir ? [homeDir] : [homeDir, real];
+		return realpathSync(p);
 	} catch {
-		return [homeDir];
+		return undefined;
 	}
 }
 

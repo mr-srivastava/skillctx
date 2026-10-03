@@ -1,7 +1,7 @@
 # ADR-010: Start with a read-only skill inventory and local web UI
 
 ## Status
-Accepted. Supersedes in part ADR-007 (we now build an inventory view). Amends ADR-005 (the web UI moves to Phase 0).
+Superseded by ADR-021 for scope: installing, updating, deploying and syncing are no longer non-goals. Phase 0 as described here is built and remains the inventory that later phases use. Two items listed below were not built: the Skillshare adapter (spec §11) and an outdated check from Skills Manager's remote revision.
 
 ## Date
 2026-10-02

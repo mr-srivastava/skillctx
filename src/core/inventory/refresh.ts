@@ -1,3 +1,4 @@
+import { withWorkspaceLock } from "../lock.ts";
 import {
 	checkUpstream,
 	type UpstreamDeps,
@@ -33,14 +34,16 @@ export async function refreshInventory(
 	homeDir: string,
 	opts: RefreshOptions,
 ): Promise<RefreshOutcome> {
-	const result = scan(ws, homeDir);
-	const written = writeInventory(ws, result, homeDir);
+	const { result, written } = withWorkspaceLock(ws, () => {
+		const scanned = scan(ws, homeDir);
+		return { result: scanned, written: writeInventory(ws, scanned, homeDir) };
+	});
 	opts.onScanned?.(result, written);
 	if (!opts.check) return { scan: result, written };
 	const report = await checkUpstream(result.skills, {
 		...opts.upstream(),
 		homeDir,
 	});
-	writeUpstream(ws, report);
+	withWorkspaceLock(ws, () => writeUpstream(ws, report));
 	return { scan: result, written, upstream: report };
 }

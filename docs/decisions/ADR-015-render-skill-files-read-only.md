@@ -1,7 +1,7 @@
 # ADR-015: Show skill files in the UI, rendered read-only and kept local
 
 ## Status
-Accepted. Extends ADR-010 (what the inventory UI shows).
+Accepted. Extends ADR-010 (what the inventory UI shows). Syntax highlighting was added later by ADR-018.
 
 ## Date
 2026-10-02
@@ -42,5 +42,5 @@ Skill files are third-party text. Rendering them in a page served from localhost
 - Adds `unified`, `remark-parse`, `remark-gfm`, `remark-rehype`, `hast-util-to-jsx-runtime` and `@types/hast`.
 - Adds shadcn `tabs`, restyled to the underline style and our type scale (ADR-012).
 - Adds a `title` text size (20px) and a `split` breakpoint (64rem) for the two-column contents layout.
-- Code blocks aren't syntax-highlighted. Add that later if it's missed.
+- Code blocks aren't syntax-highlighted. Add that later if it's missed. (Superseded: ADR-018 adds highlighting.)
 - Nothing is written; the inventory stays read-only (ADR-010).

@@ -1,7 +1,7 @@
 # ADR-009: All skillctx data lives in one workspace at a user-chosen path
 
 ## Status
-Accepted. Supersedes the storage locations in ADR-003 (the three-layer cascade itself still holds). Amends ADR-001: compiled output is written to the workspace; how it reaches agent folders is open.
+Accepted. Supersedes the storage locations in ADR-003 (the three-layer cascade itself still holds). Amends ADR-001: compiled output is written to the workspace. Amended by ADR-021 (the workspace gains a library, a lockfile and `build/`, and what gets committed) and ADR-022 (skillctx writes into agent folders, only to entries in its deployment record).
 
 ## Date
 2026-10-02

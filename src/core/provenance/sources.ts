@@ -1,20 +1,12 @@
 import { Database } from "bun:sqlite";
-import { existsSync, readFileSync, realpathSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { parseSkillMd } from "../indexer/parse.ts";
-import { isInside } from "../paths.ts";
+import { isInside, tryRealpath } from "../paths.ts";
 import type { Provenance } from "./types.ts";
 
 /** Lookups take a copy's real path and return what each tool recorded about it. */
 export type ProvenanceLookup = (realPath: string) => Provenance[];
-
-function safeReal(p: string): string | undefined {
-	try {
-		return realpathSync(p);
-	} catch {
-		return undefined;
-	}
-}
 
 const str = (v: unknown): string | undefined =>
 	typeof v === "string" && v ? v : undefined;
@@ -42,7 +34,7 @@ export function skillLockLookup(
 				);
 			for (const [name, raw] of Object.entries(parsed.skills ?? {})) {
 				const e = (raw ?? {}) as Record<string, unknown>;
-				const real = safeReal(path.join(homeDir, ".agents/skills", name));
+				const real = tryRealpath(path.join(homeDir, ".agents/skills", name));
 				const sourceUrl = str(e.sourceUrl);
 				const folderHash = str(e.skillFolderHash);
 				if (!real || !sourceUrl || !folderHash) continue;
@@ -115,7 +107,7 @@ function git(cwd: string, args: string[]): string | undefined {
  */
 export function gitCheckoutLookup(homeDir: string): ProvenanceLookup {
 	const cache = new Map<string, Provenance | null>();
-	const home = safeReal(homeDir) ?? homeDir;
+	const home = tryRealpath(homeDir) ?? homeDir;
 	return (real) => {
 		let dir = real;
 		while (isInside(home, dir) && dir !== home) {
@@ -183,7 +175,7 @@ export function skillsManagerLookup(
 					.all() as Record<string, string | null>[];
 				for (const row of rows) {
 					const real = row.central_path
-						? safeReal(row.central_path)
+						? tryRealpath(row.central_path)
 						: undefined;
 					if (!real) continue;
 					byReal.set(real, {
@@ -252,7 +244,7 @@ export function readClaudePlugins(
 export function claudePluginLookup(plugins: PluginInstall[]): ProvenanceLookup {
 	const installs = plugins.map((p) => ({
 		...p,
-		real: safeReal(p.installPath) ?? p.installPath,
+		real: tryRealpath(p.installPath) ?? p.installPath,
 	}));
 	return (real) =>
 		installs
@@ -267,7 +259,7 @@ export function claudePluginLookup(plugins: PluginInstall[]): ProvenanceLookup {
 
 /** Skills the Claude desktop app syncs into ~/.claude/skills/synced/<id>/. */
 export function claudeAppSyncedLookup(homeDir: string): ProvenanceLookup {
-	const synced = safeReal(path.join(homeDir, ".claude/skills/synced"));
+	const synced = tryRealpath(path.join(homeDir, ".claude/skills/synced"));
 	return (real) =>
 		synced && isInside(synced, real) ? [{ kind: "claude-app-synced" }] : [];
 }

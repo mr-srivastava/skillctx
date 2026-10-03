@@ -56,8 +56,10 @@
 	--radius-xl: calc(var(--radius) + 6px);
 }
 
-/* Type scale and layout breakpoints, named by role. */
+/* Type scale, widths and layout breakpoints, named by role. */
 @theme {
+	/* Status pills on cards and the skill page header. */
+	--text-chip: 11px;
 	--text-code: 12.5px;
 	--text-caption: 13px;
 	--text-small: 14px;
@@ -65,6 +67,11 @@
 	--text-lead: 16px;
 	--text-heading: 17px;
 	--text-title: 20px;
+	/* Page headings: grows with the window between phone and desktop. */
+	--text-display: clamp(24px, 3vw, 30px);
+
+	/* A comfortable line of prose: descriptions, notes, rendered files. */
+	--container-reading: 72ch;
 
 	--breakpoint-wide: 45rem;
 	/* Room for a side column next to a 72ch reading column. */
@@ -83,6 +90,7 @@
 	--problem: #b4302a;
 	--add: #dff0e4;
 	--del: #f8e1e6;
+	--string: #2d6a4a;
 
 	--ui:
 		"Avenir Next", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
@@ -106,13 +114,36 @@
 		--problem: #ff8f86;
 		--add: #163324;
 		--del: #3a1a28;
+		--string: #85c9a1;
 		color-scheme: dark;
 	}
 }
 
 /*
- * Everything else is utility classes in the components (see ui.tsx for the
- * shared pieces). Only page-wide defaults live here.
+ * Syntax colours for highlighted code (lib/highlight.ts, ADR-018), drawn from
+ * the palette so code reads as part of the page and follows dark mode.
+ * Shiki's css-variables theme emits var(--code-token-*) for each token kind.
+ */
+:root {
+	--code-foreground: var(--ink);
+	--code-background: transparent;
+	--code-token-comment: var(--ink-soft);
+	--code-token-punctuation: var(--ink-soft);
+	--code-token-keyword: var(--differs);
+	--code-token-function: var(--outdated);
+	--code-token-link: var(--outdated);
+	--code-token-constant: var(--edited);
+	--code-token-changed: var(--edited);
+	--code-token-string: var(--string);
+	--code-token-string-expression: var(--string);
+	--code-token-inserted: var(--string);
+	--code-token-deleted: var(--problem);
+	--code-token-parameter: var(--ink);
+}
+
+/*
+ * Everything else is utility classes in the components (shared pieces live in
+ * components/). Only page-wide defaults live here.
  */
 @layer base {
 	html {
