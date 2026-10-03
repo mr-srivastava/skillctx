@@ -1,11 +1,12 @@
 import type { Element, ElementContent, Root } from "hast";
 import { toJsxRuntime } from "hast-util-to-jsx-runtime";
-import type { ComponentProps, ReactNode } from "react";
+import { type ComponentProps, type ReactNode, useMemo } from "react";
 import { Fragment, jsx, jsxs } from "react/jsx-runtime";
 import remarkGfm from "remark-gfm";
 import remarkParse from "remark-parse";
 import remarkRehype from "remark-rehype";
 import { unified } from "unified";
+import type { Highlight } from "@/lib/highlight";
 import { cn } from "@/lib/utils";
 
 /*
@@ -27,6 +28,8 @@ export interface Heading {
 export interface ParsedMarkdown {
 	tree: Root;
 	headings: Heading[];
+	/** Languages named on code fences, for loading their grammars. */
+	languages: string[];
 }
 
 /** `---` frontmatter at the top of a file, as in core/indexer/parse.ts. */
@@ -59,6 +62,20 @@ function textOf(node: ElementContent): string {
 	return "";
 }
 
+/** The `<code>` inside a fenced block and its language, from ```lang. */
+function fence(pre: Element): { code: Element; lang: string | null } | null {
+	const code = pre.children[0];
+	if (code?.type !== "element" || code.tagName !== "code") return null;
+	const classes = code.properties.className;
+	const lang = Array.isArray(classes)
+		? classes
+				.map(String)
+				.find((c) => c.startsWith("language-"))
+				?.slice("language-".length)
+		: undefined;
+	return { code, lang: lang ?? null };
+}
+
 /**
  * Parse once, then give every heading an id and list it. The outline and the
  * rendered page come from the same tree, so they can't disagree.
@@ -66,6 +83,7 @@ function textOf(node: ElementContent): string {
 export function parseMarkdown(md: string): ParsedMarkdown {
 	const tree = processor.runSync(processor.parse(md));
 	const headings: Heading[] = [];
+	const languages = new Set<string>();
 	const seen = new Map<string, number>();
 	const visit = (node: Root | Element) => {
 		for (const child of node.children) {
@@ -79,13 +97,41 @@ export function parseMarkdown(md: string): ParsedMarkdown {
 				const id = ID_PREFIX + (n === 0 ? base : `${base}-${n}`);
 				child.properties.id = id;
 				headings.push({ id, depth: Number(depth), text });
+			} else if (child.tagName === "pre") {
+				const lang = fence(child)?.lang;
+				if (lang) languages.add(lang);
 			} else {
 				visit(child);
 			}
 		}
 	};
 	visit(tree);
-	return { tree, headings };
+	return { tree, headings, languages: [...languages] };
+}
+
+/**
+ * A copy of the tree with fenced code replaced by highlighted lines. The
+ * parsed tree is left alone, so it can be rendered again once more grammars
+ * load.
+ */
+function withHighlighting(tree: Root, highlight: Highlight): Root {
+	const map = (node: Element): Element => {
+		if (node.tagName === "pre") {
+			const f = fence(node);
+			const lines = f?.lang ? highlight(textOf(f.code), f.lang) : null;
+			return f && lines
+				? { ...node, children: [{ ...f.code, children: lines }] }
+				: node;
+		}
+		return {
+			...node,
+			children: node.children.map((c) => (c.type === "element" ? map(c) : c)),
+		};
+	};
+	return {
+		...tree,
+		children: tree.children.map((c) => (c.type === "element" ? map(c) : c)),
+	};
 }
 
 /**
@@ -151,14 +197,21 @@ export function Markdown({
 	file,
 	files,
 	onOpenFile,
+	highlight = null,
 }: {
 	parsed: ParsedMarkdown;
 	/** Path of this file inside the skill, for resolving relative links. */
 	file: string;
 	files: ReadonlySet<string>;
 	onOpenFile: (path: string) => void;
+	/** Colours fenced code once its grammars have loaded. */
+	highlight?: Highlight | null;
 }): ReactNode {
-	return toJsxRuntime(parsed.tree, {
+	const tree = useMemo(
+		() => (highlight ? withHighlighting(parsed.tree, highlight) : parsed.tree),
+		[parsed.tree, highlight],
+	);
+	return toJsxRuntime(tree, {
 		Fragment,
 		jsx,
 		jsxs,

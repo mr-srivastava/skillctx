@@ -9,6 +9,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import * as api from "@/lib/api";
+import { CodeText, grammarForFile, useHighlight } from "@/lib/highlight";
 import {
 	goToAnchor,
 	type Heading,
@@ -87,6 +88,22 @@ export function Contents({
 		const { frontmatter, body } = splitFrontmatter(shown.text);
 		return { frontmatter, parsed: parseMarkdown(body) };
 	}, [shown, isMarkdown]);
+
+	// Grammars this file needs: its fences and frontmatter, or the file itself.
+	const fileGrammar = shown && !isMarkdown ? grammarForFile(shown.path) : null;
+	const languages = useMemo(
+		() =>
+			doc
+				? [
+						...doc.parsed.languages,
+						...(doc.frontmatter !== null ? ["yaml"] : []),
+					]
+				: fileGrammar
+					? [fileGrammar]
+					: [],
+		[doc, fileGrammar],
+	);
+	const highlight = useHighlight(languages);
 
 	const paths = useMemo(
 		() => new Set(listing?.files.map((f) => f.path)),
@@ -192,7 +209,11 @@ export function Contents({
 									Frontmatter
 								</summary>
 								<pre className="overflow-x-auto border-t border-rule px-3.5 py-2.5 font-mono text-code leading-relaxed">
-									{doc.frontmatter}
+									<CodeText
+										code={doc.frontmatter}
+										lang="yaml"
+										highlight={highlight}
+									/>
 								</pre>
 							</details>
 						)}
@@ -202,12 +223,17 @@ export function Contents({
 								file={current.path}
 								files={paths}
 								onOpenFile={open}
+								highlight={highlight}
 							/>
 						</div>
 					</>
 				) : (
 					<pre className="overflow-x-auto rounded-md border border-rule bg-raised px-3.5 py-2.5 font-mono text-code leading-relaxed">
-						{current.text}
+						<CodeText
+							code={current.text}
+							lang={fileGrammar}
+							highlight={highlight}
+						/>
 					</pre>
 				)}
 			</div>

@@ -83,6 +83,7 @@
 	--problem: #b4302a;
 	--add: #dff0e4;
 	--del: #f8e1e6;
+	--string: #2d6a4a;
 
 	--ui:
 		"Avenir Next", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
@@ -106,8 +107,31 @@
 		--problem: #ff8f86;
 		--add: #163324;
 		--del: #3a1a28;
+		--string: #85c9a1;
 		color-scheme: dark;
 	}
+}
+
+/*
+ * Syntax colours for highlighted code (lib/highlight.ts, ADR-018), drawn from
+ * the palette so code reads as part of the page and follows dark mode.
+ * Shiki's css-variables theme emits var(--code-token-*) for each token kind.
+ */
+:root {
+	--code-foreground: var(--ink);
+	--code-background: transparent;
+	--code-token-comment: var(--ink-soft);
+	--code-token-punctuation: var(--ink-soft);
+	--code-token-keyword: var(--differs);
+	--code-token-function: var(--outdated);
+	--code-token-link: var(--outdated);
+	--code-token-constant: var(--edited);
+	--code-token-changed: var(--edited);
+	--code-token-string: var(--string);
+	--code-token-string-expression: var(--string);
+	--code-token-inserted: var(--string);
+	--code-token-deleted: var(--problem);
+	--code-token-parameter: var(--ink);
 }
 
 /*
