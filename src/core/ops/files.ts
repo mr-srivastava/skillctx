@@ -1,9 +1,9 @@
 import { existsSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { createTwoFilesPatch } from "diff";
-import { listSkillFiles } from "../core/indexer/files.ts";
-import type { SkillRecord } from "../core/inventory/format.ts";
-import { fromPortable } from "../core/paths.ts";
+import { listSkillFiles } from "../indexer/files.ts";
+import type { SkillRecord } from "../inventory/format.ts";
+import { fromPortable } from "../paths.ts";
 
 /** File-level comparison of two copies of one skill, with unified diffs for changed text files. */
 export function copyDiff(

@@ -7,13 +7,9 @@ import {
 } from "../../core/deploy/agents.ts";
 import { applyPlan, planDeploy } from "../../core/deploy/apply.ts";
 import type { Op, Plan } from "../../core/deploy/plan.ts";
-import {
-	entryState,
-	linkTarget,
-	readRecord,
-} from "../../core/deploy/record.ts";
-import { buildDir } from "../../core/library/format.ts";
-import { fromPortable, toPortable } from "../../core/paths.ts";
+import { linkTarget } from "../../core/deploy/record.ts";
+import { listDeployments } from "../../core/ops/deployments.ts";
+import { toPortable } from "../../core/paths.ts";
 import {
 	type Env,
 	resolveWorkspace,
@@ -64,19 +60,17 @@ const STATE_TEXT = {
 	missing: "missing (removed outside skillctx)",
 } as const;
 
-function listDeployments(io: Io, ws: Workspace, env: Env): number {
-	const { deployments } = readRecord(ws);
+function printDeployments(io: Io, ws: Workspace, env: Env): number {
+	const deployments = listDeployments(ws, env.homeDir);
 	if (deployments.length === 0) {
 		io.out("Nothing deployed yet.");
 		return 0;
 	}
 	for (const d of deployments) {
-		const entry = fromPortable(d.entry, env.homeDir);
-		const state = entryState(entry, d, ws.resolve(buildDir(d.skill)));
 		const text =
-			state in STATE_TEXT
-				? STATE_TEXT[state as keyof typeof STATE_TEXT]
-				: state;
+			d.state in STATE_TEXT
+				? STATE_TEXT[d.state as keyof typeof STATE_TEXT]
+				: d.state;
 		io.out(`${d.skill.padEnd(24)}  ${d.entry}  ${d.mode}, ${text}`);
 	}
 	return 0;
@@ -114,7 +108,7 @@ export async function deployCommand(
 	});
 	const ws = resolveWorkspace(env, values.home);
 	const [skill] = positionals;
-	if (!skill) return listDeployments(io, ws, env);
+	if (!skill) return printDeployments(io, ws, env);
 	if (positionals.length > 1) {
 		io.err(
 			"Deploy one skill at a time: skillctx deploy <skill> --agent <agents>",

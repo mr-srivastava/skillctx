@@ -1,10 +1,11 @@
 import { realpathSync } from "node:fs";
 import { buildDir } from "../library/format.ts";
 import { readLockfile } from "../library/store.ts";
+import { listDeployments } from "../ops/deployments.ts";
 import { fromPortable } from "../paths.ts";
 import type { ProvenanceLookup } from "../provenance/sources.ts";
 import type { Workspace } from "../workspace.ts";
-import { entryState, readRecord } from "./record.ts";
+import { readRecord } from "./record.ts";
 
 function real(p: string): string | undefined {
 	try {
@@ -50,15 +51,10 @@ export function tallyDeployments(
 	ws: Workspace,
 	homeDir: string,
 ): DeploymentTally | undefined {
-	const { deployments } = readRecord(ws);
+	const deployments = listDeployments(ws, homeDir);
 	if (deployments.length === 0) return undefined;
 	const tally: DeploymentTally = { deployed: 0, takenBack: 0, missing: 0 };
-	for (const d of deployments) {
-		const state = entryState(
-			fromPortable(d.entry, homeDir),
-			d,
-			ws.resolve(buildDir(d.skill)),
-		);
+	for (const { state } of deployments) {
 		if (state === "ours") tally.deployed++;
 		else if (state === "missing") tally.missing++;
 		else tally.takenBack++;

@@ -23,5 +23,5 @@ export type {
 	UpstreamReport,
 	UpstreamResult,
 } from "../../../core/upstream/index.ts";
-export type { CopyDiff, CopyFiles, FileText } from "../../data.ts";
+export type { CopyDiff, CopyFiles, FileText } from "../../../core/ops/files.ts";
 export type { RefreshResult } from "../../server.ts";

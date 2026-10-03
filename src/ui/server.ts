@@ -1,10 +1,10 @@
 import { randomBytes } from "node:crypto";
 import type { RefreshOutcome } from "../core/inventory/refresh.ts";
 import { InventoryReader } from "../core/inventory/store.ts";
+import { copyDiff, copyFile, copyFiles } from "../core/ops/files.ts";
 import { tallyUpstream } from "../core/upstream/index.ts";
 import type { Workspace } from "../core/workspace.ts";
 import index from "./client/index.html";
-import { copyDiff, copyFile, copyFiles } from "./data.ts";
 
 export interface RefreshResult {
 	ok: boolean;

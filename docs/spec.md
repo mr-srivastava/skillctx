@@ -1,6 +1,6 @@
 # skillctx spec
 
-Status: draft v0.13 · 2026-10-03 · Owner: Aadarsh Srivastava
+Status: draft v0.14 · 2026-10-03 · Owner: Aadarsh Srivastava
 Decisions: [docs/decisions/](decisions/) · Research: [docs/research/community-research.md](research/community-research.md) · Engine review notes: [docs/reviews/](reviews/)
 
 "skillctx" is a working name. This file is the only copy of the spec; an earlier Claude Doc copy is superseded.
@@ -193,7 +193,7 @@ Committed files are plain text with no machine-specific absolute paths, so the w
                              └───────────────────────────────┘
 ```
 
-Phase 0 built the source adapters, the Indexer and the inventory UI. Phase 1 adds the library and the deployment planner and writer; the compiler later reuses both. Core operations are single functions the CLI, the UI and MCP all call, with the network and the clock injected (see `refreshInventory`).
+Phase 0 built the source adapters, the Indexer and the inventory UI. Phase 1 adds the library and the deployment planner and writer; the compiler later reuses both. Core operations are single functions the CLI, the UI and MCP all call, with the network and the clock injected (see `refreshInventory`). Operations that combine several core modules for a surface, such as listing deployments with their state or reading a skill copy's files, live in `src/core/ops/`; surfaces parse input and render output, nothing more.
 
 ## 6. Surfaces
 
