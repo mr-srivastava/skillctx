@@ -95,5 +95,5 @@ Which user-level folders each agent reads (engine review, candidate 3, verified 
 - [x] Library filter: in your library, or not (with counts)
 
 ### Checkpoint: real machine
-- [ ] Adopt and deploy a handful of the author's skills; undeploy restores the old links; `git status` in the workspace shows only `library/` changes
+- [x] Adopt and deploy a handful of the author's skills; undeploy restores the old links; `git status` in the workspace shows only `library/` changes (plus `inventory/` while skills are deployed, until the next rescan). Done 2026-10-04: 4 skills, 5 takeovers of `npx skills` links across Claude Code, Codex, Cursor and Gemini CLI, symlink and copy mode; all restored. Findings fixed: builds in a git-backed workspace read as git checkouts; duplicate notes now say whether a deploy adds the duplicate; adopt explains why it refuses different content
 - [ ] Review with the user before Phase 2 planning

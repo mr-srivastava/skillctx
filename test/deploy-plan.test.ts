@@ -62,8 +62,16 @@ describe("folder choice", () => {
 	test("claude alone exposes the skill to cursor, and says so", () => {
 		const p = run(["claude"], folders());
 		expect(p.warnings).toEqual([
-			"Also visible to Cursor, which read the same folder.",
+			"Also visible to Cursor, which reads the same folder.",
 		]);
+	});
+
+	test("several exposed agents read the folder", () => {
+		const p = run(["gemini"], folders({ gemini: "foreign-folder" }));
+		expect(kinds(p)).toEqual(["create /h/.agents/skills/tdd"]);
+		expect(p.warnings).toContain(
+			"Also visible to Codex, Cursor, which read the same folder.",
+		);
 	});
 
 	test("prefers a folder that is already ours", () => {
@@ -91,15 +99,15 @@ describe("the author's machine: npx skills owns ~/.agents/skills", () => {
 		expect(kinds(p)).toEqual(["takeover /h/.claude/skills/tdd"]);
 		expect(p.needsConfirmation).toBe(true);
 		expect(p.warnings).toContain(
-			"Cursor will see tdd 4 times: /h/.cursor/skills, /h/.agents/skills, /h/.claude/skills, /h/.codex/skills",
+			"Cursor already sees tdd 4 times; this deploy adds none: /h/.cursor/skills, /h/.agents/skills, /h/.claude/skills, /h/.codex/skills",
 		);
 	});
 
-	test("codex goes through ~/.codex/skills and warns it sees two copies", () => {
+	test("codex goes through ~/.codex/skills; its two copies were already there", () => {
 		const p = run(["codex"], npx);
 		expect(kinds(p)).toEqual(["takeover /h/.codex/skills/tdd"]);
 		expect(p.warnings[0]).toBe(
-			"Codex will see tdd 2 times: /h/.agents/skills, /h/.codex/skills",
+			"Codex already sees tdd 2 times; this deploy adds none: /h/.agents/skills, /h/.codex/skills",
 		);
 	});
 

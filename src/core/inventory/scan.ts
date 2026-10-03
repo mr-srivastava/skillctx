@@ -48,7 +48,7 @@ export function scan(ws: Workspace, homeDir: string): ScanResult {
 	const lookup = combine([
 		skillLockLookup(homeDir, warn),
 		ghFrontmatterLookup,
-		gitCheckoutLookup(homeDir),
+		gitCheckoutLookup(homeDir, [ws.root]),
 		skillsManagerLookup(homeDir, warn),
 		claudePluginLookup(plugins),
 		claudeAppSyncedLookup(homeDir),
