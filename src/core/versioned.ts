@@ -26,23 +26,40 @@ function tooNew(file: VersionedFile<unknown>, found: number): FormatError {
 }
 
 /**
+ * A versioned file's text as its format and the rest of its contents.
+ * Undefined when the file is missing or isn't a JSON object. Files without
+ * `format` predate it and count as format 1.
+ */
+export function parseVersioned(
+	text: string | undefined,
+): { format: number; value: unknown } | undefined {
+	if (text === undefined) return undefined;
+	let value: unknown;
+	try {
+		value = JSON.parse(text);
+	} catch {
+		return undefined;
+	}
+	if (value === null || typeof value !== "object") return undefined;
+	const { format = 1, ...rest } = value as { format?: number };
+	return { format, value: rest };
+}
+
+/** JSON with `format` as the first key. */
+export function serializeVersioned(format: number, value: object): string {
+	return `${JSON.stringify({ format, ...value }, null, 2)}\n`;
+}
+
+/**
  * The file's contents without `format`. Missing or unparseable files read as
  * `empty()`: these files are machine-written, and a broken one is rebuilt by
  * the next write rather than blocking every command.
  */
 export function readVersioned<T>(ws: Workspace, file: VersionedFile<T>): T {
-	const text = ws.read(file.path);
-	if (text === undefined) return file.empty();
-	let value: unknown;
-	try {
-		value = JSON.parse(text);
-	} catch {
-		return file.empty();
-	}
-	if (value === null || typeof value !== "object") return file.empty();
-	const { format = 1, ...rest } = value as { format?: number };
-	if (format > file.format) throw tooNew(file, format);
-	return rest as T;
+	const parsed = parseVersioned(ws.read(file.path));
+	if (!parsed) return file.empty();
+	if (parsed.format > file.format) throw tooNew(file, parsed.format);
+	return parsed.value as T;
 }
 
 /** Write with `format` first. Refuses to replace a file from a newer skillctx. */
@@ -52,8 +69,5 @@ export function writeVersioned<T extends object>(
 	value: T,
 ): boolean {
 	readVersioned(ws, file);
-	return ws.write(
-		file.path,
-		`${JSON.stringify({ format: file.format, ...value }, null, 2)}\n`,
-	);
+	return ws.write(file.path, serializeVersioned(file.format, value));
 }

@@ -1,19 +1,10 @@
-import { realpathSync } from "node:fs";
 import { buildDir } from "../library/format.ts";
 import { readLockfile } from "../library/store.ts";
 import { listDeployments } from "../ops/deployments.ts";
-import { fromPortable } from "../paths.ts";
+import { fromPortable, tryRealpath } from "../paths.ts";
 import type { ProvenanceLookup } from "../provenance/sources.ts";
 import type { Workspace } from "../workspace.ts";
 import { readRecord } from "./record.ts";
-
-function real(p: string): string | undefined {
-	try {
-		return realpathSync(p);
-	} catch {
-		return undefined;
-	}
-}
 
 /**
  * Marks copies that are skillctx's own deployments: build folders that agent
@@ -26,12 +17,12 @@ export function skillctxLookup(
 ): ProvenanceLookup {
 	const byReal = new Map<string, { skill: string; mode: "symlink" | "copy" }>();
 	for (const name of Object.keys(readLockfile(ws).skills)) {
-		const build = real(ws.resolve(buildDir(name)));
+		const build = tryRealpath(ws.resolve(buildDir(name)));
 		if (build) byReal.set(build, { skill: name, mode: "symlink" });
 	}
 	for (const d of readRecord(ws).deployments) {
 		if (d.mode !== "copy") continue;
-		const entry = real(fromPortable(d.entry, homeDir));
+		const entry = tryRealpath(fromPortable(d.entry, homeDir));
 		if (entry) byReal.set(entry, { skill: d.skill, mode: "copy" });
 	}
 	return (realPath) => {

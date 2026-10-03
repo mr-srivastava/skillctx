@@ -6,9 +6,10 @@ import {
 	isAgentId,
 } from "../../core/deploy/agents.ts";
 import { applyPlan, planDeploy } from "../../core/deploy/apply.ts";
-import type { Op, Plan } from "../../core/deploy/plan.ts";
+import { OP_VERB, deploymentStateText } from "../../core/deploy/labels.ts";
+import type { Plan } from "../../core/deploy/plan.ts";
 import { linkTarget } from "../../core/deploy/record.ts";
-import { listDeployments } from "../../core/ops/deployments.ts";
+import { displayPlan, listDeployments } from "../../core/ops/deployments.ts";
 import { toPortable } from "../../core/paths.ts";
 import {
 	type Env,
@@ -17,48 +18,34 @@ import {
 } from "../../core/workspace.ts";
 import type { Io } from "../io.ts";
 
-const VERB: Record<Op["kind"], string> = {
-	create: "create",
-	keep: "keep",
-	recreate: "rewrite",
-	record: "record",
-	takeover: "replace",
-	remove: "remove",
-	forget: "forget",
-};
-
 function printPlan(io: Io, p: Plan, homeDir: string): void {
-	const show = (abs: string) => toPortable(abs, homeDir);
-	const changes = p.ops.filter((o) => o.kind !== "keep");
+	const shown = displayPlan(p, homeDir);
+	const changes = shown.ops.filter((o) => o.kind !== "keep");
 	io.out(
-		p.agents.length === 0
-			? `Undeploy ${p.skill}:`
-			: `Deploy ${p.skill} for ${p.agents.map(agentLabel).join(", ")} (${p.mode}):`,
+		shown.agents.length === 0
+			? `Undeploy ${shown.skill}:`
+			: `Deploy ${shown.skill} for ${shown.agents.map(agentLabel).join(", ")} (${shown.mode}):`,
 	);
-	if (p.ops.length === 0) io.out("  nothing to change");
-	for (const op of p.ops) {
+	if (shown.ops.length === 0) io.out("  nothing to change");
+	shown.ops.forEach((op, i) => {
 		let note = "";
 		if (op.kind === "takeover") {
-			const target = linkTarget(op.entry);
-			note = `  (another tool's link${target ? ` to ${show(target)}` : ""}; restored on undeploy)`;
+			// displayPlan keeps the order; the link is read from the real path.
+			const target = linkTarget(p.ops[i]?.entry ?? "");
+			note = `  (another tool's link${target ? ` to ${toPortable(target, homeDir)}` : ""}; restored on undeploy)`;
 		} else if (op.kind === "remove" && op.restore) {
-			note = `  (puts back the link to ${show(op.restore)})`;
+			note = `  (puts back the link to ${op.restore})`;
 		}
-		io.out(`  ${VERB[op.kind].padEnd(7)}  ${show(op.entry)}${note}`);
-	}
-	for (const b of p.blocked) {
+		io.out(`  ${OP_VERB[op.kind].padEnd(7)}  ${op.entry}${note}`);
+	});
+	for (const b of shown.blocked) {
 		io.out(`Can't reach ${agentLabel(b.agent)}:`);
-		for (const r of b.reasons) io.out(`  ${r.replace(homeDir, "~")}`);
+		for (const r of b.reasons) io.out(`  ${r}`);
 	}
-	for (const w of p.warnings) io.out(`Note: ${w.replaceAll(homeDir, "~")}`);
-	if (changes.length === 0 && p.ops.length > 0) io.out("Nothing to change.");
+	for (const w of shown.warnings) io.out(`Note: ${w}`);
+	if (changes.length === 0 && shown.ops.length > 0)
+		io.out("Nothing to change.");
 }
-
-const STATE_TEXT = {
-	ours: "deployed",
-	"taken-back": "taken back by another tool",
-	missing: "missing (removed outside skillctx)",
-} as const;
 
 function printDeployments(io: Io, ws: Workspace, env: Env): number {
 	const deployments = listDeployments(ws, env.homeDir);
@@ -67,11 +54,9 @@ function printDeployments(io: Io, ws: Workspace, env: Env): number {
 		return 0;
 	}
 	for (const d of deployments) {
-		const text =
-			d.state in STATE_TEXT
-				? STATE_TEXT[d.state as keyof typeof STATE_TEXT]
-				: d.state;
-		io.out(`${d.skill.padEnd(24)}  ${d.entry}  ${d.mode}, ${text}`);
+		io.out(
+			`${d.skill.padEnd(24)}  ${d.entry}  ${d.mode}, ${deploymentStateText(d.state)}`,
+		);
 	}
 	return 0;
 }

@@ -9,8 +9,10 @@
 export {
 	AGENTS,
 	type AgentId,
+	agentLabel,
 	foldersOf,
 } from "../../../core/deploy/agents.ts";
+export { deploymentStateText, OP_VERB } from "../../../core/deploy/labels.ts";
 export type { Op, Plan } from "../../../core/deploy/plan.ts";
 export type { DeployMode } from "../../../core/deploy/record.ts";
 export type { AdoptResult } from "../../../core/library/adopt.ts";

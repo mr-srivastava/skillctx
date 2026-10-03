@@ -1,9 +1,9 @@
 import { Database } from "bun:sqlite";
-import { existsSync, realpathSync } from "node:fs";
+import { existsSync } from "node:fs";
 import path from "node:path";
 import { InventoryReader } from "../inventory/store.ts";
 import { withWorkspaceLock } from "../lock.ts";
-import { fromPortable } from "../paths.ts";
+import { fromPortable, tryRealpath } from "../paths.ts";
 import type { Workspace } from "../workspace.ts";
 import { AdoptError, adopt } from "./adopt.ts";
 import { putLockEntry, readLockfile } from "./store.ts";
@@ -18,14 +18,6 @@ export interface ManagedBySkillsManager {
 }
 
 const DB = ".skills-manager/skills-manager.db";
-
-function real(p: string): string | undefined {
-	try {
-		return realpathSync(p);
-	} catch {
-		return undefined;
-	}
-}
 
 function tableExists(db: Database, name: string): boolean {
 	return (
@@ -72,7 +64,7 @@ export function readSkillsManager(
 		for (const row of rows) {
 			out.push({
 				name: row.name,
-				realPath: real(row.central_path),
+				realPath: tryRealpath(row.central_path),
 				presets: presets.get(row.id) ?? [],
 				tags: tags.get(row.id) ?? [],
 			});
@@ -130,7 +122,7 @@ function importLocked(
 		let found: { skill: string; copy: number } | undefined;
 		for (const r of records) {
 			const i = r.copies.findIndex(
-				(c) => real(fromPortable(c.realPath, homeDir)) === sm.realPath,
+				(c) => tryRealpath(fromPortable(c.realPath, homeDir)) === sm.realPath,
 			);
 			if (i >= 0) found = { skill: r.name, copy: i };
 		}

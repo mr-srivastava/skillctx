@@ -1,20 +1,8 @@
 import { BusySpinner, Notes, Path } from "@/components/display";
 import { Problem } from "@/components/problem";
 import { Button } from "@/components/ui/button";
-import { AGENTS, type AgentId, type Op, type Plan } from "@/lib/core";
+import { agentLabel, OP_VERB, type Op, type Plan } from "@/lib/core";
 import { plural } from "@/lib/format";
-
-const VERB: Record<Op["kind"], string> = {
-	create: "Create",
-	keep: "Keep",
-	recreate: "Rewrite",
-	record: "Record",
-	takeover: "Replace",
-	remove: "Remove",
-	forget: "Forget",
-};
-
-const label = (id: AgentId) => AGENTS.find((a) => a.id === id)?.label ?? id;
 
 /** Why an op matters, beyond its verb and path. */
 function opNote(op: Op): string | null {
@@ -54,7 +42,7 @@ export function PlanView({
 	const title =
 		plan.agents.length === 0
 			? "Undeploy everywhere"
-			: `Deploy for ${plan.agents.map(label).join(", ")} (${plan.mode})`;
+			: `Deploy for ${plan.agents.map(agentLabel).join(", ")} (${plan.mode})`;
 	return (
 		<section
 			aria-label="Plan"
@@ -67,8 +55,8 @@ export function PlanView({
 						const note = opNote(op);
 						return (
 							<li key={`${op.kind}:${op.entry}`} className="wrap-anywhere">
-								<span className="inline-block w-[4.5rem] font-medium">
-									{VERB[op.kind]}
+								<span className="inline-block w-[4.5rem] font-medium capitalize">
+									{OP_VERB[op.kind]}
 								</span>
 								<Path>{op.entry}</Path>
 								{note && <span className="text-ink-soft"> ({note})</span>}
@@ -90,7 +78,7 @@ export function PlanView({
 					key={b.agent}
 					role="note"
 					className="mt-3"
-					title={`Can't reach ${label(b.agent)}`}
+					title={`Can't reach ${agentLabel(b.agent)}`}
 				>
 					<ul>
 						{b.reasons.map((r) => (

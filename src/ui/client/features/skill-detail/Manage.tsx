@@ -17,6 +17,7 @@ import {
 	type AgentId,
 	type DeploymentStatus,
 	type DeployMode,
+	deploymentStateText,
 	type LockEntry,
 	type Plan,
 	type SkillRecord,
@@ -40,12 +41,6 @@ const AGENT_LOGO: Record<AgentId, ComponentType<SVGProps<SVGSVGElement>>> = {
 	cursor: CursorLogo,
 	gemini: GeminiLogo,
 	opencode: OpenCodeLogo,
-};
-
-const STATE_TEXT: Partial<Record<DeploymentStatus["state"], string>> = {
-	ours: "deployed",
-	"taken-back": "taken back by another tool",
-	missing: "missing (removed outside skillctx)",
 };
 
 const MODES = [
@@ -260,7 +255,7 @@ function Deploy({
 							<Path>{d.entry}</Path>
 							<span className="text-ink-soft">
 								{" "}
-								· {d.mode} · {STATE_TEXT[d.state] ?? d.state}
+								· {d.mode} · {deploymentStateText(d.state)}
 							</span>
 						</li>
 					))}
