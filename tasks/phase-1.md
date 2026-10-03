@@ -79,8 +79,8 @@ Which user-level folders each agent reads (engine review, candidate 3, verified 
 - [x] Scan summary counts taken-back deployments; `inventory` prints them
 
 ### 9. Import from Skills Manager
-- [ ] `skillctx import skills-manager [--dry-run]` adopts every skill in `~/.skills-manager/skills` (read-only on its side) and stores its presets and tags in the lockfile
-- [ ] Fixture database test, like the existing Skills Manager provenance test
+- [x] `skillctx import skills-manager [--dry-run]` adopts every skill in `~/.skills-manager/skills` (read-only on its side) and stores its presets and tags in the lockfile
+- [x] Fixture database test, like the existing Skills Manager provenance test
 
 ### 10. UI
 - [ ] Token-protected mutation routes for adopt, plan, apply and undeploy (ADR-020 mutation pattern)

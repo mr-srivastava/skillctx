@@ -126,7 +126,7 @@ describe("deploy and undeploy", () => {
 describe("inventory after deploying", () => {
 	const record = () =>
 		JSON.parse(readFileSync(at("sk/inventory/skills/tdd.json"), "utf8")) as {
-			copies: { realPath: string; provenance: { kind: string }[] }[];
+			copies: { realPath: string; provenance: Record<string, string>[] }[];
 		};
 
 	beforeEach(async () => {

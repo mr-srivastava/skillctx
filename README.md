@@ -59,6 +59,7 @@ skillctx adopt <skill> [--copy N]            # snapshot a skill into the library
 skillctx deploy <skill> --agent claude,codex [--copy-mode] [--replace] [--dry-run]
 skillctx deploy                              # list deployments and their state
 skillctx undeploy <skill> [--dry-run]
+skillctx import skills-manager [--dry-run]   # adopt its library; keep presets and tags
 ```
 
 The CLI also supports `--help` and `--version` (or `-h` and `-v`). During

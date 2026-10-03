@@ -3,6 +3,7 @@ import pkg from "../../package.json" with { type: "json" };
 import { defaultEnv, type Env, WorkspaceError } from "../core/workspace.ts";
 import { adoptCommand } from "./commands/adopt.ts";
 import { deployCommand, undeployCommand } from "./commands/deploy.ts";
+import { importCommand } from "./commands/import.ts";
 import { initCommand } from "./commands/init.ts";
 import { inventoryCommand } from "./commands/inventory.ts";
 import { uiCommand } from "./commands/ui.ts";
@@ -29,6 +30,9 @@ Usage:
   skillctx deploy                 List deployments and whether they're intact
   skillctx undeploy <skill> [--dry-run]
                                   Remove our entries and put back replaced links
+  skillctx import skills-manager [--dry-run]
+                                  Adopt Skills Manager's library, keeping its
+                                  presets and tags (it is never changed)
   skillctx --version
   skillctx --help
 `;
@@ -39,6 +43,7 @@ const COMMANDS: Record<string, Command> = {
 	adopt: adoptCommand,
 	deploy: deployCommand,
 	undeploy: undeployCommand,
+	import: importCommand,
 	init: initCommand,
 	inventory: inventoryCommand,
 	ui: uiCommand,
