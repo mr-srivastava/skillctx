@@ -24,6 +24,29 @@ export function DiffersDot({ className }: { className?: string }) {
 	);
 }
 
+/**
+ * The rule-topped line above a list of skills or copies: how many, and the
+ * key to the differs dot when the list can show one.
+ */
+export function ListLegend({
+	count,
+	differs = true,
+}: {
+	count: string;
+	differs?: boolean;
+}) {
+	return (
+		<p className="mb-1 flex flex-wrap gap-x-5 gap-y-1.5 border-b border-rule pb-2 text-caption text-ink-soft">
+			<span className="font-medium">{count}</span>
+			{differs && (
+				<span className="inline-flex items-center gap-1.75">
+					<DiffersDot /> copy with different content
+				</span>
+			)}
+		</p>
+	);
+}
+
 export const PRESENCE_TEXT: Record<Presence, string> = {
 	folder: "Real folder",
 	link: "Symlink",

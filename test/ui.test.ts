@@ -11,6 +11,7 @@ import {
 	initWorkspace,
 	type Workspace,
 } from "../src/core/workspace.ts";
+import { formatBytes, plural } from "../src/ui/client/lib/format.ts";
 import { filterRows, NO_FILTERS, toRows } from "../src/ui/client/lib/model.ts";
 import { startUiServer, type UiServer } from "../src/ui/server.ts";
 
@@ -223,6 +224,19 @@ describe("list model", () => {
 				status: "drift",
 			}).map((r) => r.name),
 		).toEqual(["alpha"]);
+	});
+});
+
+describe("format", () => {
+	test("plural counts in words, with an irregular plural when given", () => {
+		expect(plural(1, "skill")).toBe("1 skill");
+		expect(plural(0, "skill")).toBe("0 skills");
+		expect(plural(2, "copy", "copies")).toBe("2 copies");
+	});
+
+	test("sizes stay in bytes below a kilobyte", () => {
+		expect(formatBytes(512)).toBe("512 B");
+		expect(formatBytes(14_540)).toBe("14.2 KB");
 	});
 });
 

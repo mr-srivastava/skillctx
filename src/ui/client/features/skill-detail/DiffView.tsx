@@ -6,15 +6,10 @@ import {
 	type LucideIcon,
 } from "lucide-react";
 import { useState } from "react";
+import { CodeBlock } from "@/components/code-block";
 import { Path, TOOLBAR } from "@/components/display";
+import { Picker } from "@/components/picker";
 import { Problem } from "@/components/problem";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
 import { copyDiffQuery } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import type { SkillRecord } from "../../../../core/inventory/format.ts";
@@ -37,34 +32,12 @@ export function DiffView({ skill }: { skill: SkillRecord }) {
 
 	const copies = copyItems(skill.copies);
 
-	const pick = (
-		value: number,
-		onChange: (n: number) => void,
-		label: string,
-	) => (
-		<Select
-			items={copies}
-			value={value}
-			onValueChange={(v) => v !== null && onChange(v)}
-		>
-			<SelectTrigger aria-label={label} className="max-w-full">
-				<SelectValue />
-			</SelectTrigger>
-			<SelectContent>
-				{copies.map((it) => (
-					<SelectItem key={it.value} value={it.value}>
-						{it.label}
-					</SelectItem>
-				))}
-			</SelectContent>
-		</Select>
-	);
-
 	return (
 		<>
 			<div className={cn(TOOLBAR, "mb-3.5")}>
-				{pick(a, setA, "Compare")} <span className="text-ink-soft">with</span>{" "}
-				{pick(b, setB, "With")}
+				<Picker items={copies} value={a} onChange={setA} label="Compare" />{" "}
+				<span className="text-ink-soft">with</span>{" "}
+				<Picker items={copies} value={b} onChange={setB} label="With" />
 			</div>
 			{a === b && (
 				<p className="my-4 text-ink-soft">Pick two different copies.</p>
@@ -125,7 +98,7 @@ function Patch({ text }: { text: string }) {
 			return { key, line };
 		});
 	return (
-		<pre className="overflow-x-auto rounded-md border border-rule bg-raised py-2 font-mono text-code leading-normal">
+		<CodeBlock className="px-0 py-2 leading-normal">
 			{lines.map(({ key, line }) => (
 				<span
 					key={key}
@@ -142,6 +115,6 @@ function Patch({ text }: { text: string }) {
 					{"\n"}
 				</span>
 			))}
-		</pre>
+		</CodeBlock>
 	);
 }

@@ -6,6 +6,7 @@ import remarkGfm from "remark-gfm";
 import remarkParse from "remark-parse";
 import remarkRehype from "remark-rehype";
 import { unified } from "unified";
+import { CodeBlock } from "@/components/code-block";
 import type { Highlight } from "@/lib/highlight";
 import { cn } from "@/lib/utils";
 
@@ -251,9 +252,9 @@ export function Markdown({
 			),
 			// Inside a block, code drops its inline chip.
 			pre: (p: Props<"pre">) => (
-				<pre
+				<CodeBlock
 					{...p}
-					className="my-4 overflow-x-auto rounded-md border border-rule bg-raised px-3.5 py-2.5 font-mono text-code leading-relaxed [&>code]:border-0 [&>code]:bg-transparent [&>code]:p-0 [&>code]:text-[1em] [&>code]:wrap-normal"
+					className="my-4 [&>code]:border-0 [&>code]:bg-transparent [&>code]:p-0 [&>code]:text-[1em] [&>code]:wrap-normal"
 				/>
 			),
 			table: (p: Props<"table">) => (

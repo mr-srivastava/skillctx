@@ -33,7 +33,7 @@ export function SkillStatuses({
 						className={cn(
 							"flex items-center gap-1.5 text-caption font-medium whitespace-nowrap",
 							STATUS_TEXT[status],
-							compact && "rounded-full bg-current/10 px-2 py-0.5 text-[11px]",
+							compact && "rounded-full bg-current/10 px-2 py-0.5 text-chip",
 						)}
 					>
 						<Icon aria-hidden className="size-3.5 shrink-0" />

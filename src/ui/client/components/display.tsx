@@ -29,7 +29,7 @@ export const HEADLINE =
 /** Notes with an ink left edge: what to do about a skill. */
 export function Notes({ children }: { children: ReactNode }) {
 	return (
-		<ul className="max-w-[72ch] [&>li]:mb-2 [&>li]:rounded-r-md [&>li]:border-l-3 [&>li]:border-ink [&>li]:bg-raised [&>li]:px-4 [&>li]:py-3">
+		<ul className="max-w-reading [&>li]:mb-2 [&>li]:rounded-r-md [&>li]:border-l-3 [&>li]:border-ink [&>li]:bg-raised [&>li]:px-4 [&>li]:py-3">
 			{children}
 		</ul>
 	);
@@ -53,5 +53,3 @@ export const STATUS_TEXT: Record<Status, string> = {
 	drift: "text-differs",
 	warnings: "text-problem",
 };
-
-/** Marks a logo whose copy differs from the one most locations hold. */

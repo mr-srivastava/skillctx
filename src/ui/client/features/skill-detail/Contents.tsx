@@ -1,14 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { CodeBlock } from "@/components/code-block";
 import { Path, TOOLBAR } from "@/components/display";
+import { Picker, type PickerItem } from "@/components/picker";
 import { Problem } from "@/components/problem";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
+import { formatBytes } from "@/lib/format";
 import { CodeText, grammarForFile, useHighlight } from "@/lib/highlight";
 import {
 	goToAnchor,
@@ -22,10 +18,6 @@ import { cn } from "@/lib/utils";
 import type { SkillRecord } from "../../../../core/inventory/format.ts";
 import type { CopyFiles } from "../../../data.ts";
 import { copyItems } from "./copy-items.tsx";
-
-function size(bytes: number): string {
-	return bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
-}
 
 /** The file a skill opens on: SKILL.md, or the first file if it's missing. */
 function entryFile(files: CopyFiles["files"]): string | null {
@@ -90,12 +82,12 @@ export function Contents({
 	};
 
 	const copies = copyItems(skill.copies);
-	const fileItems = (listing?.files ?? []).map((f) => ({
+	const fileItems: PickerItem<string>[] = (listing?.files ?? []).map((f) => ({
 		value: f.path,
 		label: (
 			<>
 				<Path>{f.path}</Path>
-				<span className="text-ink-soft">{size(f.bytes)}</span>
+				<span className="text-ink-soft">{formatBytes(f.bytes)}</span>
 			</>
 		),
 	}));
@@ -105,44 +97,23 @@ export function Contents({
 			<div className="min-w-0">
 				<div className={cn(TOOLBAR, "mb-2 empty:hidden")}>
 					{skill.copies.length > 1 && (
-						<Select
+						<Picker
 							items={copies}
 							value={copy}
-							onValueChange={(v) => {
-								if (v === null) return;
+							onChange={(v) => {
 								setPicked(null);
 								setCopy(v);
 							}}
-						>
-							<SelectTrigger aria-label="Copy" className="max-w-full">
-								<SelectValue />
-							</SelectTrigger>
-							<SelectContent>
-								{copies.map((it) => (
-									<SelectItem key={it.value} value={it.value}>
-										{it.label}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
+							label="Copy"
+						/>
 					)}
 					{listing && listing.files.length > 1 && file && (
-						<Select
+						<Picker
 							items={fileItems}
 							value={file}
-							onValueChange={(v) => v !== null && open(v)}
-						>
-							<SelectTrigger aria-label="File" className="max-w-full">
-								<SelectValue />
-							</SelectTrigger>
-							<SelectContent>
-								{fileItems.map((it) => (
-									<SelectItem key={it.value} value={it.value}>
-										{it.label}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
+							onChange={open}
+							label="File"
+						/>
 					)}
 				</div>
 				{listing && file && (
@@ -186,7 +157,7 @@ export function Contents({
 								</pre>
 							</details>
 						)}
-						<div className="max-w-[72ch] leading-[1.6]">
+						<div className="max-w-reading leading-[1.6]">
 							<Markdown
 								parsed={doc.parsed}
 								file={current.path}
@@ -197,13 +168,13 @@ export function Contents({
 						</div>
 					</>
 				) : (
-					<pre className="overflow-x-auto rounded-md border border-rule bg-raised px-3.5 py-2.5 font-mono text-code leading-relaxed">
+					<CodeBlock>
 						<CodeText
 							code={current.text}
 							lang={fileGrammar}
 							highlight={highlight}
 						/>
-					</pre>
+					</CodeBlock>
 				)}
 			</div>
 			{doc && <Outline headings={doc.parsed.headings} />}

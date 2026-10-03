@@ -13,7 +13,8 @@ import {
 	TOOLBAR,
 	TOOLBAR_SELECT,
 } from "@/components/display";
-import { DiffersDot, rootIcon } from "@/components/presence";
+import { type PickerItem, Picker } from "@/components/picker";
+import { ListLegend, rootIcon } from "@/components/presence";
 import { Button } from "@/components/ui/button";
 import {
 	InputGroup,
@@ -22,13 +23,7 @@ import {
 } from "@/components/ui/input-group";
 import { ItemGroup, ItemSeparator } from "@/components/ui/item";
 import { Kbd } from "@/components/ui/kbd";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
+import { plural } from "@/lib/format";
 import {
 	countBy,
 	type Filters,
@@ -83,8 +78,8 @@ function Headline({
 			<div className="flex items-center gap-3">
 				<h1 className={cn(HEADLINE, "text-[clamp(24px,3vw,30px)]")}>Library</h1>
 				<span className="rounded-full border border-rule bg-raised px-2.5 py-0.5 text-caption font-medium tabular-nums text-ink-soft">
-					{rows.length}
-					<span className="sr-only"> skills</span>
+					<span aria-hidden>{rows.length}</span>
+					<span className="sr-only">{plural(rows.length, "skill")}</span>
 				</span>
 			</div>
 			<p className="mt-1 text-caption text-ink-soft">
@@ -156,13 +151,12 @@ export function SkillList({
 	const roots = summary.roots.filter((r) => r.present);
 	const sources = [...new Set(rows.flatMap((r) => r.sources))].sort();
 
-	// Select items double as the trigger's labels (SelectValue reads them).
 	// "" is the no-filter value, as in Filters.
-	const sourceItems = [
+	const sourceItems: PickerItem<string>[] = [
 		{ value: "", label: "Installed by anything" },
 		...sources.map((s) => ({ value: s, label: sourceLabel(s) })),
 	];
-	const rootItems = [
+	const rootItems: PickerItem<string>[] = [
 		{ value: "", label: "In any location" },
 		...roots.map((r) => {
 			const Logo = rootIcon(r.id);
@@ -177,7 +171,7 @@ export function SkillList({
 			};
 		}),
 	];
-	const sortItems: { value: Filters["sort"]; label: string }[] = [
+	const sortItems: PickerItem<Filters["sort"]>[] = [
 		{ value: "attention", label: "Needs attention first" },
 		{ value: "name", label: "A to Z" },
 	];
@@ -227,54 +221,27 @@ export function SkillList({
 						<Kbd>/</Kbd>
 					</InputGroupAddon>
 				</InputGroup>
-				<Select
+				<Picker
 					items={sourceItems}
 					value={filters.source}
-					onValueChange={(v) => set({ source: v ?? "" })}
-				>
-					<SelectTrigger aria-label="Installed by" className={TOOLBAR_SELECT}>
-						<SelectValue />
-					</SelectTrigger>
-					<SelectContent>
-						{sourceItems.map((it) => (
-							<SelectItem key={it.value} value={it.value}>
-								{it.label}
-							</SelectItem>
-						))}
-					</SelectContent>
-				</Select>
-				<Select
+					onChange={(source) => set({ source })}
+					label="Installed by"
+					className={TOOLBAR_SELECT}
+				/>
+				<Picker
 					items={rootItems}
 					value={filters.root}
-					onValueChange={(v) => set({ root: v ?? "" })}
-				>
-					<SelectTrigger aria-label="Location" className={TOOLBAR_SELECT}>
-						<SelectValue />
-					</SelectTrigger>
-					<SelectContent>
-						{rootItems.map((it) => (
-							<SelectItem key={it.value} value={it.value}>
-								{it.label}
-							</SelectItem>
-						))}
-					</SelectContent>
-				</Select>
-				<Select
+					onChange={(root) => set({ root })}
+					label="Location"
+					className={TOOLBAR_SELECT}
+				/>
+				<Picker
 					items={sortItems}
 					value={filters.sort}
-					onValueChange={(v) => v !== null && set({ sort: v })}
-				>
-					<SelectTrigger aria-label="Sort" className={TOOLBAR_SELECT}>
-						<SelectValue />
-					</SelectTrigger>
-					<SelectContent>
-						{sortItems.map((it) => (
-							<SelectItem key={it.value} value={it.value}>
-								{it.label}
-							</SelectItem>
-						))}
-					</SelectContent>
-				</Select>
+					onChange={(sort) => set({ sort })}
+					label="Sort"
+					className={TOOLBAR_SELECT}
+				/>
 				{filtered && (
 					<Button
 						variant="link"
@@ -324,11 +291,11 @@ export function SkillList({
 				</div>
 			</div>
 
-			<Legend
+			<ListLegend
 				count={
 					visible.length === rows.length
-						? `${rows.length} skills`
-						: `${visible.length} of ${rows.length} skills`
+						? plural(rows.length, "skill")
+						: `${visible.length} of ${plural(rows.length, "skill")}`
 				}
 			/>
 
@@ -344,7 +311,7 @@ export function SkillList({
 			) : (
 				<ul
 					aria-label="Skills"
-					className="grid list-none grid-cols-1 gap-2.5 p-0 sm:grid-cols-2 wide:grid-cols-3"
+					className="grid list-none grid-cols-1 gap-2.5 p-0 wide:grid-cols-2 split:grid-cols-3"
 				>
 					{visible.map((row) => (
 						<SkillCard
@@ -361,16 +328,5 @@ export function SkillList({
 				</p>
 			)}
 		</section>
-	);
-}
-
-function Legend({ count }: { count: string }) {
-	return (
-		<p className="mb-1 flex flex-wrap gap-x-5 gap-y-1.5 border-b border-rule pb-2 text-caption text-ink-soft">
-			<span className="font-medium">{count}</span>
-			<span className="inline-flex items-center gap-1.75">
-				<DiffersDot /> copy with different content
-			</span>
-		</p>
 	);
 }

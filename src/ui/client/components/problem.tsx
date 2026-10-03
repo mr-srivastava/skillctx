@@ -18,7 +18,7 @@ export function Problem({
 	return (
 		<Alert
 			variant="destructive"
-			className={cn("max-w-[72ch]", className)}
+			className={cn("max-w-reading", className)}
 			role={role ?? "alert"}
 		>
 			<CircleAlertIcon aria-hidden />

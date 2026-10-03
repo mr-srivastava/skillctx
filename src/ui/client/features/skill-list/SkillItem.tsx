@@ -14,7 +14,7 @@ export function SkillRow({ row, roots }: { row: Row; roots: string[] }) {
 		<Item role="listitem" size="sm" className="relative px-2 hover:bg-raised">
 			<ItemContent className="min-w-0 basis-[260px]">
 				<SkillName row={row} className="after:absolute after:inset-0" />
-				<ItemDescription className="max-w-[72ch]">
+				<ItemDescription className="max-w-reading">
 					{row.description}
 				</ItemDescription>
 			</ItemContent>

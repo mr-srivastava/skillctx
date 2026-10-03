@@ -56,8 +56,10 @@
 	--radius-xl: calc(var(--radius) + 6px);
 }
 
-/* Type scale and layout breakpoints, named by role. */
+/* Type scale, widths and layout breakpoints, named by role. */
 @theme {
+	/* Status pills on cards and the skill page header. */
+	--text-chip: 11px;
 	--text-code: 12.5px;
 	--text-caption: 13px;
 	--text-small: 14px;
@@ -65,6 +67,9 @@
 	--text-lead: 16px;
 	--text-heading: 17px;
 	--text-title: 20px;
+
+	/* A comfortable line of prose: descriptions, notes, rendered files. */
+	--container-reading: 72ch;
 
 	--breakpoint-wide: 45rem;
 	/* Room for a side column next to a 72ch reading column. */
@@ -135,8 +140,8 @@
 }
 
 /*
- * Everything else is utility classes in the components (see ui.tsx for the
- * shared pieces). Only page-wide defaults live here.
+ * Everything else is utility classes in the components (shared pieces live in
+ * components/). Only page-wide defaults live here.
  */
 @layer base {
 	html {

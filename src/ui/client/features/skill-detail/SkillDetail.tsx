@@ -8,7 +8,7 @@ import {
 import { Fragment, type ReactNode, useEffect, useRef, useState } from "react";
 import { Notes, Path, STATUS_ICON, STATUS_TEXT } from "@/components/display";
 import { Hint } from "@/components/Hint";
-import { DiffersDot, LocationIcons } from "@/components/presence";
+import { DiffersDot, ListLegend, LocationIcons } from "@/components/presence";
 import { Problem } from "@/components/problem";
 import { SkillStatuses } from "@/components/status";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import {
 	ItemSeparator,
 } from "@/components/ui/item";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { formatBytes, plural } from "@/lib/format";
 import { copyPresence, mainCopy, type Row } from "@/lib/model";
 import { cn } from "@/lib/utils";
 import type {
@@ -218,14 +219,12 @@ function Header({
 				</h1>
 				{row && <SkillStatuses row={row} compact />}
 			</div>
-			<p className="mt-1.5 max-w-[72ch] text-ink-soft">
+			<p className="mt-1.5 max-w-reading text-ink-soft">
 				{skill.description || "No description."}
 			</p>
 			<dl className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 border-y border-rule py-2.5 text-caption">
 				{row && locations > 0 && (
-					<Fact
-						label={locations === 1 ? "1 location" : `${locations} locations`}
-					>
+					<Fact label={plural(locations, "location")}>
 						<LocationIcons presence={row.presence} roots={roots} max={8} />
 					</Fact>
 				)}
@@ -247,8 +246,8 @@ function Header({
 function copyFacts(copy: Copy, index: number, isMain: boolean): string {
 	return [
 		`Copy ${index + 1}`,
-		`${copy.fileCount} ${copy.fileCount === 1 ? "file" : "files"}`,
-		`${(copy.bytes / 1024).toFixed(1)} KB`,
+		plural(copy.fileCount, "file"),
+		formatBytes(copy.bytes),
 		...(isMain ? [] : ["different content"]),
 		...(copy.installState === "modified" ? ["edited after install"] : []),
 	].join(" · ");
@@ -264,19 +263,10 @@ function CopyList({ skill, roots }: { skill: SkillRecord; roots: string[] }) {
 	const untracked = skill.copies.every((c) => c.provenance.length === 0);
 	return (
 		<>
-			<p className="mb-1 flex flex-wrap gap-x-5 gap-y-1.5 border-b border-rule pb-2 text-caption text-ink-soft">
-				<span className="font-medium">
-					{skill.copies.length === 1
-						? "1 copy"
-						: `${skill.copies.length} copies`}{" "}
-					on disk
-				</span>
-				{skill.drift && (
-					<span className="inline-flex items-center gap-1.75">
-						<DiffersDot /> copy with different content
-					</span>
-				)}
-			</p>
+			<ListLegend
+				count={`${plural(skill.copies.length, "copy", "copies")} on disk`}
+				differs={skill.drift}
+			/>
 			<ItemGroup aria-label="Copies on disk">
 				{skill.copies.map((c, i) => (
 					<Fragment key={c.realPath}>
@@ -315,7 +305,7 @@ function CopyList({ skill, roots }: { skill: SkillRecord; roots: string[] }) {
 				))}
 			</ItemGroup>
 			{untracked && (
-				<p className="mt-4 max-w-[72ch] text-caption text-ink-soft">
+				<p className="mt-4 max-w-reading text-caption text-ink-soft">
 					No installer recorded this skill, so it can't be checked for updates.
 				</p>
 			)}
@@ -347,7 +337,7 @@ export function SkillDetail({
 
 			<Advice skill={skill} row={row} />
 			{skill.copies.some((c) => c.diagnostics.length > 0) && (
-				<div className="mb-2 grid max-w-[72ch] gap-2">
+				<div className="mb-2 grid max-w-reading gap-2">
 					{skill.copies
 						.filter((c) => c.diagnostics.length > 0)
 						.map((c) => (
