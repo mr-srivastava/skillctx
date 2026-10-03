@@ -82,7 +82,14 @@ Which user-level folders each agent reads (engine review, candidate 3, verified 
 - [x] `skillctx import skills-manager [--dry-run]` adopts every skill in `~/.skills-manager/skills` (read-only on its side) and stores its presets and tags in the lockfile
 - [x] Fixture database test, like the existing Skills Manager provenance test
 
-### 10. UI
+### 10. Workspace write lock
+- [x] `withWorkspaceLock(ws, fn)` in `src/core/lock.ts`: a lock file at `local/workspace.lock` holding the owner's pid, created exclusively; re-entrant within one process (import calls adopt)
+- [x] Held by a live process: `WorkspaceBusyError` naming the pid and the file. Left by a dead process: taken over
+- [x] `adopt`, `applyPlan`, `importSkillsManager` (not `--dry-run`) and `refreshInventory` take it; refresh holds it for the scan and each write, never across the network
+- [x] The UI's refresh route answers 409 when the workspace is busy
+- [x] Tests: lock released after success and after a throw; nested use; busy; stale lock taken over; a CLI write refused while another process holds it
+
+### 11. UI
 - [ ] Token-protected mutation routes for adopt, plan, apply and undeploy (ADR-020 mutation pattern)
 - [ ] Skill page: Adopt button; Deploy panel with agent toggles, the plan, warnings, and a confirm step; deployments listed with their state
 - [ ] Library filter: managed skills

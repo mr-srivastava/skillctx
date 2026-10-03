@@ -12,6 +12,7 @@ import { hashFolder } from "../indexer/hash.ts";
 import { safeName } from "../inventory/format.ts";
 import { buildDir, snapshotDir } from "../library/format.ts";
 import { readLockfile } from "../library/store.ts";
+import { withWorkspaceLock } from "../lock.ts";
 import { fromPortable, toPortable } from "../paths.ts";
 import { BUILTIN_ROOTS } from "../sources/roots.ts";
 import { ensureLayout, type Workspace, WorkspaceError } from "../workspace.ts";
@@ -141,6 +142,15 @@ export interface ApplyResult {
  * fails part-way, so it always matches what's on disk.
  */
 export function applyPlan(
+	ws: Workspace,
+	homeDir: string,
+	p: Plan,
+	opts: ApplyOptions,
+): ApplyResult {
+	return withWorkspaceLock(ws, () => applyLocked(ws, homeDir, p, opts));
+}
+
+function applyLocked(
 	ws: Workspace,
 	homeDir: string,
 	p: Plan,

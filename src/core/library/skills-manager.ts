@@ -2,6 +2,7 @@ import { Database } from "bun:sqlite";
 import { existsSync, realpathSync } from "node:fs";
 import path from "node:path";
 import { InventoryReader } from "../inventory/store.ts";
+import { withWorkspaceLock } from "../lock.ts";
 import { fromPortable } from "../paths.ts";
 import type { Workspace } from "../workspace.ts";
 import { AdoptError, adopt } from "./adopt.ts";
@@ -98,6 +99,15 @@ export interface ImportOutcome {
  * what would happen and writes nothing.
  */
 export function importSkillsManager(
+	ws: Workspace,
+	homeDir: string,
+	opts: { now: string; dryRun: boolean },
+): ImportOutcome[] | undefined {
+	const run = () => importLocked(ws, homeDir, opts);
+	return opts.dryRun ? run() : withWorkspaceLock(ws, run);
+}
+
+function importLocked(
 	ws: Workspace,
 	homeDir: string,
 	opts: { now: string; dryRun: boolean },

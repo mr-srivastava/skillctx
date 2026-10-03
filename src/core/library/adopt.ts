@@ -2,6 +2,7 @@ import { listSkillFiles } from "../indexer/files.ts";
 import { hashFolder } from "../indexer/hash.ts";
 import { type CopyRecord, safeName } from "../inventory/format.ts";
 import { InventoryReader } from "../inventory/store.ts";
+import { withWorkspaceLock } from "../lock.ts";
 import { fromPortable } from "../paths.ts";
 import { upstreamTarget } from "../provenance/kinds.ts";
 import { ensureLayout, type Workspace, WorkspaceError } from "../workspace.ts";
@@ -62,6 +63,14 @@ export function snapshotPlace(copy: CopyRecord): SnapshotPlace {
  * and refuses if the folder changed since then.
  */
 export function adopt(
+	ws: Workspace,
+	homeDir: string,
+	opts: AdoptOptions,
+): AdoptResult {
+	return withWorkspaceLock(ws, () => adoptLocked(ws, homeDir, opts));
+}
+
+function adoptLocked(
 	ws: Workspace,
 	homeDir: string,
 	opts: AdoptOptions,

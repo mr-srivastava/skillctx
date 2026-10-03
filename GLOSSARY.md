@@ -18,6 +18,7 @@ Domain terms for skillctx. Architecture terms (module, interface, seam, adapter,
 - **Snapshot**: the immutable files of a managed skill as installed or adopted. Recorded in the lockfile with source, revision and content hash.
 - **Adopt**: take a snapshot of a skill another tool installed into the library, leaving the original untouched.
 - **Edit**: your change to a managed skill, stored as a diff against its snapshot and merged 3-way on update.
+- **Workspace lock**: `local/workspace.lock`, held by whichever skillctx process is writing the workspace. Another writer is refused with the holder's pid; a lock left by a process that exited is taken over.
 - **Library**: the workspace folder holding the lockfile, edits, and snapshots that can't be fetched again.
 - **Build**: a snapshot with its edit applied, in `<home>/build/`. Regenerated, never committed.
 - **Deployment**: a symlink or copy in an agent's skill folder pointing at a build. Listed in the per-machine deployment record; skillctx only modifies entries in that record (ADR-022).

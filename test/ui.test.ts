@@ -6,6 +6,7 @@ import type { SkillRecord } from "../src/core/inventory/format.ts";
 import { refreshInventory } from "../src/core/inventory/refresh.ts";
 import { scan } from "../src/core/inventory/scan.ts";
 import { writeInventory } from "../src/core/inventory/store.ts";
+import { LOCK_FILE } from "../src/core/lock.ts";
 import {
 	type Env,
 	initWorkspace,
@@ -179,6 +180,29 @@ describe("ui server", () => {
 		);
 		const skills = (await (await api("/api/skills")).json()) as SkillRecord[];
 		expect(skills.map((s) => s.name)).toContain("gamma");
+	});
+
+	test("refresh answers 409 while another process changes the workspace", async () => {
+		const { token } = (await (await api("/api/session")).json()) as {
+			token: string;
+		};
+		mkdirSync(path.dirname(ws.resolve(LOCK_FILE)), { recursive: true });
+		writeFileSync(
+			ws.resolve(LOCK_FILE),
+			JSON.stringify({ pid: process.ppid, since: "earlier" }),
+		);
+		const res = await api("/api/refresh", {
+			method: "POST",
+			headers: {
+				"content-type": "application/json",
+				"x-skillctx-token": token,
+			},
+			body: "{}",
+		});
+		expect(res.status).toBe(409);
+		expect(((await res.json()) as { error: string }).error).toContain(
+			`pid ${process.ppid}`,
+		);
 	});
 });
 

@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import type { RefreshOutcome } from "../core/inventory/refresh.ts";
 import { InventoryReader } from "../core/inventory/store.ts";
+import { WorkspaceBusyError } from "../core/lock.ts";
 import { copyDiff, copyFile, copyFiles } from "../core/ops/files.ts";
 import { tallyUpstream } from "../core/upstream/index.ts";
 import type { Workspace } from "../core/workspace.ts";
@@ -149,6 +150,10 @@ export function startUiServer(opts: UiServerOptions): UiServer {
 							ok: true,
 							message: refreshMessage(outcome),
 						} satisfies RefreshResult);
+					} catch (error) {
+						if (error instanceof WorkspaceBusyError)
+							return Response.json({ error: error.message }, { status: 409 });
+						throw error;
 					} finally {
 						refreshing = false;
 					}
