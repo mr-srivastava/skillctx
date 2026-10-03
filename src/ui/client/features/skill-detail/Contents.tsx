@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import { Path, TOOLBAR } from "@/components/display";
 import { Problem } from "@/components/problem";
 import {
@@ -8,7 +9,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import * as api from "@/lib/api";
 import { CodeText, grammarForFile, useHighlight } from "@/lib/highlight";
 import {
 	goToAnchor,
@@ -17,9 +17,10 @@ import {
 	parseMarkdown,
 	splitFrontmatter,
 } from "@/lib/markdown";
+import { copyFileQuery, copyFilesQuery } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import type { SkillRecord } from "../../../../core/inventory/format.ts";
-import type { CopyFiles, FileText } from "../../../data.ts";
+import type { CopyFiles } from "../../../data.ts";
 import { copyItems } from "./copy-items.tsx";
 
 function size(bytes: number): string {
@@ -45,52 +46,29 @@ export function Contents({
 	mainCopy: number;
 }) {
 	const [copy, setCopy] = useState(mainCopy);
-	const [listing, setListing] = useState<CopyFiles | null>(null);
-	const [file, setFile] = useState<string | null>(null);
-	const [shown, setShown] = useState<FileText | null>(null);
-	const [error, setError] = useState<string | null>(null);
+	/** The file picked; null opens the copy's entry file. */
+	const [picked, setPicked] = useState<string | null>(null);
+	const listingQuery = useQuery(copyFilesQuery(skill.name, copy));
+	const listing = listingQuery.data ?? null;
+	const file = picked ?? (listing ? entryFile(listing.files) : null);
+	const fileQuery = useQuery({
+		...copyFileQuery(skill.name, copy, file ?? ""),
+		enabled: file !== null,
+	});
+	// Keyed by copy and path, so only the current selection's file shows.
+	const current = fileQuery.data ?? null;
+	const error = listingQuery.error?.message ?? fileQuery.error?.message ?? null;
 
-	useEffect(() => {
-		let live = true;
-		api
-			.copyFiles(skill.name, copy)
-			.then((l) => {
-				if (!live) return;
-				setListing(l);
-				setFile(entryFile(l.files));
-				setError(null);
-			})
-			.catch((e: Error) => live && setError(e.message));
-		return () => {
-			live = false;
-		};
-	}, [skill.name, copy]);
-
-	useEffect(() => {
-		if (file === null) return;
-		let live = true;
-		api
-			.copyFile(skill.name, copy, file)
-			.then((f) => {
-				if (!live) return;
-				setShown(f);
-				setError(null);
-			})
-			.catch((e: Error) => live && setError(e.message));
-		return () => {
-			live = false;
-		};
-	}, [skill.name, copy, file]);
-
-	const isMarkdown = shown ? /\.(md|markdown)$/i.test(shown.path) : false;
+	const isMarkdown = current ? /\.(md|markdown)$/i.test(current.path) : false;
 	const doc = useMemo(() => {
-		if (!shown?.text || !isMarkdown) return null;
-		const { frontmatter, body } = splitFrontmatter(shown.text);
+		if (!current?.text || !isMarkdown) return null;
+		const { frontmatter, body } = splitFrontmatter(current.text);
 		return { frontmatter, parsed: parseMarkdown(body) };
-	}, [shown, isMarkdown]);
+	}, [current, isMarkdown]);
 
 	// Grammars this file needs: its fences and frontmatter, or the file itself.
-	const fileGrammar = shown && !isMarkdown ? grammarForFile(shown.path) : null;
+	const fileGrammar =
+		current && !isMarkdown ? grammarForFile(current.path) : null;
 	const languages = useMemo(
 		() =>
 			doc
@@ -110,13 +88,9 @@ export function Contents({
 		[listing],
 	);
 	const open = (path: string) => {
-		setFile(path);
+		setPicked(path);
 		window.scrollTo({ top: 0 });
 	};
-
-	// Only show what belongs to the current selection; a stale file stays
-	// hidden until its replacement arrives.
-	const current = shown && shown.path === file ? shown : null;
 
 	const copies = copyItems(skill.copies);
 	const fileItems = (listing?.files ?? []).map((f) => ({
@@ -139,9 +113,7 @@ export function Contents({
 							value={copy}
 							onValueChange={(v) => {
 								if (v === null) return;
-								setListing(null);
-								setFile(null);
-								setShown(null);
+								setPicked(null);
 								setCopy(v);
 							}}
 						>

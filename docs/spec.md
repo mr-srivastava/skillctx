@@ -1,6 +1,6 @@
 # skillctx spec
 
-Status: draft v0.10 · 2026-10-03 · Owner: Aadarsh Srivastava
+Status: draft v0.11 · 2026-10-03 · Owner: Aadarsh Srivastava
 Live doc: https://claude.ai/code/artifact/2a245a34-da36-4c90-867e-1cceca1ae294
 Decisions: [docs/decisions/](decisions/) · Research: [docs/research/community-research.md](research/community-research.md) · Engine review notes: [docs/reviews/](reviews/)
 
@@ -296,7 +296,7 @@ The MVP is Phase 0, a read-only inventory (ADR-010). It is useful on its own, an
 
 | Phase | Scope | Gate to next |
 | --- | --- | --- |
-| 0 · Inventory | Workspace init, source adapters, Indexer (realpath + content-hash dedupe), outdated check on refresh, inventory files, local web UI that also renders skill files read-only, with syntax-highlighted code ([ADR-015](decisions/ADR-015-render-skill-files-read-only.md), [ADR-018](decisions/ADR-018-syntax-highlighting-with-shiki.md), [ADR-019](decisions/ADR-019-skill-page-matches-the-library.md)) | Inventory matches what's on disk across all sources on the author's machine |
+| 0 · Inventory | Workspace init, source adapters, Indexer (realpath + content-hash dedupe), outdated check on refresh, inventory files, local web UI that also renders skill files read-only, with syntax-highlighted code ([ADR-015](decisions/ADR-015-render-skill-files-read-only.md), [ADR-018](decisions/ADR-018-syntax-highlighting-with-shiki.md), [ADR-019](decisions/ADR-019-skill-page-matches-the-library.md), [ADR-020](decisions/ADR-020-tanstack-query-for-ui-server-state.md)) | Inventory matches what's on disk across all sources on the author's machine |
 | 1 · Compile | Section parser, lens scope + rules, build into `<home>/compiled/`, delivery into agent folders, lock.json | Compiled beats original in paired runs |
 | 2 · Patches | Section ops, five patch states, personal store repo, `check` in CI, drafted conflict fixes | Patches survive 3 upstream updates |
 | 3 · Read path | CLI search/get, MCP (stdio), `cli` mode + events, dashboard v1, rebase review UI | Agents use the read path unprompted |

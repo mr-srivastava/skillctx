@@ -1,10 +1,11 @@
+import { useQuery } from "@tanstack/react-query";
 import {
 	FileDiffIcon,
 	FileMinusIcon,
 	FilePlusIcon,
 	type LucideIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Path, TOOLBAR } from "@/components/display";
 import { Problem } from "@/components/problem";
 import {
@@ -14,7 +15,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import * as api from "@/lib/api";
+import { copyDiffQuery } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import type { SkillRecord } from "../../../../core/inventory/format.ts";
 import type { CopyDiff } from "../../../data.ts";
@@ -28,29 +29,11 @@ export function DiffView({ skill }: { skill: SkillRecord }) {
 			skill.copies.findIndex((c) => c.hash !== skill.copies[0]?.hash),
 		),
 	);
-	const [diff, setDiff] = useState<CopyDiff | null>(null);
-	const [error, setError] = useState<string | null>(null);
-
-	useEffect(() => {
-		if (a === b) {
-			// oxlint-disable-next-line react/set-state-in-effect -- clears the previous pair's diff.
-			setDiff(null);
-			return;
-		}
-		// A slower response for an earlier pair must not replace this one.
-		let live = true;
-		api
-			.copyDiff(skill.name, a, b)
-			.then((d) => {
-				if (!live) return;
-				setDiff(d);
-				setError(null);
-			})
-			.catch((e: Error) => live && setError(e.message));
-		return () => {
-			live = false;
-		};
-	}, [skill.name, a, b]);
+	// Keyed by the pair, so a slow response for an earlier pair can't show;
+	// disabled (no data) when both sides are the same copy.
+	const query = useQuery(copyDiffQuery(skill.name, a, b));
+	const diff = query.data ?? null;
+	const error = query.error?.message ?? null;
 
 	const copies = copyItems(skill.copies);
 

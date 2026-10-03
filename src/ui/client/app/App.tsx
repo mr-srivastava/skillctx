@@ -1,21 +1,30 @@
+import { useQuery } from "@tanstack/react-query";
 import { FolderSearchIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { BusySpinner, HEADLINE } from "@/components/display";
 import { Problem } from "@/components/problem";
 import { Button } from "@/components/ui/button";
 import { SkillDetail } from "@/features/skill-detail/SkillDetail";
 import { SkillList, type SkillView } from "@/features/skill-list/SkillList";
-import * as api from "@/lib/api";
 import { type Filters, NO_FILTERS, toRows } from "@/lib/model";
+import { inventoryQuery, useRefresh } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import { type Busy, TopBar } from "./TopBar.tsx";
 import { useHashRoute } from "./useHashRoute.ts";
 
 const PAGE = "mx-auto max-w-[1180px] px-4 pb-16 wide:px-8 wide:pb-24";
 export function App() {
-	const [data, setData] = useState<api.Inventory | null>(null);
-	const [loadError, setLoadError] = useState<string | null>(null);
-	const [busy, setBusy] = useState<Busy>(null);
+	const inventory = useQuery(inventoryQuery);
+	const data = inventory.data ?? null;
+	// Only a first load that fails replaces the page. A failed refetch (on
+	// window focus) keeps the inventory already shown and retries next time.
+	const loadError = data ? null : (inventory.error?.message ?? null);
+	const refreshing = useRefresh();
+	const busy: Busy = refreshing.isPending
+		? refreshing.variables
+			? "check"
+			: "scan"
+		: null;
 	const [result, setResult] = useState<{ ok: boolean; text: string } | null>(
 		null,
 	);
@@ -24,35 +33,16 @@ export function App() {
 	const [route, setTab] = useHashRoute();
 	const selected = route.name;
 
-	const load = useCallback(async () => {
-		try {
-			setData(await api.loadInventory());
-			setLoadError(null);
-		} catch (e) {
-			setLoadError((e as Error).message);
-		}
-	}, []);
-
-	useEffect(() => {
-		// oxlint-disable-next-line react/set-state-in-effect -- load() sets state after its fetches resolve, not synchronously.
-		void load();
-	}, [load]);
-
-	const refresh = async (check: boolean) => {
-		setBusy(check ? "check" : "scan");
+	const refresh = (check: boolean) => {
 		setResult(null);
-		try {
-			const r = await api.refresh(check);
-			setResult({ ok: r.ok, text: r.message });
-			await load();
-		} catch (e) {
-			setResult({
-				ok: false,
-				text: `Couldn't reach skillctx. Check that \`skillctx ui\` is still running. (${(e as Error).message})`,
-			});
-		} finally {
-			setBusy(null);
-		}
+		refreshing.mutate(check, {
+			onSuccess: (r) => setResult({ ok: r.ok, text: r.message }),
+			onError: (e) =>
+				setResult({
+					ok: false,
+					text: `Couldn't reach skillctx. Check that \`skillctx ui\` is still running. (${e.message})`,
+				}),
+		});
 	};
 
 	const rows = useMemo(
