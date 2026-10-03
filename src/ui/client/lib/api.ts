@@ -1,5 +1,12 @@
 import type {
+	AdoptResult,
+	AgentId,
 	CopyDiff,
+	DeploymentStatus,
+	DeployMode,
+	LockEntry,
+	Plan,
+	ReviewedOutcome,
 	CopyFiles,
 	FileText,
 	InventorySummary,
@@ -41,24 +48,104 @@ export async function loadInventory(signal?: AbortSignal): Promise<Inventory> {
 }
 
 /**
- * Rescan, and with `check` compare with upstream. Fetches the per-session
- * token first; the server refuses refreshes without it. Throws only when the
- * server can't be reached.
+ * POST to a route that changes something. Fetches the per-session token
+ * first; the server refuses these requests without it.
  */
-export async function refresh(check: boolean): Promise<RefreshResult> {
+async function post(
+	url: string,
+	body: unknown,
+): Promise<{ status: number; ok: boolean; body: Record<string, unknown> }> {
 	const { token } = await getJson<{ token: string }>("/api/session");
-	const res = await fetch("/api/refresh", {
+	const res = await fetch(url, {
 		method: "POST",
 		headers: {
 			"content-type": "application/json",
 			"x-skillctx-token": token,
 		},
-		body: JSON.stringify({ check }),
+		body: JSON.stringify(body),
 	});
-	const body = (await res.json()) as { message?: string; error?: string };
+	const parsed = (await res.json().catch(() => ({}))) as Record<
+		string,
+		unknown
+	>;
+	return { status: res.status, ok: res.ok, body: parsed };
+}
+
+/** The server's refusal as an Error, with its message when it sent one. */
+function refused(
+	url: string,
+	res: { status: number; body: Record<string, unknown> },
+) {
+	const message =
+		typeof res.body.error === "string" ? res.body.error : undefined;
+	return new Error(message ?? `${url} returned ${res.status}`);
+}
+
+/**
+ * Rescan, and with `check` compare with upstream. Throws only when the
+ * server can't be reached.
+ */
+export async function refresh(check: boolean): Promise<RefreshResult> {
+	const res = await post("/api/refresh", { check });
+	const { message, error } = res.body as { message?: string; error?: string };
 	return res.ok
-		? { ok: true, message: body.message ?? "Done." }
-		: { ok: false, message: body.error ?? `Refresh failed (${res.status}).` };
+		? { ok: true, message: message ?? "Done." }
+		: { ok: false, message: error ?? `Refresh failed (${res.status}).` };
+}
+
+/** Managed skills, by name. */
+export function loadLibrary(
+	signal?: AbortSignal,
+): Promise<Record<string, LockEntry>> {
+	return getJson<Record<string, LockEntry>>("/api/library", signal);
+}
+
+export function loadDeployments(
+	signal?: AbortSignal,
+): Promise<DeploymentStatus[]> {
+	return getJson<DeploymentStatus[]>("/api/deployments", signal);
+}
+
+const skillUrl = (name: string, action: string) =>
+	`/api/skills/${encodeURIComponent(name)}/${action}`;
+
+/** Snapshot one copy into the library; `copy` defaults to the main copy. */
+export async function adoptSkill(
+	name: string,
+	copy?: number,
+): Promise<AdoptResult> {
+	const url = skillUrl(name, "adopt");
+	const res = await post(url, { copy });
+	if (!res.ok) throw refused(url, res);
+	return res.body as unknown as AdoptResult;
+}
+
+/** What deploying to `agents` would write; no agents plans an undeploy. */
+export async function planDeploy(
+	name: string,
+	agents: readonly AgentId[],
+	mode: DeployMode,
+): Promise<Plan> {
+	const url = skillUrl(name, "plan");
+	const res = await post(url, { agents, mode });
+	if (!res.ok) throw refused(url, res);
+	return res.body as unknown as Plan;
+}
+
+/**
+ * Apply a plan the person reviewed. If the folders changed since, nothing is
+ * written and the outcome carries the new plan to show instead.
+ */
+export async function applyPlan(
+	name: string,
+	plan: Plan,
+	confirmTakeover: boolean,
+): Promise<ReviewedOutcome> {
+	const url = skillUrl(name, "apply");
+	const res = await post(url, { plan, confirmTakeover });
+	if (res.ok || res.body.status === "changed")
+		return res.body as unknown as ReviewedOutcome;
+	throw refused(url, res);
 }
 
 export function copyDiff(

@@ -4,12 +4,18 @@ import {
 	onlineManager,
 	skipToken,
 } from "@tanstack/react-query";
+import type { Plan } from "../src/core/deploy/plan.ts";
 import {
+	adoptMutation,
+	applyMutation,
 	copyDiffQuery,
 	copyFileQuery,
 	copyFilesQuery,
 	createQueryClient,
+	deploymentsQuery,
 	inventoryQuery,
+	libraryQuery,
+	planMutation,
 	refreshMutation,
 } from "../src/ui/client/lib/queries.ts";
 
@@ -111,5 +117,101 @@ describe("page queries", () => {
 		expect(copyFileQuery("alpha", 0, null).queryFn).toBe(skipToken);
 		expect(copyDiffQuery("alpha", 1, 1).queryFn).toBe(skipToken);
 		expect(copyDiffQuery("alpha", 0, 1).queryFn).not.toBe(skipToken);
+	});
+});
+
+describe("library and deployment mutations", () => {
+	const PLAN: Plan = {
+		skill: "beta",
+		hash: "h",
+		mode: "symlink",
+		agents: ["claude"],
+		ops: [],
+		blocked: [],
+		warnings: [],
+		needsConfirmation: false,
+	};
+
+	function cached() {
+		const client = createQueryClient();
+		client.setQueryData(libraryQuery.queryKey, {});
+		client.setQueryData(deploymentsQuery.queryKey, []);
+		client.setQueryData(inventoryQuery.queryKey, EMPTY_INVENTORY);
+		const stale = (key: readonly unknown[]) =>
+			client.getQueryState(key)?.isInvalidated;
+		return { client, stale };
+	}
+
+	const apply = (client: ReturnType<typeof createQueryClient>) =>
+		new MutationObserver(client, applyMutation(client)).mutate({
+			name: "beta",
+			plan: PLAN,
+			confirmTakeover: false,
+		});
+
+	test("adopting reloads the library only", async () => {
+		serve({
+			"/api/session": () => Response.json({ token: "t" }),
+			"/api/skills/beta/adopt": () => Response.json({ status: "adopted" }),
+		});
+		const { client, stale } = cached();
+		await new MutationObserver(client, adoptMutation(client)).mutate({
+			name: "beta",
+		});
+		expect(stale(libraryQuery.queryKey)).toBe(true);
+		expect(stale(deploymentsQuery.queryKey)).toBe(false);
+		expect(stale(inventoryQuery.queryKey)).toBe(false);
+	});
+
+	test("a plan is sent with the token and reloads nothing", async () => {
+		let sent: RequestInit | undefined;
+		serve({
+			"/api/session": () => Response.json({ token: "t" }),
+			"/api/skills/beta/plan": (init) => {
+				sent = init;
+				return Response.json(PLAN);
+			},
+		});
+		const { client, stale } = cached();
+		const plan = await new MutationObserver(client, planMutation).mutate({
+			name: "beta",
+			agents: ["claude"],
+			mode: "symlink",
+		});
+		expect(plan).toEqual(PLAN);
+		expect(new Headers(sent?.headers).get("x-skillctx-token")).toBe("t");
+		expect(JSON.parse(sent?.body as string)).toEqual({
+			agents: ["claude"],
+			mode: "symlink",
+		});
+		expect(stale(deploymentsQuery.queryKey)).toBe(false);
+	});
+
+	test("an applied plan reloads the deployments; a changed one reloads nothing", async () => {
+		let answer = Response.json({ status: "applied", plan: PLAN, applied: [] });
+		serve({
+			"/api/session": () => Response.json({ token: "t" }),
+			"/api/skills/beta/apply": () => answer,
+		});
+		let { client, stale } = cached();
+		expect((await apply(client)).status).toBe("applied");
+		expect(stale(deploymentsQuery.queryKey)).toBe(true);
+
+		answer = Response.json({ status: "changed", plan: PLAN }, { status: 409 });
+		({ client, stale } = cached());
+		const changed = await apply(client);
+		expect(changed).toEqual({ status: "changed", plan: PLAN });
+		expect(stale(deploymentsQuery.queryKey)).toBe(false);
+	});
+
+	test("a refused apply throws the server's reason", async () => {
+		serve({
+			"/api/session": () => Response.json({ token: "t" }),
+			"/api/skills/beta/apply": () =>
+				Response.json({ error: "Another skillctx process" }, { status: 409 }),
+		});
+		const error = await apply(cached().client).catch((e: unknown) => e);
+		expect(error).toBeInstanceOf(Error);
+		expect((error as Error).message).toBe("Another skillctx process");
 	});
 });

@@ -6,6 +6,7 @@ import {
 	useMutation,
 	useQueryClient,
 } from "@tanstack/react-query";
+import type { AgentId, DeployMode, Plan } from "@/lib/core";
 import * as api from "./api.ts";
 
 /*
@@ -39,6 +40,21 @@ export const inventoryQuery = queryOptions({
 	queryFn: ({ signal }) => api.loadInventory(signal),
 	// `skillctx inventory` in a terminal rescans too; pick that up when the
 	// reader comes back to the page.
+	staleTime: 0,
+	refetchOnWindowFocus: true,
+});
+
+// The CLI changes these too, so pick that up on return, like the inventory.
+export const libraryQuery = queryOptions({
+	queryKey: ["library"],
+	queryFn: ({ signal }) => api.loadLibrary(signal),
+	staleTime: 0,
+	refetchOnWindowFocus: true,
+});
+
+export const deploymentsQuery = queryOptions({
+	queryKey: ["deployments"],
+	queryFn: ({ signal }) => api.loadDeployments(signal),
 	staleTime: 0,
 	refetchOnWindowFocus: true,
 });
@@ -86,4 +102,50 @@ export function refreshMutation(client: QueryClient) {
 
 export function useRefresh() {
 	return useMutation(refreshMutation(useQueryClient()));
+}
+
+export function adoptMutation(client: QueryClient) {
+	return mutationOptions({
+		mutationKey: ["adopt"],
+		mutationFn: ({ name, copy }: { name: string; copy?: number }) =>
+			api.adoptSkill(name, copy),
+		onSuccess: () => client.invalidateQueries({ queryKey: ["library"] }),
+	});
+}
+
+/** Planning writes at most a missing build, so it invalidates nothing. */
+export const planMutation = mutationOptions({
+	mutationKey: ["plan"],
+	mutationFn: ({
+		name,
+		agents,
+		mode,
+	}: {
+		name: string;
+		agents: readonly AgentId[];
+		mode: DeployMode;
+	}) => api.planDeploy(name, agents, mode),
+});
+
+/**
+ * Apply a reviewed plan. Only an applied plan reloads the deployments; a
+ * changed one wrote nothing and comes back with the plan to show instead.
+ */
+export function applyMutation(client: QueryClient) {
+	return mutationOptions({
+		mutationKey: ["apply"],
+		mutationFn: ({
+			name,
+			plan,
+			confirmTakeover,
+		}: {
+			name: string;
+			plan: Plan;
+			confirmTakeover: boolean;
+		}) => api.applyPlan(name, plan, confirmTakeover),
+		onSuccess: (outcome) =>
+			outcome.status === "applied"
+				? client.invalidateQueries({ queryKey: ["deployments"] })
+				: undefined,
+	});
 }

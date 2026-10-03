@@ -6,6 +6,15 @@
  * (also checked there).
  */
 
+export type { AgentId } from "../../../core/deploy/agents.ts";
+export type { Plan } from "../../../core/deploy/plan.ts";
+export type { DeployMode } from "../../../core/deploy/record.ts";
+export type { AdoptResult } from "../../../core/library/adopt.ts";
+export type { LockEntry } from "../../../core/library/format.ts";
+export type {
+	DeploymentStatus,
+	ReviewedOutcome,
+} from "../../../core/ops/deployments.ts";
 export type {
 	CopyRecord,
 	InventorySummary,

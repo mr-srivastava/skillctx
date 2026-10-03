@@ -90,7 +90,7 @@ Which user-level folders each agent reads (engine review, candidate 3, verified 
 - [x] Tests: lock released after success and after a throw; nested use; busy; stale lock taken over; a CLI write refused while another process holds it
 
 ### 11. UI
-- [ ] Token-protected mutation routes for adopt, plan, apply and undeploy (ADR-020 mutation pattern)
+- [x] Token-protected mutation routes for adopt, plan, apply and undeploy (ADR-020 mutation pattern). Undeploy is a plan with no agents, then apply. Apply takes the plan the user reviewed, plans again under the workspace lock, and answers 409 with the new plan if the disk changed since (`applyReviewed`). Read routes for the library and deployments; client mutations in `lib/queries.ts`
 - [ ] Skill page: Adopt button; Deploy panel with agent toggles, the plan, warnings, and a confirm step; deployments listed with their state
 - [ ] Library filter: managed skills
 

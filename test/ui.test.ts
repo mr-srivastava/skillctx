@@ -1,12 +1,24 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+	existsSync,
+	lstatSync,
+	mkdirSync,
+	mkdtempSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import type { Plan } from "../src/core/deploy/plan.ts";
 import type { SkillRecord } from "../src/core/inventory/format.ts";
 import { refreshInventory } from "../src/core/inventory/refresh.ts";
 import { scan } from "../src/core/inventory/scan.ts";
 import { writeInventory } from "../src/core/inventory/store.ts";
 import { LOCK_FILE } from "../src/core/lock.ts";
+import type {
+	DeploymentStatus,
+	ReviewedOutcome,
+} from "../src/core/ops/deployments.ts";
 import {
 	type Env,
 	initWorkspace,
@@ -203,6 +215,137 @@ describe("ui server", () => {
 		expect(((await res.json()) as { error: string }).error).toContain(
 			`pid ${process.ppid}`,
 		);
+	});
+});
+
+describe("ui mutations", () => {
+	let token: string;
+	const post = (route: string, body: unknown, headers = {}) =>
+		api(route, {
+			method: "POST",
+			headers: {
+				"content-type": "application/json",
+				"x-skillctx-token": token,
+				...headers,
+			},
+			body: JSON.stringify(body),
+		});
+	const json = async <T = unknown>(res: Response | Promise<Response>) =>
+		(await (await res).json()) as T;
+	const claudeEntry = () => path.join(home, ".claude/skills/beta");
+
+	beforeEach(async () => {
+		({ token } = await json<{ token: string }>(api("/api/session")));
+	});
+
+	test("every mutation needs the session token", async () => {
+		for (const action of ["adopt", "plan", "apply"]) {
+			const res = await post(
+				`/api/skills/beta/${action}`,
+				{},
+				{
+					"x-skillctx-token": "wrong",
+				},
+			);
+			expect(res.status).toBe(403);
+		}
+		expect((await api("/api/skills/beta/adopt")).status).toBe(404);
+		expect(await json<object>(api("/api/library"))).toEqual({});
+	});
+
+	test("adopt, plan, apply, then undeploy the same way", async () => {
+		const adopted = await post("/api/skills/beta/adopt", {});
+		expect(adopted.status).toBe(200);
+		expect(Object.keys(await json(api("/api/library")))).toEqual(["beta"]);
+
+		const plan = await json<Plan>(
+			post("/api/skills/beta/plan", { agents: ["claude"], mode: "symlink" }),
+		);
+		expect(plan.ops).toEqual([
+			{
+				kind: "create",
+				folder: "~/.claude/skills",
+				entry: "~/.claude/skills/beta",
+			},
+		]);
+		expect(existsSync(claudeEntry())).toBe(false);
+
+		const applied = await post("/api/skills/beta/apply", { plan });
+		expect(applied.status).toBe(200);
+		expect((await json<ReviewedOutcome>(applied)).status).toBe("applied");
+		expect(lstatSync(claudeEntry()).isSymbolicLink()).toBe(true);
+		const deployed = await json<DeploymentStatus[]>(api("/api/deployments"));
+		expect(deployed.map((d) => [d.entry, d.state])).toEqual([
+			["~/.claude/skills/beta", "ours"],
+		]);
+
+		const undeploy = await json<Plan>(
+			post("/api/skills/beta/plan", { agents: [] }),
+		);
+		expect(undeploy.ops.map((o) => o.kind)).toEqual(["remove"]);
+		expect(
+			(await post("/api/skills/beta/apply", { plan: undeploy })).status,
+		).toBe(200);
+		expect(existsSync(claudeEntry())).toBe(false);
+		expect(await json<unknown[]>(api("/api/deployments"))).toEqual([]);
+	});
+
+	test("a plan the disk has moved on from is not applied; the new plan comes back", async () => {
+		await post("/api/skills/beta/adopt", {});
+		const plan = await json<Plan>(
+			post("/api/skills/beta/plan", { agents: ["claude"] }),
+		);
+		// Another tool installs its own beta after the plan was shown.
+		skill(claudeEntry(), "beta", "Theirs.\n");
+		const res = await post("/api/skills/beta/apply", { plan });
+		expect(res.status).toBe(409);
+		const outcome = await json<ReviewedOutcome>(res);
+		expect(outcome.status).toBe("changed");
+		expect(outcome.plan.ops).toEqual([]);
+		expect(outcome.plan.blocked.map((b) => b.agent)).toEqual(["claude"]);
+		expect(lstatSync(claudeEntry()).isDirectory()).toBe(true);
+		expect(await json<unknown[]>(api("/api/deployments"))).toEqual([]);
+	});
+
+	test("refusals reach the page as 400 with the reason", async () => {
+		const unknown = await post("/api/skills/nope/adopt", {});
+		expect(unknown.status).toBe(400);
+		expect((await json<{ error: string }>(unknown)).error).toContain("nope");
+
+		const notAdopted = await post("/api/skills/beta/plan", {
+			agents: ["claude"],
+		});
+		expect(notAdopted.status).toBe(400);
+		expect((await json<{ error: string }>(notAdopted)).error).toContain(
+			"skillctx adopt beta",
+		);
+
+		const badAgent = await post("/api/skills/beta/plan", { agents: ["vim"] });
+		expect((await json<{ error: string }>(badAgent)).error).toBe(
+			"Unknown agent vim",
+		);
+		expect((await post("/api/skills/beta/adopt", { copy: -1 })).status).toBe(
+			400,
+		);
+		expect((await post("/api/skills/beta/apply", {})).status).toBe(400);
+
+		await post("/api/skills/beta/adopt", {});
+		const plan = await json<Plan>(
+			post("/api/skills/beta/plan", { agents: ["claude"] }),
+		);
+		const other = await post("/api/skills/alpha/apply", { plan });
+		expect((await json<{ error: string }>(other)).error).toBe(
+			"The plan is for a different skill",
+		);
+	});
+
+	test("adopt answers 409 while another process changes the workspace", async () => {
+		mkdirSync(path.dirname(ws.resolve(LOCK_FILE)), { recursive: true });
+		writeFileSync(
+			ws.resolve(LOCK_FILE),
+			JSON.stringify({ pid: process.ppid, since: "earlier" }),
+		);
+		expect((await post("/api/skills/beta/adopt", {})).status).toBe(409);
 	});
 });
 
