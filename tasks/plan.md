@@ -1,5 +1,7 @@
 # Implementation plan: Phase 0, skill inventory
 
+> **Historical record.** This is the Phase 0 plan as written on October 2, 2026, and it is complete. It is not the current task list. Since then, [ADR-021](../docs/decisions/ADR-021-skillctx-becomes-a-skill-manager.md) made skillctx a skill manager and [ADR-022](../docs/decisions/ADR-022-deploying-into-agent-folders.md) decided how it writes into agent folders, so statements here that the UI or skillctx must stay read-only no longer apply. File paths and some details differ from the code; trust the code and `docs/spec.md`.
+
 ## Overview
 
 Build `skillctx init`, `skillctx inventory [--check]` and `skillctx ui`: a read-only inventory of every agent skill on the machine, written as plain files into a user-chosen workspace, with a local web UI. Governing decisions: ADR-004 (TypeScript + Bun), ADR-005 (CLI + local web UI), ADR-009 (workspace), ADR-010 (inventory first). Domain terms: `GLOSSARY.md`.

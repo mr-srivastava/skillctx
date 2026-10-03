@@ -2,6 +2,8 @@
 
 Checked 2026-10-02. Feeds [spec.md](../spec.md).
 
+Update 2026-10-03: the evidence below is unchanged, but the decision drawn from it for problem 4 changed. [ADR-021](../decisions/ADR-021-skillctx-becomes-a-skill-manager.md) makes skillctx a skill manager with parity to Skills Manager, so "None, integrate" for visibility and management no longer holds.
+
 All five problems are real, but served very unevenly. Visibility and memory are crowded; safe customization and usefulness feedback are nearly empty. Benchmarks show focused skills beat exhaustive ones, which backs the compiler directly.
 
 | Problem | Community heat | Existing solutions | Opening for us |
@@ -9,7 +11,7 @@ All five problems are real, but served very unevenly. Visibility and memory are 
 | 1. Context pollution | High: hard budget in Claude Code, wrong-skill picks at scale | Manual splitting, fewer skills, budget settings, ai-nexus | Strong |
 | 2. No memory between runs | Very high | claude-mem (~84k stars), memory/convention MCPs, `MEMORY.md` | Narrow |
 | 3. No safe customization | Medium: repeated asks, no answers | Forks; Hermes overlay proposal (unbuilt); agent-patch | Strongest |
-| 4. No visibility | High, security-driven | Skillshare, Skills Manager, SkillSpector, Snyk Agent Scan | None, integrate |
+| 4. No visibility | High, security-driven | Skillshare, Skills Manager, SkillSpector, Snyk Agent Scan | Was "none, integrate"; now parity plus cross-installer provenance (ADR-021) |
 | 5. No feedback | Rising | Hooks, OpenTelemetry, Port, offline evals | Strong |
 
 ## 1. Context pollution
@@ -86,9 +88,9 @@ Checked 2026-10-03 against [skillsmanager.dev](https://skillsmanager.dev/) and t
 | Content view | Main document only (SKILL.md), as markdown; no editing | Every file in the skill, read-only, with Shiki highlighting |
 | Compile, patches, lenses, analytics | None | Planned (Phases 1–4) |
 
-Takeaway: it covers the management layer more fully than we should try to, and its hashing and drift handling are as good as ours or better. Its line-ending and dependency-folder rules are worth adopting. Where it can't compete is in seeing skills it didn't install: cross-tool provenance and a standing view across sources come from reading in place, and those are what the inventory should lean on.
+Takeaway: it covers the management layer well, and its hashing and drift handling are as good as ours or better. (When written, this was read as "don't compete"; ADR-021 now targets parity, built on immutable snapshots and diffs rather than its mutable library.) Its line-ending and dependency-folder rules are worth adopting. Where it can't compete is in seeing skills it didn't install: cross-tool provenance and a standing view across sources come from reading in place, and those are what the inventory should lean on.
 
-What's missing: nothing we should own. The one useful hook is running a scanner during `build`.
+What's missing: provenance for skills a manager didn't install itself, and edits that survive updates. Originally this read "nothing we should own"; ADR-021 reversed that. Scanners still run on install and on compiled output rather than being built.
 
 ## 5. No feedback
 

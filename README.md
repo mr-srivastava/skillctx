@@ -1,8 +1,8 @@
 # skillctx
 
-A local, tool-agnostic skill compiler for coding agents. It reads skills installed by other tools (`npx skills`, `gh skill`, Skills Manager) without modifying them, applies your personal variants and per-project patches, and produces lean, project-scoped skills for Claude Code, Codex and Cursor. All its data lives in one workspace folder you choose and can back up to your own GitHub repo. "skillctx" is a working name.
+A local skill manager for coding agents. Install, deploy and edit skills without losing upstream updates, see where every skill came from and whether it's used, and later compile project-specific skills. Skills installed by other tools (`npx skills`, `gh skill`, Skills Manager) are never modified; skillctx reads them, and can adopt them into its own library. All its data lives in one workspace folder you choose and can back up to your own GitHub repo. "skillctx" is a working name.
 
-Status: Phase 0 (read-only inventory and local web UI) works. The compile engine is not designed yet.
+Status: Phase 0 (read-only inventory and local web UI) works. Next is Phase 1, adopting skills and deploying them into agent folders ([ADR-021](docs/decisions/ADR-021-skillctx-becomes-a-skill-manager.md), [ADR-022](docs/decisions/ADR-022-deploying-into-agent-folders.md)).
 
 ## Docs
 
@@ -18,16 +18,16 @@ Status: Phase 0 (read-only inventory and local web UI) works. The compile engine
 
 | ADR | Decision |
 | --- | --- |
-| [001](docs/decisions/ADR-001-compile-to-native-skill-folders.md) | Compile skills for agents' native folders; CLI/MCP read path on top (amended by 009) |
-| [002](docs/decisions/ADR-002-section-ops-for-variants-and-patches.md) | Variants and patches are section operations with five rebase states |
+| [001](docs/decisions/ADR-001-compile-to-native-skill-folders.md) | Compile skills for agents' native folders; CLI/MCP read path on top (amended by 009, 022) |
+| [002](docs/decisions/ADR-002-section-ops-for-variants-and-patches.md) | Variants and patches are section operations with five rebase states (diffs come first: 021) |
 | [003](docs/decisions/ADR-003-three-layer-storage-cascade.md) | Three-layer cascade: upstream → personal → project (locations superseded by 009) |
 | [004](docs/decisions/ADR-004-typescript-with-bun-binary.md) | TypeScript, npm + Bun single binary |
-| [005](docs/decisions/ADR-005-cli-and-local-web-ui-no-desktop-app.md) | CLI + on-demand local web UI; no desktop app, no daemon (UI moved to Phase 0 by 010) |
+| [005](docs/decisions/ADR-005-cli-and-local-web-ui-no-desktop-app.md) | CLI + on-demand local web UI; no desktop app, no daemon (amended by 010, 021) |
 | [006](docs/decisions/ADR-006-sqlite-fts5-first.md) | SQLite FTS5 first; embeddings optional |
-| [007](docs/decisions/ADR-007-integrate-dont-build-adjacent-categories.md) | Integrate with sync, memory and scanners; don't rebuild them (inventory exception: 010) |
+| [007](docs/decisions/ADR-007-integrate-dont-build-adjacent-categories.md) | Integrate with memory tools and scanners; don't rebuild them (skill management superseded by 021) |
 | [008](docs/decisions/ADR-008-local-usefulness-analytics.md) | Local usefulness funnel, harness telemetry, paired evals |
-| [009](docs/decisions/ADR-009-workspace-at-user-chosen-home.md) | One workspace at a user-chosen path holds all skillctx data; git-backable |
-| [010](docs/decisions/ADR-010-inventory-first-with-local-web-ui.md) | Phase 0 is a read-only cross-source inventory with a local web UI |
+| [009](docs/decisions/ADR-009-workspace-at-user-chosen-home.md) | One workspace at a user-chosen path holds all skillctx data; git-backable (amended by 021, 022) |
+| [010](docs/decisions/ADR-010-inventory-first-with-local-web-ui.md) | Phase 0 is a read-only cross-source inventory with a local web UI (scope superseded by 021) |
 | [011](docs/decisions/ADR-011-tailwind-for-the-web-ui.md) | Tailwind CSS v4 for the web UI, via Bun's plugin |
 | [012](docs/decisions/ADR-012-shadcn-components.md) | shadcn/ui components, themed with the existing palette |
 | [013](docs/decisions/ADR-013-oxlint-and-oxfmt.md) | Oxlint and Oxfmt instead of Biome |
@@ -35,6 +35,11 @@ Status: Phase 0 (read-only inventory and local web UI) works. The compile engine
 | [015](docs/decisions/ADR-015-render-skill-files-read-only.md) | Show skill files in the UI, rendered read-only and kept local |
 | [016](docs/decisions/ADR-016-skill-list-items-with-agent-logos.md) | Skill list as items with agent logos |
 | [017](docs/decisions/ADR-017-base-ui-primitives.md) | Base UI primitives for shadcn components |
+| [018](docs/decisions/ADR-018-syntax-highlighting-with-shiki.md) | Syntax highlighting with Shiki, coloured from the page palette |
+| [019](docs/decisions/ADR-019-skill-page-matches-the-library.md) | Skill page uses the Library's layout and logos |
+| [020](docs/decisions/ADR-020-tanstack-query-for-ui-server-state.md) | TanStack Query for the UI's server state |
+| [021](docs/decisions/ADR-021-skillctx-becomes-a-skill-manager.md) | skillctx becomes a skill manager: snapshots, edits as diffs, parity with Skills Manager, analytics, compiler last |
+| [022](docs/decisions/ADR-022-deploying-into-agent-folders.md) | Deploy into agent folders through a plan, touching only entries skillctx created |
 
 ## Usage
 

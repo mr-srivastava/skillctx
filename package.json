@@ -2,7 +2,7 @@
 	"name": "skillctx",
 	"version": "0.0.1",
 	"private": true,
-	"description": "Local skill compiler for coding agents. Phase 0: read-only skill inventory.",
+	"description": "Local skill manager for coding agents: safe edits, provenance and usage analytics.",
 	"license": "UNLICENSED",
 	"bin": {
 		"skillctx": "src/cli/index.ts"

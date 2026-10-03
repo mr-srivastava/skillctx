@@ -1,7 +1,7 @@
 # ADR-001: Compile skills into agents' native skill folders
 
 ## Status
-Accepted. Amended by ADR-009: compiled output is written to the workspace, and delivery into agent folders is an open design question.
+Accepted. Amended by ADR-009: compiled output is written to the workspace. Amended by ADR-022: compiled skills reach agent folders through the same deployment planner as managed skills. The compiler is now Phase 5 (ADR-021).
 
 ## Date
 2026-10-02

@@ -1,6 +1,6 @@
 # Engine architecture review (notes, not decisions)
 
-Date: 2026-10-02. Reviewed spec v0.3 and ADR-001…008 with six read-only analysis passes, one per candidate. Nothing here is decided. These are inputs for when the compile engine is designed; ADR-009 and ADR-010 moved Phase 0 to an inventory first.
+Date: 2026-10-02. Reviewed spec v0.3 and ADR-001…008 with six read-only analysis passes, one per candidate. Nothing here is decided. These are inputs for when the compile engine is designed; ADR-009 and ADR-010 moved Phase 0 to an inventory first. Under ADR-021 the engine is Phase 5. Candidate 3 (placement) is now decided for managed skills by ADR-022, and the compiler reuses that planner.
 
 Vocabulary follows the codebase-design glossary: module, interface, implementation, depth, seam, adapter, leverage, locality.
 
