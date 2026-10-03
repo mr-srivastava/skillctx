@@ -40,6 +40,7 @@ Status: Phase 0 (read-only inventory and local web UI) works. Next is Phase 1, a
 | [020](docs/decisions/ADR-020-tanstack-query-for-ui-server-state.md) | TanStack Query for the UI's server state |
 | [021](docs/decisions/ADR-021-skillctx-becomes-a-skill-manager.md) | skillctx becomes a skill manager: snapshots, edits as diffs, parity with Skills Manager, analytics, compiler last |
 | [022](docs/decisions/ADR-022-deploying-into-agent-folders.md) | Deploy into agent folders through a plan, touching only entries skillctx created |
+| [023](docs/decisions/ADR-023-library-and-deployment-record-formats.md) | Library and deployment record formats; take over foreign symlinks only, restore them on undeploy |
 
 ## Usage
 

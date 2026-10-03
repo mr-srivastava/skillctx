@@ -1,6 +1,6 @@
 # skillctx spec
 
-Status: draft v0.12 · 2026-10-03 · Owner: Aadarsh Srivastava
+Status: draft v0.13 · 2026-10-03 · Owner: Aadarsh Srivastava
 Decisions: [docs/decisions/](decisions/) · Research: [docs/research/community-research.md](research/community-research.md) · Engine review notes: [docs/reviews/](reviews/)
 
 "skillctx" is a working name. This file is the only copy of the spec; an earlier Claude Doc copy is superseded.
@@ -137,9 +137,9 @@ Managed skills are whole-skill snapshots with your edits on top. Sections (Phase
 | Installed skill | A skill another tool installed, read in place and never modified | `skill:vercel-react@a1b2c3` | Its own folder; listed in `<home>/inventory/` |
 | Snapshot | Immutable copy of a managed skill's files, taken at install or adopt | `snapshot:<name>@<hash>` | `<home>/library/` (committed only if it can't be fetched again) |
 | Edit | Your change to a managed skill, as a diff against its snapshot (Phase 2) | `edit:<name>` | `<home>/library/` (committed) |
-| Lockfile | Source, revision and content hash of every managed skill | n/a | `<home>/library/` (committed) |
+| Lockfile | Source, revision and content hash of every managed skill | n/a | `<home>/library/lock.json` (committed) |
 | Build | Snapshot with the edit applied | n/a | `<home>/build/` (git-ignored, regenerated) |
-| Deployment | Link or copy from an agent folder to a build | n/a | Per-machine record in `local.yaml` (git-ignored) |
+| Deployment | Link or copy from an agent folder to a build | n/a | Per-machine record in `local/deployments.json` (git-ignored) |
 | Profile | Named set of skills, from Skills Manager presets or your own (Phase 3) | `profile:react-convex` | `<home>/profiles/` |
 | Inventory entry | All copies of one skill name on the machine, with provenance and outdated status | `skill:<name>@<hash>` | `<home>/inventory/` |
 | Event | One usage signal (shown, opened, applied, corrected) (Phase 4) | n/a | Local SQLite |
@@ -162,15 +162,16 @@ Changes stack in three layers, like CSS: the snapshot (never edited), then your 
 ```
 <home>/              a folder you choose; push it to your own GitHub repo if you like
   skillctx.yaml      workspace config: sources, agents, settings
-  local.yaml         per-machine values, including the deployment record; git-ignored
+  local.yaml         per-machine settings; git-ignored
+  local/             per-machine state: deployments.json, the deployment record; git-ignored (Phase 1)
   inventory/         every skill on the machine: copies, provenance, outdated status
-  library/           lockfile, edits, and snapshots that can't be fetched again (Phase 1)
+  library/           lock.json, edits, and snapshots/ (committed); fetched/ for snapshots that can be fetched again (git-ignored) (Phase 1)
   build/             snapshots with edits applied; agents link here; git-ignored (Phase 1)
   profiles/          named skill sets (Phase 3)
   variants/          section-op variants and composites (Phase 5)
   projects/<name>/   lens.yaml, patches/, lock.json per project (Phase 5)
   compiled/          compiler output (Phase 5)
-  .cache/            git-sourced snapshots, index.db, events.db; rebuildable, git-ignored
+  .cache/            index.db, events.db; rebuildable, git-ignored
 ```
 
 Committed files are plain text with no machine-specific absolute paths, so the workspace can move between machines and later back up to cloud storage.

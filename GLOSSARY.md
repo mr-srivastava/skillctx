@@ -22,6 +22,8 @@ Domain terms for skillctx. Architecture terms (module, interface, seam, adapter,
 - **Build**: a snapshot with its edit applied, in `<home>/build/`. Regenerated, never committed.
 - **Deployment**: a symlink or copy in an agent's skill folder pointing at a build. Listed in the per-machine deployment record; skillctx only modifies entries in that record (ADR-022).
 - **Deployment plan**: the list of writes a deploy, undeploy or update would make, shown before anything is applied.
+- **Takeover**: replacing another tool's symlink in an agent folder with a deployment, after confirmation. The replaced link is restored on undeploy. Real folders are never taken over (ADR-023).
+- **Taken back**: a recorded deployment that another tool has since rewritten. skillctx reports it and stops treating it as its own.
 - **Parity**: Skills Manager's users can switch to skillctx without missing anything day to day. Defined by a checklist, not by Skills Manager's changelog.
 - **Skills Manager**: the desktop app xingkongliang/skills-manager. Not udayvarmora07/skills-manager, which the spec borrows vocabulary from.
 - **Profile**: a named set of skills; Skills Manager presets import as profiles (Phase 3).

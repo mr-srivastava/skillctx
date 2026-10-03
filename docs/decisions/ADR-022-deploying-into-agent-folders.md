@@ -1,7 +1,7 @@
 # ADR-022: Deploying skills into agent folders
 
 ## Status
-Accepted. Amends ADR-001 and ADR-009: how skills reach agent folders is decided here, for managed skills now and for compiled skills later.
+Accepted. Amends ADR-001 and ADR-009: how skills reach agent folders is decided here, for managed skills now and for compiled skills later. Refined by ADR-023: the record lives in `local/deployments.json`, only foreign symlinks can be taken over (never real folders), replaced links are restored on undeploy, and entries another tool rewrites are reported as taken back.
 
 ## Date
 2026-10-03
