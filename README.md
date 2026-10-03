@@ -55,6 +55,10 @@ bun run build            # writes dist/skillctx, a single binary
 skillctx init [--home <path>]                 # create or activate a workspace
 skillctx inventory [--home <path>] [--check] # scan skill folders into inventory/
 skillctx ui [--home <path>] [--port <port>] [--no-open]
+skillctx adopt <skill> [--copy N]            # snapshot a skill into the library
+skillctx deploy <skill> --agent claude,codex [--copy-mode] [--replace] [--dry-run]
+skillctx deploy                              # list deployments and their state
+skillctx undeploy <skill> [--dry-run]
 ```
 
 The CLI also supports `--help` and `--version` (or `-h` and `-v`). During
@@ -62,6 +66,8 @@ development, use `bun run dev <command>` in place of `skillctx`; for example,
 `bun run dev ui --no-open`. The UI also accepts `--dev`, which enables the
 development client build. The `dev:ui` package script runs the UI in Bun watch
 mode with `--dev --no-open`.
+
+`adopt` copies one installed copy of a skill into `<home>/library/` and never changes the original. `deploy` prints a plan before it writes anything: it links (or with `--copy-mode`, copies) the skill's build into the folders the chosen agents read, touches only entries it created, and replaces another tool's symlink only with `--replace`, remembering the old link so `undeploy` can put it back. Another tool's real folder is never replaced (ADR-022, ADR-023).
 
 `inventory` reads skill folders for Agents (`~/.agents/skills`), Claude Code, Codex, Cursor, Gemini, OpenCode, Skills Manager and Claude plugins. It never writes to them. Provenance comes from the `npx skills`/`gh skill` lockfile, `gh skill` frontmatter, git checkouts, the Skills Manager database and Claude's plugin list. Only `--check` (or "Check for updates" in the UI) touches the network: one GitHub request per repository, using `GITHUB_TOKEN` or `gh auth token` if available.
 

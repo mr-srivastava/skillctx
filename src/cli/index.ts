@@ -1,6 +1,8 @@
 #!/usr/bin/env bun
 import pkg from "../../package.json" with { type: "json" };
 import { defaultEnv, type Env, WorkspaceError } from "../core/workspace.ts";
+import { adoptCommand } from "./commands/adopt.ts";
+import { deployCommand, undeployCommand } from "./commands/deploy.ts";
 import { initCommand } from "./commands/init.ts";
 import { inventoryCommand } from "./commands/inventory.ts";
 import { uiCommand } from "./commands/ui.ts";
@@ -16,6 +18,17 @@ Usage:
                                   --check also compares with upstream (network)
   skillctx ui [--port N] [--no-open]
                                   Browse the inventory in a local web page
+  skillctx adopt <skill> [--copy N]
+                                  Snapshot an installed skill into the library
+                                  (the original is never changed)
+  skillctx deploy <skill> --agent claude,codex,cursor,gemini,opencode
+          [--copy-mode] [--replace] [--dry-run]
+                                  Show the plan, then link the skill into the
+                                  agents' folders. --replace confirms replacing
+                                  other tools' links
+  skillctx deploy                 List deployments and whether they're intact
+  skillctx undeploy <skill> [--dry-run]
+                                  Remove our entries and put back replaced links
   skillctx --version
   skillctx --help
 `;
@@ -23,6 +36,9 @@ Usage:
 type Command = (args: string[], io: Io, env: Env) => Promise<number>;
 
 const COMMANDS: Record<string, Command> = {
+	adopt: adoptCommand,
+	deploy: deployCommand,
+	undeploy: undeployCommand,
 	init: initCommand,
 	inventory: inventoryCommand,
 	ui: uiCommand,

@@ -35,44 +35,44 @@ Which user-level folders each agent reads (engine review, candidate 3, verified 
 ## Tasks
 
 ### 1. Workspace layout for the library
-- [ ] `LAYOUT` gains `library`, `build`, `local`; `.gitignore` gains `build/`, `library/fetched/`, `local/`
-- [ ] `ensureLayout(ws)` adds missing folders and ignore lines to existing workspaces; idempotent; `init` uses it
-- [ ] Tests: new workspace; pre-Phase-1 workspace gets the lines once; running twice changes nothing
+- [x] `LAYOUT` gains `library`, `build`, `local`; `.gitignore` gains `build/`, `library/fetched/`, `local/`
+- [x] `ensureLayout(ws)` adds missing folders and ignore lines to existing workspaces; idempotent; `init` uses it
+- [x] Tests: new workspace; pre-Phase-1 workspace gets the lines once; running twice changes nothing
 
 ### 2. Lockfile format and store
-- [ ] `src/core/library/format.ts`: `LIBRARY_FORMAT = 1`, `LockEntry`, `Lockfile`, paths, `snapshotDir`, `buildDir`
-- [ ] `src/core/library/store.ts`: read and write `library/lock.json` with `format` first and sorted keys; refuse newer formats (`LibraryFormatError`)
-- [ ] Tests: round trip; stable bytes; newer format refused for read and write
+- [x] `src/core/library/format.ts`: `LIBRARY_FORMAT = 1`, `LockEntry`, `Lockfile`, paths, `snapshotDir`, `buildDir`
+- [x] `src/core/library/store.ts`: read and write `library/lock.json` with `format` first and sorted keys; refuse newer formats (`LibraryFormatError`)
+- [x] Tests: round trip; stable bytes; newer format refused for read and write
 
 ### 3. Adopt
-- [ ] `adopt(ws, homeDir, { name, copy?, now })` reads the inventory record, picks the main copy (most locations) unless `copy` is given, re-hashes the source, and refuses if it changed since the scan
-- [ ] Copies exactly `listSkillFiles` into `library/snapshots/<name>` or `library/fetched/<name>` (refetchable = has an upstream and is unchanged since install), then materializes `build/<name>`
-- [ ] Adopting the same hash again is a no-op; a different hash for an adopted name is refused ("update arrives in Phase 2")
-- [ ] Never writes outside the workspace (existing guard)
-- [ ] Tests: snapshot bytes and hash match; refetchable vs committed placement; drifted skill needs `--copy` or takes the main copy; source edited after scan is refused
+- [x] `adopt(ws, homeDir, { name, copy?, now })` reads the inventory record, picks the main copy (most locations) unless `copy` is given, re-hashes the source, and refuses if it changed since the scan
+- [x] Copies exactly `listSkillFiles` into `library/snapshots/<name>` or `library/fetched/<name>` (refetchable = has an upstream and is unchanged since install), then materializes `build/<name>`
+- [x] Adopting the same hash again is a no-op; a different hash for an adopted name is refused ("update arrives in Phase 2")
+- [x] Never writes outside the workspace (existing guard)
+- [x] Tests: snapshot bytes and hash match; refetchable vs committed placement; drifted skill needs `--copy` or takes the main copy; source edited after scan is refused
 
 ### 4. Deployment record and ownership
-- [ ] `src/core/deploy/record.ts`: read and write `local/deployments.json` (versioned)
-- [ ] `entryState(entry, record, ws)`: `missing`, `ours`, `taken-back`, `foreign-link`, `foreign-folder`
-- [ ] Tests for each state, including a copy-mode entry whose content changed
+- [x] `src/core/deploy/record.ts`: read and write `local/deployments.json` (versioned)
+- [x] `entryState(entry, record, ws)`: `missing`, `ours`, `taken-back`, `foreign-link`, `foreign-folder`
+- [x] Tests for each state, including a copy-mode entry whose content changed
 
 ### 5. Planner
-- [ ] `src/core/deploy/agents.ts`: the agent table above, as data
-- [ ] `plan({ skill, agents, mode, record, folders })` picks the fewest folders reaching the agents (ties: preferred order, fewest unchosen agents exposed, fewest takeovers), then per folder: create, keep, replace-link (takeover), blocked (foreign real folder or taken back); removes this skill's recorded entries in folders no longer chosen
-- [ ] Warnings: an agent that would see the skill in two folders; unchosen agents that will also see it
-- [ ] Tests over plain data: each state, set cover choices, duplicate warnings, undeploy plans
+- [x] `src/core/deploy/agents.ts`: the agent table above, as data
+- [x] `plan({ skill, agents, mode, record, folders })` picks the fewest folders reaching the agents (ties: preferred order, fewest unchosen agents exposed, fewest takeovers), then per folder: create, keep, replace-link (takeover), blocked (foreign real folder or taken back); removes this skill's recorded entries in folders no longer chosen
+- [x] Warnings: an agent that would see the skill in two folders; unchosen agents that will also see it
+- [x] Tests over plain data: each state, set cover choices, duplicate warnings, undeploy plans
 
 ### 6. Writer and apply
-- [ ] `src/core/deploy/writer.ts`: create symlink or copy, replace a foreign link (recording its old target), remove an owned entry, restore a replaced link. Refuses any path not inside a known agent folder, and any entry the record doesn't own unless the op is a confirmed takeover
-- [ ] `applyPlan(ws, plan, { confirmTakeover, now })` re-checks every entry's state before writing (the disk may have changed since planning), then updates the record
-- [ ] Tests in a temp HOME: deploy, redeploy is a no-op, takeover then undeploy restores the old link, writer refuses an unowned entry, taken-back entry is left alone
+- [x] `src/core/deploy/writer.ts`: create symlink or copy, replace a foreign link (recording its old target), remove an owned entry, restore a replaced link. Refuses any path not inside a known agent folder, and any entry the record doesn't own unless the op is a confirmed takeover
+- [x] `applyPlan(ws, plan, { confirmTakeover, now })` re-checks every entry's state before writing (the disk may have changed since planning), then updates the record
+- [x] Tests in a temp HOME: deploy, redeploy is a no-op, takeover then undeploy restores the old link, writer refuses an unowned entry, taken-back entry is left alone
 
 ### 7. CLI
-- [ ] `skillctx adopt <skill> [--copy N]`
-- [ ] `skillctx deploy <skill> --agent claude,codex,... [--copy-mode] [--replace] [--dry-run]` prints the plan; applies unless `--dry-run`; takeovers need `--replace`
-- [ ] `skillctx deploy` with no skill lists deployments and their state (ours, taken back, missing)
-- [ ] `skillctx undeploy <skill> [--dry-run]`
-- [ ] Tests through `main()` with a temp HOME, like `test/inventory.test.ts`
+- [x] `skillctx adopt <skill> [--copy N]`
+- [x] `skillctx deploy <skill> --agent claude,codex,... [--copy-mode] [--replace] [--dry-run]` prints the plan; applies unless `--dry-run`; takeovers need `--replace`
+- [x] `skillctx deploy` with no skill lists deployments and their state (ours, taken back, missing)
+- [x] `skillctx undeploy <skill> [--dry-run]`
+- [x] Tests through `main()` with a temp HOME, like `test/inventory.test.ts`
 
 ### 8. Inventory awareness
 - [ ] Provenance kind `skillctx` for copies whose real path is under `<home>/build/`, or recorded copy-mode entries

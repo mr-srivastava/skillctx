@@ -21,6 +21,10 @@ export type AgentId = (typeof AGENTS)[number]["id"];
 
 export const AGENT_IDS: readonly AgentId[] = AGENTS.map((a) => a.id);
 
+export function isAgentId(id: string): id is AgentId {
+	return (AGENT_IDS as readonly string[]).includes(id);
+}
+
 export function agentLabel(id: AgentId): string {
 	return AGENTS.find((a) => a.id === id)?.label ?? id;
 }
