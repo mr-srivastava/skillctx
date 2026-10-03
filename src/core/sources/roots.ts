@@ -7,7 +7,7 @@ import type { SkillRoot } from "./types.ts";
 /**
  * User-level skill roots read by the agents we know about (verified 2026-10;
  * see docs/reviews/2026-10-02-engine-architecture-review.md, candidate 3).
- * Project-level roots are deferred (tasks/plan.md).
+ * Project-level roots are deferred (spec §11, open questions).
  */
 export const BUILTIN_ROOTS: readonly SkillRoot[] = [
 	{

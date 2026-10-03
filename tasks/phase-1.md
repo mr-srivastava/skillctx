@@ -1,6 +1,6 @@
 # Phase 1: adopt and deploy
 
-Current plan. Governing decisions: ADR-021 (direction), ADR-022 (deploying), ADR-023 (formats, takeover). Spec §3, §4 and §10. Commands: `bun run test`, `bun run lint`, `bun run typecheck`.
+Current plan. Governing decisions: ADR-021 (direction), ADR-022 (deploying), ADR-023 (formats, takeover), ADR-024 (shared operations, workspace lock, reviewed plans). Spec §3, §4 and §10. Commands: `bun run test`, `bun run lint`, `bun run typecheck`.
 
 Gate: the author manages their own machine's skills through skillctx, with no writes outside the deployment record.
 

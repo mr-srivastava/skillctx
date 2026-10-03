@@ -1,7 +1,7 @@
 # ADR-005: CLI plus on-demand local web UI; no desktop app, no daemon
 
 ## Status
-Accepted. Amended by ADR-010: the local web UI ships in Phase 0 as the inventory view. Under ADR-021 skillctx competes with Skills Manager on management features; the decision (CLI plus local web UI, no desktop app) stands, but "competes with an incumbent" is no longer a reason for it.
+Accepted. Amended by ADR-010: the local web UI ships in Phase 0 as the inventory view. Under ADR-021 skillctx competes with Skills Manager on management features; the decision (CLI plus local web UI, no desktop app) stands, but "competes with an incumbent" is no longer a reason for it. Refined by ADR-024: the surfaces share operations in `src/core/ops/` and one workspace write lock.
 
 ## Date
 2026-10-02

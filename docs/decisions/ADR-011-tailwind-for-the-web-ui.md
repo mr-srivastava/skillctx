@@ -1,7 +1,7 @@
 # ADR-011: Tailwind CSS v4 for the web UI
 
 ## Status
-Accepted. The shared `src/ui/client/ui.tsx` named below was later split into `src/ui/client/components/` (for example `display.tsx`, `status.tsx`, `Hint.tsx`); the rule (shared pieces as small components or class strings, not `@apply`) is unchanged.
+Accepted. File paths below predate the move of shared UI pieces into `src/ui/client/components/`; the rule (shared pieces as small components or class strings, not `@apply`) is unchanged.
 
 ## Date
 2026-10-02

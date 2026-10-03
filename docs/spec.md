@@ -1,6 +1,6 @@
 # skillctx spec
 
-Status: draft v0.16 · 2026-10-03 · Owner: Aadarsh Srivastava
+Status: draft v0.17 · 2026-10-03 · Owner: Aadarsh Srivastava
 Decisions: [docs/decisions/](decisions/) · Research: [docs/research/community-research.md](research/community-research.md) · Engine review notes: [docs/reviews/](reviews/)
 
 "skillctx" is a working name. This file is the only copy of the spec; an earlier Claude Doc copy is superseded.
@@ -193,19 +193,19 @@ Committed files are plain text with no machine-specific absolute paths, so the w
                              └───────────────────────────────┘
 ```
 
-Phase 0 built the source adapters, the Indexer and the inventory UI. Phase 1 adds the library and the deployment planner and writer; the compiler later reuses both. Core operations are single functions the CLI, the UI and MCP all call, with the network and the clock injected (see `refreshInventory`). Operations that combine several core modules for a surface, such as listing deployments with their state or reading a skill copy's files, live in `src/core/ops/`; surfaces parse input and render output, nothing more. Operations that write the workspace hold a lock file, `local/workspace.lock`, so the CLI, the UI server and MCP never interleave writes; a second writer is refused rather than made to wait, and the lock is never held across network calls. When the UI applies a plan, it sends the plan the user reviewed; core plans again and writes only if nothing changed, otherwise it returns the new plan to show.
+Phase 0 built the source adapters, the Indexer and the inventory UI. Phase 1 adds the library and the deployment planner and writer; the compiler later reuses both. Core operations are single functions the CLI, the UI and MCP all call, with the network and the clock injected (see `refreshInventory`). Operations that combine several core modules live in `src/core/ops/`, so surfaces only parse input and render output. Writes hold one workspace lock, and the UI applies a plan only if planning again gives the plan the person reviewed ([ADR-024](decisions/ADR-024-shared-operations-and-workspace-lock.md)).
 
 ## 6. Surfaces
 
-### Planned management operations
+### Management operations
 
-Phases 1–3 add these to the CLI and the web UI. Names aren't final.
+Phases 1–3 add these to the CLI and the web UI. Names for Phase 2 and 3 operations aren't final.
 
 | Operation | What it does | Phase |
 | --- | --- | --- |
-| adopt | Snapshot a skill another tool installed into the library; original untouched | 1 |
-| import Skills Manager | Adopt its library; presets → profiles; copy tags. Read-only on its side | 1 |
-| deploy / undeploy | Plan, show, then apply links or copies for the chosen agents | 1 |
+| adopt | Snapshot a skill another tool installed into the library; original untouched | 1 (built: CLI, UI) |
+| import Skills Manager | Adopt its library; presets → profiles; copy tags. Read-only on its side | 1 (built: CLI) |
+| deploy / undeploy | Plan, show, then apply links or copies for the chosen agents | 1 (built: CLI, UI) |
 | install | From git, a local folder, a ZIP or skills.sh, recording provenance | 2 |
 | update | Fetch a new snapshot and merge your edit onto it; conflicts go to review | 2 |
 | edit | Open a working copy; save stores a diff | 2 |
@@ -214,7 +214,7 @@ Phases 1–3 add these to the CLI and the web UI. Names aren't final.
 
 ### Planned agent operations (Phase 5, CLI and MCP)
 
-These operations describe the intended context engine surface. CLI and MCP return identical payloads. None is implemented; the current CLI supports `init`, `inventory` and `ui` (see the [README](../README.md)).
+These operations describe the intended context engine surface. CLI and MCP return identical payloads. None is implemented yet; the [README](../README.md) lists the commands that exist.
 
 | Operation | CLI | Returns |
 | --- | --- | --- |
@@ -234,7 +234,7 @@ A small stub skill or one `AGENTS.md` line tells the agent to call `skillctx con
 
 ### Web UI
 
-`skillctx ui` is a loopback-only page with a per-session token for every action that changes something. Today it shows the inventory: every skill, where it lives, who installed it, its files, differences between copies, and updates. It grows with the phases: library, adopt and deploy screens with a plan to confirm (Phase 1); install, update and edit, with a 3-way conflict review (Phase 2); profiles, tags and bulk actions (Phase 3); usage and pruning suggestions (Phase 4); variants, lenses and the analytics funnel (Phase 5).
+`skillctx ui` is a loopback-only page with a per-session token for every action that changes something. Today it shows the inventory (every skill, where it lives, who installed it, its files, differences between copies, and updates) and, on each skill's page, adopting and deploying through a plan you confirm (Phase 1). It grows with the phases: install, update and edit, with a 3-way conflict review (Phase 2); profiles, tags and bulk actions (Phase 3); usage and pruning suggestions (Phase 4); variants, lenses and the analytics funnel (Phase 5).
 
 ## 7. Context assembly and grounding (Phase 5)
 
@@ -342,12 +342,12 @@ Guardrails: weights corrections > agent reports > inferred; hints hidden below 5
 
 ## 10. MVP and roadmap
 
-Phase 0, the read-only inventory, is built. Phases 1–3 reach day-to-day parity with Skills Manager, each feature built on snapshots, diffs and planned deployments ([ADR-021](decisions/ADR-021-skillctx-becomes-a-skill-manager.md)). Phase 4 adds analytics; Phase 5 is the compiler. The compile engine design stays open; the [engine review notes](reviews/2026-10-02-engine-architecture-review.md) collect what we know so far.
+Phase 0, the read-only inventory, is built; Phase 1 is in progress ([tasks/phase-1.md](../tasks/phase-1.md)). Phases 1–3 reach day-to-day parity with Skills Manager, each feature built on snapshots, diffs and planned deployments ([ADR-021](decisions/ADR-021-skillctx-becomes-a-skill-manager.md)). Phase 4 adds analytics; Phase 5 is the compiler. The compile engine design stays open; the [engine review notes](reviews/2026-10-02-engine-architecture-review.md) collect what we know so far.
 
 | Phase | Scope | Gate to next |
 | --- | --- | --- |
 | 0 · Inventory (done) | Workspace init, source adapters, Indexer (realpath + content-hash dedupe), outdated check on refresh, inventory files, local web UI that also renders skill files read-only, with syntax-highlighted code ([ADR-015](decisions/ADR-015-render-skill-files-read-only.md), [ADR-018](decisions/ADR-018-syntax-highlighting-with-shiki.md), [ADR-019](decisions/ADR-019-skill-page-matches-the-library.md), [ADR-020](decisions/ADR-020-tanstack-query-for-ui-server-state.md)) | Inventory matches what's on disk across all sources on the author's machine |
-| 1 · Adopt and deploy | Library (snapshots, lockfile), adopt, import from Skills Manager, `build/`, deployment record, plan-then-apply writer, agent toggles planned per folder, symlink or copy, undeploy ([ADR-022](decisions/ADR-022-deploying-into-agent-folders.md)) | The author manages their own machine's skills through skillctx with no writes outside the record |
+| 1 · Adopt and deploy (in progress) | Library (snapshots, lockfile), adopt, import from Skills Manager, `build/`, deployment record, plan-then-apply writer, agent toggles planned per folder, symlink or copy, undeploy ([ADR-022](decisions/ADR-022-deploying-into-agent-folders.md)) | The author manages their own machine's skills through skillctx with no writes outside the record |
 | 2 · Install, update, edit | Install from git, a local folder, a ZIP or skills.sh; apply updates; edits as diffs with 3-way merge and a conflict review screen; restore a workspace on a new machine | An edited skill survives 3 upstream updates |
 | 3 · Organize | Profiles, tags, bulk actions, project scopes and project-level skill folders, backup push, more agents | Parity checklist complete |
 | 4 · Analytics | Hook-based usage capture for deployed skills, per-skill usage, pruning suggestions | Real usage data on the author's machine |
@@ -384,8 +384,8 @@ Phase 0, the read-only inventory, is built. Phases 1–3 reach day-to-day parity
 - [x] Commit built or compiled output, or regenerate it? Regenerate (ADR-021).
 - [x] How skills reach agent folders: symlink by default or copy, through the deployment planner (ADR-022).
 - [ ] Parity checklist: which Skills Manager features count as day-to-day? Write it when planning Phase 3.
-- [ ] Which agents and folders the planner supports at Phase 1, and the order to add the rest.
-- [ ] Command names for adopt, deploy, install, update and edit.
+- [x] Which agents and folders the planner supports at Phase 1: Claude Code, Codex, Cursor, Gemini CLI and OpenCode, through their user-level folders (`src/core/deploy/agents.ts`). The order to add the rest is open.
+- [x] Command names for Phase 1: top-level verbs `adopt`, `deploy`, `undeploy`, `import`. Names for install, update and edit are open.
 - [ ] Skills Manager presets with per-agent settings: how they map onto profiles.
 - [ ] Skillshare adapter: listed in ADR-010 but not built in Phase 0, because no Skillshare install was available to test against. Add it when someone has one.
 - [ ] Project-level skill folders (`<repo>/.claude/skills` and similar): deferred from Phase 0; needed for project scopes in Phase 3.

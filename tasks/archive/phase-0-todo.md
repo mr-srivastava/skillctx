@@ -1,6 +1,6 @@
 # Phase 0 tasks: skill inventory
 
-> **Historical record.** This is the Phase 0 plan as written on October 2, 2026, and it is complete. It is not the current task list. Since then, [ADR-021](../docs/decisions/ADR-021-skillctx-becomes-a-skill-manager.md) made skillctx a skill manager and [ADR-022](../docs/decisions/ADR-022-deploying-into-agent-folders.md) decided how it writes into agent folders, so statements here that the UI or skillctx must stay read-only no longer apply. File paths and some details differ from the code; trust the code and `docs/spec.md`.
+> **Historical record.** This is the Phase 0 plan as written on October 2, 2026, and it is complete. It is not the current task list. Since then, [ADR-021](../../docs/decisions/ADR-021-skillctx-becomes-a-skill-manager.md) made skillctx a skill manager and [ADR-022](../../docs/decisions/ADR-022-deploying-into-agent-folders.md) decided how it writes into agent folders, so statements here that the UI or skillctx must stay read-only no longer apply. File paths and some details differ from the code; trust the code and `docs/spec.md`.
 
 Where Phase 0 ended up, compared with the task text below:
 
@@ -10,7 +10,7 @@ Where Phase 0 ended up, compared with the task text below:
 - The Indexer groups copies by skill name, not by hash; different hashes under one name are drift. The hash scheme is `h2:`, not `h1:` (`src/core/indexer/hash.ts`).
 - Linting is Oxlint and Oxfmt (ADR-013), not Biome. The UI is bundled by Bun's HTML bundler (ADR-011), not Vite.
 
-Plan: `tasks/plan.md`. Commands assume Bun: `bun test`, `bun run build`, `bun run lint`.
+Plan: `phase-0-plan.md`. Commands assume Bun: `bun test`, `bun run build`, `bun run lint`.
 
 ## Foundation
 
@@ -150,7 +150,7 @@ Plan: `tasks/plan.md`. Commands assume Bun: `bun test`, `bun run build`, `bun ru
 **Description:** For GitHub-sourced skills, fetch each repo's tree once and compare the folder's tree SHA at `skillPath` with `skillFolderHash`. For git checkouts, compare HEAD with `git ls-remote`. Status per skill: `up-to-date`, `outdated`, `unknown`, `error`, plus `checkedAt`. Use `gh auth token` when available. Cache responses in `.cache/`. Runs only under `--check`.
 
 **Acceptance criteria:**
-- [x] First step verifies on one real skill that `skillFolderHash` equals the GitHub tree SHA; if not, switch to the commit-date fallback in plan.md
+- [x] First step verifies on one real skill that `skillFolderHash` equals the GitHub tree SHA; if not, switch to the commit-date fallback in phase-0-plan.md
 - [x] One request per distinct repo; rate-limit responses map to `error` with a readable message
 - [x] Without `--check`, no network calls (asserted by a test with networking stubbed to throw)
 

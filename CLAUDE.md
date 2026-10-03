@@ -13,5 +13,5 @@ Project: skillctx, a local skill manager for coding agents. Install, deploy and 
   - Local-first: network only on explicit actions (install, check for updates, restore, browse skills.sh, push). No account, no server, no telemetry.
   - Tool-agnostic: CLI and plain files first, local web UI and MCP on top.
 - Parity with Skills Manager (xingkongliang/skills-manager) means its users can switch without missing anything day to day. Build each parity feature on skillctx's model (snapshot → diff → build → deployment), not by copying Skills Manager's mutable library. udayvarmora07/skills-manager is a different project; the spec borrows only its vocabulary.
-- Phase 0 (read-only inventory and web UI) is built. Phase 1, adopt and deploy, is in progress: `tasks/phase-1.md` is the current plan. `tasks/plan.md` and `tasks/todo.md` are the historical Phase 0 record. `docs/reviews/` holds notes for the compile engine (Phase 5), not decisions.
+- Phase 0 (read-only inventory and web UI) is built. Phase 1, adopt and deploy, is in progress: `tasks/phase-1.md` is the current plan. `tasks/archive/` holds finished phase plans (Phase 0), kept as a historical record. `docs/reviews/` holds notes for the compile engine (Phase 5), not decisions.
 - Domain terms are in `GLOSSARY.md`; add a term there when a new concept gets a name.

@@ -18,11 +18,11 @@ Domain terms for skillctx. Architecture terms (module, interface, seam, adapter,
 - **Snapshot**: the immutable files of a managed skill as installed or adopted. Recorded in the lockfile with source, revision and content hash.
 - **Adopt**: take a snapshot of a skill another tool installed into the library, leaving the original untouched.
 - **Edit**: your change to a managed skill, stored as a diff against its snapshot and merged 3-way on update.
-- **Workspace lock**: `local/workspace.lock`, held by whichever skillctx process is writing the workspace. Another writer is refused with the holder's pid; a lock left by a process that exited is taken over.
+- **Workspace lock**: `local/workspace.lock`, held by whichever skillctx process is writing the workspace. Another writer is refused with the holder's pid; a lock left by a process that exited is taken over (ADR-024).
 - **Library**: the workspace folder holding the lockfile, edits, and snapshots that can't be fetched again.
 - **Build**: a snapshot with its edit applied, in `<home>/build/`. Regenerated, never committed.
 - **Deployment**: a symlink or copy in an agent's skill folder pointing at a build. Listed in the per-machine deployment record; skillctx only modifies entries in that record (ADR-022).
-- **Deployment plan**: the list of writes a deploy, undeploy or update would make, shown before anything is applied.
+- **Deployment plan**: the list of writes a deploy, undeploy or update would make, shown before anything is applied. The UI applies a plan only if planning again gives the one the person reviewed (ADR-024).
 - **Takeover**: replacing another tool's symlink in an agent folder with a deployment, after confirmation. The replaced link is restored on undeploy. Real folders are never taken over (ADR-023).
 - **Taken back**: a recorded deployment that another tool has since rewritten. skillctx reports it and stops treating it as its own.
 - **Parity**: Skills Manager's users can switch to skillctx without missing anything day to day. Defined by a checklist, not by Skills Manager's changelog.
