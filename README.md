@@ -71,9 +71,13 @@ Point at a different workspace with `--home <path>` or `SKILLCTX_HOME`. The acti
 ```
 <home>/
   skillctx.yaml        # workspace settings
+  .gitignore           # ignores .cache/ and local.yaml
   inventory/           # one JSON file per skill, plus summary.json and upstream.json
+  variants/ profiles/ projects/ compiled/   # created empty; used by later phases
   .cache/              # rebuildable, git-ignored
 ```
+
+Phase 1 adds `library/` and `build/` (spec §4).
 
 Every path stored in the workspace is relative to `~`, so you can commit it to a private GitHub repo and use it on another machine.
 

@@ -39,5 +39,5 @@ Lucide has no brand logos, so following that layout needs a second icon source.
 ## Consequences
 - A new agent root needs an entry in `ROOT_ICON`; without one it falls back to the Folder icon. Fetch the logo from Lobe Icons' `@lobehub/icons-static-svg` and add it to `logos.tsx`.
 - Phone users see logos without names (Radix hints don't open on touch). The location filter lists names, and the skill page names every location.
-- Symlink versus real folder is no longer visible in the list. The skill page's copies table keeps the presence squares (`Cell` in `ui.tsx`).
+- Symlink versus real folder is no longer visible in the list. The skill page's copies table keeps the presence squares (`Cell` in `ui.tsx`; both later removed by ADR-019).
 - Brand logos are the owners' trademarks, used to name the agent a folder belongs to.

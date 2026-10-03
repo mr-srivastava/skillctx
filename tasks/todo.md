@@ -2,6 +2,14 @@
 
 > **Historical record.** This is the Phase 0 plan as written on October 2, 2026, and it is complete. It is not the current task list. Since then, [ADR-021](../docs/decisions/ADR-021-skillctx-becomes-a-skill-manager.md) made skillctx a skill manager and [ADR-022](../docs/decisions/ADR-022-deploying-into-agent-folders.md) decided how it writes into agent folders, so statements here that the UI or skillctx must stay read-only no longer apply. File paths and some details differ from the code; trust the code and `docs/spec.md`.
 
+Where Phase 0 ended up, compared with the task text below:
+
+- Provenance adapters for all sources are in `src/core/provenance/sources.ts`, with the per-kind table in `src/core/provenance/kinds.ts`; there are no `src/core/sources/npx-skills.ts`, `gh-skill.ts`, `git-checkout.ts`, `skills-manager.ts` or `claude-plugins.ts`.
+- The upstream checker is one file, `src/core/upstream/index.ts`. Inventory code is in `src/core/inventory/` (`format.ts`, `store.ts`, `scan.ts`, `refresh.ts`), not `src/core/inventory.ts`.
+- Tests are flat files in `test/` (`inventory.test.ts`, `provenance.test.ts`, `upstream.test.ts`, `ui.test.ts`, and others), not `test/sources/` or `test/indexer.test.ts`.
+- The Indexer groups copies by skill name, not by hash; different hashes under one name are drift. The hash scheme is `h2:`, not `h1:` (`src/core/indexer/hash.ts`).
+- Linting is Oxlint and Oxfmt (ADR-013), not Biome. The UI is bundled by Bun's HTML bundler (ADR-011), not Vite.
+
 Plan: `tasks/plan.md`. Commands assume Bun: `bun test`, `bun run build`, `bun run lint`.
 
 ## Foundation

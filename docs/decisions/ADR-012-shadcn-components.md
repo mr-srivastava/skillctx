@@ -1,7 +1,7 @@
 # ADR-012: shadcn/ui for UI components
 
 ## Status
-Accepted in part. The primitive library is superseded by ADR-017: components use Base UI, not Radix. Notes below about Radix (`Select` sentinel, `radix-ui` dependency) are historical.
+Accepted in part. The primitive library is superseded by ADR-017: components use Base UI, not Radix. Notes below about Radix (`Select` sentinel, `radix-ui` dependency) and Biome are historical. Files named below have moved: `Hint` is in `components/Hint.tsx`, status icons are in `STATUS` in `components/status.tsx` (not `STATUS_ICON` in `App.tsx`), and the presence squares were removed by ADR-019.
 
 ## Date
 2026-10-02

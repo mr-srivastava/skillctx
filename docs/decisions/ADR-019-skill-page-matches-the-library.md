@@ -15,7 +15,7 @@ ADR-016 turned the Library from a table of presence squares into item rows with 
 ## Decision
 - **Header.** The skill card's parts, laid out as a page header: a "Library" back link, the name with the same status pills as a card, the description, then a summary strip that lists the locations as logos, the number of copies (and versions, with the differs dot when they differ), and which installers recorded it.
 - **Where it lives.** One `Item` row per copy, as in the Library list: the folder path, a description line (`Copy 2 · 2 files · 19.1 KB · different content · edited after install`), the installers that recorded that copy and what they recorded, and on the right the logos of the locations that read it. A copy whose content differs from the main copy gets the differs dot on its logos, as in the Library. Folder versus symlink is in each logo's hint and `sr-only` text, as ADR-016 does for the list. The separate "Installed by" list is gone; each copy carries its own.
-- **Toolbars.** The Contents and Compare pickers sit in the same bordered strip as the Library's filters (`TOOLBAR` in `components/display.tsx`, shared by all three).
+- **Toolbars.** The Contents and Compare pickers sit in the same bordered strip as the Library's filters (the `Toolbar` component in `components/display.tsx`, shared by all three; first written as a `TOOLBAR` class string).
 - **Shared pieces.** `SkillStatuses` moves to `components/status.tsx` so cards and the skill page draw the same pills. `mainCopy` and `copyPresence` in `lib/model.ts` give each copy's presence per location, and the Library's per-skill presence is built from them.
 
 ## Alternatives Considered

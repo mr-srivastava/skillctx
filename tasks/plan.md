@@ -27,11 +27,11 @@ Implications:
 
 - **Single package, three module groups:** `src/core` (workspace, sources, indexer, upstream, inventory), `src/cli`, `src/ui` (local server + web client). Core has no knowledge of CLI or UI.
 - **Source adapters only enumerate.** `list()` returns skill folders with provenance. The Indexer owns realpath resolution, hashing, grouping, drift and diagnostics (engine review, candidate 4). Plain-folder discovery is the baseline; provenance adapters enrich it.
-- **Normalized content hash:** sorted relative paths plus file bytes, with known provenance frontmatter keys stripped, so the same skill matches across sources. Prefixed with a scheme version (`h1:`).
+- **Normalized content hash:** sorted relative paths plus file bytes, with known provenance frontmatter keys stripped, so the same skill matches across sources. Prefixed with a scheme version (`h1:` at the time; now `h2:`).
 - **Inventory files:** `<home>/inventory/skills/<name>.json` (one file per skill, small diffs) plus `<home>/inventory/summary.json`. Stable key order. Paths stored relative to `~`. A run that finds nothing new produces no diff.
 - **Workspace pointer:** `~/.config/skillctx/config.json` holds the path to `<home>`, so commands work from anywhere. Overridable with `--home` or `SKILLCTX_HOME`.
 - **Outdated check runs only under `inventory --check` or the UI refresh button.** GitHub requests use `gh auth token` if available, else unauthenticated. Responses are cached in `<home>/.cache/`. Git checkouts are compared with `git ls-remote`.
-- **Local UI:** `Bun.serve` on 127.0.0.1, JSON endpoints over the inventory files, a per-session token required for the refresh action. Client stack is an open question below; the plan assumes React + Vite built into static assets served by the CLI.
+- **Local UI:** `Bun.serve` on 127.0.0.1, JSON endpoints over the inventory files, a per-session token required for the refresh action. Client stack is an open question below; the plan assumed React + Vite. As built, it's React bundled by Bun's HTML bundler, with no Vite (ADR-011).
 - **Never write outside `<home>`.** Enforced by a single write helper that refuses paths outside the workspace. A test asserts it.
 
 ## Task list
@@ -85,7 +85,7 @@ Tasks are detailed in `tasks/todo.md`.
 
 ## Decisions on open questions (2026-10-02)
 
-The user chose the defaults: React + Vite UI; Skills Manager via its SQLite DB, read-only; project-level skill roots deferred; Claude plugin skills included as optional Task 9; keep the `skillctx` name and check npm before publishing.
+The user chose the defaults: React + Vite UI (later built with Bun's bundler instead of Vite, ADR-011); Skills Manager via its SQLite DB, read-only; project-level skill roots deferred; Claude plugin skills included as optional Task 9; keep the `skillctx` name and check npm before publishing.
 
 ## Original open questions
 
