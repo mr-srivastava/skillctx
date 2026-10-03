@@ -7,6 +7,7 @@ import {
 	ItemDescription,
 } from "@/components/ui/item";
 import type { Row } from "@/lib/model";
+import { skillHref } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
 export function SkillRow({ row, roots }: { row: Row; roots: string[] }) {
@@ -65,7 +66,7 @@ function SkillName({
 				className,
 			)}
 			title={title}
-			href={`#/skill/${encodeURIComponent(row.name)}`}
+			href={skillHref(row.name)}
 		>
 			{row.name}
 		</a>

@@ -1,8 +1,9 @@
-import type { SkillRecord } from "../../../core/inventory/format.ts";
 import type {
+	CopyRecord,
+	SkillRecord,
 	UpstreamReport,
 	UpstreamResult,
-} from "../../../core/upstream/index.ts";
+} from "@/lib/core";
 
 /**
  * Something about a skill worth a reader's attention, in the order they're
@@ -28,9 +29,7 @@ export interface Row {
 }
 
 /** The copy most locations point at counts as the main one. */
-export function mainCopy(
-	s: SkillRecord,
-): SkillRecord["copies"][number] | undefined {
+export function mainCopy(s: SkillRecord): CopyRecord | undefined {
 	return [...s.copies].sort((a, b) => b.seenIn.length - a.seenIn.length)[0];
 }
 
@@ -40,7 +39,7 @@ export function mainCopy(
  */
 export function copyPresence(
 	s: SkillRecord,
-	copy: SkillRecord["copies"][number],
+	copy: CopyRecord,
 	main = mainCopy(s),
 	out: Record<string, Presence> = {},
 ): Record<string, Presence> {

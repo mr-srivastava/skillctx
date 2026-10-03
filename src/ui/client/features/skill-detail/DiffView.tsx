@@ -10,10 +10,9 @@ import { CodeBlock } from "@/components/code-block";
 import { Path, Toolbar } from "@/components/display";
 import { Picker } from "@/components/picker";
 import { Problem } from "@/components/problem";
+import type { CopyDiff, SkillRecord } from "@/lib/core";
 import { copyDiffQuery } from "@/lib/queries";
 import { cn } from "@/lib/utils";
-import type { SkillRecord } from "../../../../core/inventory/format.ts";
-import type { CopyDiff } from "../../../data.ts";
 import { copyItems } from "./copy-items.tsx";
 
 export function DiffView({ skill }: { skill: SkillRecord }) {

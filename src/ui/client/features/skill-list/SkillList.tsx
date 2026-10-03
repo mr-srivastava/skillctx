@@ -1,9 +1,9 @@
 import { Fragment } from "react";
 import { ListLegend } from "@/components/presence";
 import { ItemGroup, ItemSeparator } from "@/components/ui/item";
+import type { InventorySummary } from "@/lib/core";
 import { plural } from "@/lib/format";
 import { type Filters, filterRows, type Row } from "@/lib/model";
-import type { InventorySummary } from "../../../../core/inventory/format.ts";
 import { FilterBar } from "./FilterBar.tsx";
 import { Headline } from "./Headline.tsx";
 import { SkillCard, SkillRow } from "./SkillItem";

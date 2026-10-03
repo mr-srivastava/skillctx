@@ -1,8 +1,8 @@
 import { CodeBlock } from "@/components/code-block";
 import { Problem } from "@/components/problem";
+import type { FileText } from "@/lib/core";
 import { CodeText } from "@/lib/highlight";
 import { Markdown } from "@/lib/markdown";
-import type { FileText } from "../../../data.ts";
 import type { FileDocument } from "./use-file-document.ts";
 
 /**

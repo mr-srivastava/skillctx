@@ -1,10 +1,12 @@
 import type {
+	CopyDiff,
+	CopyFiles,
+	FileText,
 	InventorySummary,
+	RefreshResult,
 	SkillRecord,
-} from "../../../core/inventory/format.ts";
-import type { UpstreamReport } from "../../../core/upstream/index.ts";
-import type { CopyDiff, CopyFiles, FileText } from "../../data.ts";
-import type { RefreshResult } from "../../server.ts";
+	UpstreamReport,
+} from "@/lib/core";
 
 /*
  * The client side of src/ui/server.ts: every request the page makes. Errors

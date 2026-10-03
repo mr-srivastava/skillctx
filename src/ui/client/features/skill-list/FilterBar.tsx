@@ -10,10 +10,8 @@ import {
 	InputGroupInput,
 } from "@/components/ui/input-group";
 import { Kbd } from "@/components/ui/kbd";
+import { type RootSummary, rootLabel, sourceLabel } from "@/lib/core";
 import { type Filters, NO_FILTERS, type Row } from "@/lib/model";
-import type { InventorySummary } from "../../../../core/inventory/format.ts";
-import { sourceLabel } from "../../../../core/provenance/kinds.ts";
-import { rootLabel } from "../../../../core/sources/roots.ts";
 import { type SkillView, ViewToggle } from "./ViewToggle.tsx";
 
 /** Whether a key press is typing into a field, where "/" is just a slash. */
@@ -49,7 +47,7 @@ export function FilterBar({
 }: {
 	rows: Row[];
 	/** Locations present on this machine, in display order. */
-	roots: InventorySummary["roots"];
+	roots: RootSummary[];
 	filters: Filters;
 	setFilters: (f: Filters | ((f: Filters) => Filters)) => void;
 	view: SkillView;

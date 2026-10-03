@@ -7,10 +7,10 @@ import {
 import { BusySpinner } from "@/components/display";
 import { Hint } from "@/components/Hint";
 import { Button } from "@/components/ui/button";
+import type { UpstreamReport } from "@/lib/core";
+import { LIBRARY_HREF } from "@/lib/routes";
 import { cn } from "@/lib/utils";
-import type { UpstreamReport } from "../../../core/upstream/index.ts";
-
-export type Busy = null | "scan" | "check";
+import type { Busy, RefreshNotice } from "./useRefreshStatus.ts";
 
 function when(iso: string): string {
 	return new Date(iso).toLocaleString(undefined, {
@@ -24,18 +24,18 @@ function when(iso: string): string {
 export function TopBar({
 	busy,
 	onRefresh,
-	result,
+	notice,
 	upstream,
 }: {
 	busy: Busy;
 	onRefresh: (check: boolean) => void;
-	result: { ok: boolean; text: string } | null;
+	notice: RefreshNotice | null;
 	upstream: UpstreamReport | null;
 }) {
 	return (
 		<header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-rule py-4.5">
 			<a
-				href="#/"
+				href={LIBRARY_HREF}
 				className="text-lead font-semibold tracking-[-0.01em] no-underline"
 			>
 				skillctx
@@ -75,21 +75,21 @@ export function TopBar({
 					</Button>
 				</Hint>
 			</div>
-			{result && (
+			{notice && (
 				<p
 					className={cn(
 						"flex basis-full items-start gap-2 text-small",
-						result.ok ? "text-ink-soft" : "text-problem",
+						notice.ok ? "text-ink-soft" : "text-problem",
 					)}
 					role="status"
 					aria-live="polite"
 				>
-					{result.ok ? (
+					{notice.ok ? (
 						<CircleCheckIcon aria-hidden className="mt-0.75 size-4 shrink-0" />
 					) : (
 						<CircleAlertIcon aria-hidden className="mt-0.75 size-4 shrink-0" />
 					)}
-					{result.text}
+					{notice.text}
 				</p>
 			)}
 		</header>

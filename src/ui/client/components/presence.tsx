@@ -1,8 +1,8 @@
 import { BotIcon, FolderIcon, LibraryIcon, PlugIcon } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
+import { PLUGIN_ROOT_PREFIX, rootLabel } from "@/lib/core";
 import type { Presence } from "@/lib/model";
 import { cn } from "@/lib/utils";
-import { PLUGIN_ROOT_PREFIX, rootLabel } from "../../../core/sources/roots.ts";
 import {
 	ClaudeLogo,
 	CodexLogo,

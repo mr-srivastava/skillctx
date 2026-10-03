@@ -19,6 +19,11 @@ import {
 	type Row,
 	toRows,
 } from "../src/ui/client/lib/model.ts";
+import {
+	LIBRARY_HREF,
+	parseHash,
+	skillHref,
+} from "../src/ui/client/lib/routes.ts";
 import { startUiServer, type UiServer } from "../src/ui/server.ts";
 
 let tmp: string;
@@ -295,6 +300,25 @@ describe("skill advice", () => {
 	});
 });
 
+describe("routes", () => {
+	test("links and the hash parser agree, names with slashes included", () => {
+		for (const tab of ["contents", "where", "copies"] as const) {
+			expect(parseHash(skillHref("a/b c", tab))).toEqual({
+				name: "a/b c",
+				tab,
+			});
+		}
+		expect(skillHref("x")).toBe("#/skill/x");
+	});
+
+	test("anything else is the Library, opened on Contents", () => {
+		for (const hash of [LIBRARY_HREF, "", "#/nope", "#/skill/%E0"]) {
+			expect(parseHash(hash)).toEqual({ name: null, tab: "contents" });
+		}
+		expect(parseHash("#/skill/x/bogus").tab).toBe("contents");
+	});
+});
+
 describe("format", () => {
 	test("plural counts in words, with an irregular plural when given", () => {
 		expect(plural(1, "skill")).toBe("1 skill");
@@ -319,14 +343,29 @@ describe("client code", () => {
 		expect(offenders).toEqual([]);
 	});
 
+	test("reaches core and the server only through lib/core.ts", async () => {
+		const glob = new Bun.Glob("**/*.{ts,tsx}");
+		const offenders: string[] = [];
+		for await (const file of glob.scan("src/ui/client")) {
+			if (file === path.join("lib", "core.ts")) continue;
+			const src = await Bun.file(`src/ui/client/${file}`).text();
+			for (const m of src.matchAll(/from "(\.{1,2}\/[^"]+)"/g)) {
+				const target = path.normalize(`src/ui/client/${file}/../${m[1]}`);
+				if (!target.startsWith(`src${path.sep}ui${path.sep}client${path.sep}`))
+					offenders.push(`${file} -> ${m[1]}`);
+			}
+		}
+		expect(offenders).toEqual([]);
+	});
+
 	test("core modules the client imports have no runtime Node imports", async () => {
 		const glob = new Bun.Glob("**/*.{ts,tsx}");
 		const fromCore = new Set<string>();
 		for await (const file of glob.scan("src/ui/client")) {
 			const src = await Bun.file(`src/ui/client/${file}`).text();
-			// Type-only imports are erased, so only value imports count.
+			// Type-only imports and re-exports are erased; only values count.
 			for (const m of src.matchAll(
-				/^import (?!type )[^;]*?from "((?:\.\.\/)+core\/[^"]+)"/gm,
+				/^(?:import|export) (?!type )[^;]*?from "((?:\.\.\/)+core\/[^"]+)"/gm,
 			))
 				if (m[1])
 					fromCore.add(path.normalize(`src/ui/client/${file}/../${m[1]}`));

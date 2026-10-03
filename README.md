@@ -87,4 +87,4 @@ Every path stored in the workspace is relative to `~`, so you can commit it to a
 
 CI (`.github/workflows/ci.yml`) runs lint, typecheck and tests on every pull request and on pushes to `main`, with the Bun version pinned by `packageManager` in `package.json`. If a change alters the inventory output on purpose, update `test/__snapshots__/` with `bun test --update-snapshots` in the same commit.
 
-The UI server builds the client bundle at startup, so restart `skillctx ui` after editing `src/ui/client/`. Styles use Tailwind v4; theme tokens are in `src/ui/client/styles.css` (ADR-011). Add shadcn components with `bunx shadcn@latest add <name>`, then change its `cn` import to `@/lib/utils` (ADR-012).
+The UI server builds the client bundle at startup, so restart `skillctx ui` after editing `src/ui/client/`. Styles use Tailwind v4; theme tokens are in `src/ui/client/styles.css` (ADR-011). Add shadcn components with `bunx shadcn@latest add <name>`, then change its `cn` import to `@/lib/utils` (ADR-012). The client reaches `src/core/` and the UI server only through `src/ui/client/lib/core.ts`; `test/ui.test.ts` checks this.

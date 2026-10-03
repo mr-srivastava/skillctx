@@ -1,5 +1,4 @@
-import type { SkillRecord } from "../../../core/inventory/format.ts";
-import { updateCommand } from "../../../core/provenance/kinds.ts";
+import { type SkillRecord, updateCommand } from "@/lib/core";
 import type { Row, Status } from "./model.ts";
 
 /** One thing to tell the reader about a skill, and what to run if anything. */

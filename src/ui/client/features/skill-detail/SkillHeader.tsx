@@ -2,10 +2,10 @@ import { ArrowLeftIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { DiffersDot, LocationIcons } from "@/components/presence";
 import { SkillStatuses } from "@/components/status";
+import { type SkillRecord, sourceLabel } from "@/lib/core";
 import { plural } from "@/lib/format";
 import type { Row } from "@/lib/model";
-import type { SkillRecord } from "../../../../core/inventory/format.ts";
-import { sourceLabel } from "../../../../core/provenance/kinds.ts";
+import { LIBRARY_HREF } from "@/lib/routes";
 
 /** One label-value pair in the header's summary strip. */
 function Fact({ label, children }: { label: string; children: ReactNode }) {
@@ -35,7 +35,7 @@ export function SkillHeader({
 	return (
 		<header className="mt-7 mb-6 wide:mt-9">
 			<a
-				href="#/"
+				href={LIBRARY_HREF}
 				className="inline-flex items-center gap-1.5 text-caption text-ink-soft no-underline hover:text-ink"
 			>
 				<ArrowLeftIcon aria-hidden className="size-3.5" />

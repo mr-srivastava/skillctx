@@ -3,9 +3,9 @@ import { CopyButton } from "@/components/copy-button";
 import { Notes } from "@/components/display";
 import { STATUS } from "@/components/status";
 import { type Advice, adviceFor } from "@/lib/advice";
+import type { SkillRecord } from "@/lib/core";
 import type { Row } from "@/lib/model";
 import { cn } from "@/lib/utils";
-import type { SkillRecord } from "../../../../core/inventory/format.ts";
 
 /** The icon and colour for a piece of advice: its status's, or a problem's. */
 function adviceLook(kind: Advice["kind"]): { icon: LucideIcon; tone: string } {

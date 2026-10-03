@@ -1,11 +1,11 @@
 import { useMemo } from "react";
+import type { FileText } from "@/lib/core";
 import { grammarForFile, type Highlight, useHighlight } from "@/lib/highlight";
 import {
 	type ParsedMarkdown,
 	parseMarkdown,
 	splitFrontmatter,
 } from "@/lib/markdown";
-import type { FileText } from "../../../data.ts";
 
 export interface FileDocument {
 	/** A markdown file, its frontmatter split off; null for any other file. */

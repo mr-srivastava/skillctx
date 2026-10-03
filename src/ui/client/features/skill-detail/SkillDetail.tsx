@@ -1,18 +1,14 @@
 import { Path } from "@/components/display";
 import { Problem } from "@/components/problem";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { InventorySummary, SkillRecord } from "@/lib/core";
 import { mainCopy, type Row } from "@/lib/model";
-import type {
-	InventorySummary,
-	SkillRecord,
-} from "../../../../core/inventory/format.ts";
+import type { DetailTab } from "@/lib/routes";
 import { AdviceNotes } from "./AdviceNotes.tsx";
 import { Contents } from "./Contents.tsx";
 import { CopyList } from "./CopyList.tsx";
 import { DiffView } from "./DiffView.tsx";
 import { SkillHeader } from "./SkillHeader.tsx";
-
-export type DetailTab = "contents" | "where" | "copies";
 
 /** Frontmatter problems, one box per copy that has them. */
 function Diagnostics({ skill }: { skill: SkillRecord }) {

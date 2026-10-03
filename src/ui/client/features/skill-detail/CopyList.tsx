@@ -8,18 +8,18 @@ import {
 	ItemGroup,
 	ItemSeparator,
 } from "@/components/ui/item";
+import {
+	type CopyRecord,
+	type Provenance,
+	provenanceDetails,
+	type SkillRecord,
+	sourceLabel,
+} from "@/lib/core";
 import { formatBytes, plural } from "@/lib/format";
 import { copyPresence, mainCopy } from "@/lib/model";
-import type { SkillRecord } from "../../../../core/inventory/format.ts";
-import {
-	provenanceDetails,
-	sourceLabel,
-} from "../../../../core/provenance/kinds.ts";
-
-type Copy = SkillRecord["copies"][number];
 
 /** Size and state of one copy, in the style of a list row's description. */
-function copyFacts(copy: Copy, index: number, isMain: boolean): string {
+function copyFacts(copy: CopyRecord, index: number, isMain: boolean): string {
 	return [
 		`Copy ${index + 1}`,
 		plural(copy.fileCount, "file"),
@@ -29,7 +29,7 @@ function copyFacts(copy: Copy, index: number, isMain: boolean): string {
 	].join(" · ");
 }
 
-function ProvenanceText({ p }: { p: Copy["provenance"][number] }) {
+function ProvenanceText({ p }: { p: Provenance }) {
 	return provenanceDetails(p).map((d, i) =>
 		d.as === "path" ? (
 			<Path key={i}>{d.text}</Path>
