@@ -4,6 +4,8 @@ Checked 2026-10-02. Feeds [spec.md](../spec.md).
 
 Update 2026-10-03: the evidence below is unchanged, but the decision drawn from it for problem 4 changed. [ADR-021](../decisions/ADR-021-skillctx-becomes-a-skill-manager.md) makes skillctx a skill manager with parity to Skills Manager, so "None, integrate" for visibility and management no longer holds.
 
+Update 2026-10-04: [ADR-025](../decisions/ADR-025-versions-targets-and-harness-adapters.md) answers problem 3 for projects as well. Versions of a skill (personal or per project) are diffs rebased on update, and project versions ship in Phase 3 rather than waiting for section ops. Common setups seen since: everything installed globally; project skills committed to `.agents/skills` with `.claude/skills` symlinked to it; personal skills in a dotfiles repo symlinked into each agent; and central managers (Skills Manager, [Skillshare](https://github.com/runkids/skillshare)) that symlink one library out to every agent. Agents can't exclude a global skill per project except through their own settings (Claude Code's `skillOverrides`), which is why ADR-025 adds per-project hide as a harness capability.
+
 All five problems are real, but served very unevenly. Visibility and memory are crowded; safe customization and usefulness feedback are nearly empty. Benchmarks show focused skills beat exhaustive ones, which backs the compiler directly.
 
 | Problem | Community heat | Existing solutions | Opening for us |

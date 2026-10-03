@@ -441,6 +441,13 @@ describe("list model", () => {
 				status: "drift",
 			}).map((r) => r.name),
 		).toEqual(["alpha"]);
+
+		const managed = new Set(["beta"]);
+		const inLibrary = (library: "managed" | "unmanaged") =>
+			filterRows(rows, { ...NO_FILTERS, library }, managed).map((r) => r.name);
+		expect(inLibrary("managed")).toEqual(["beta"]);
+		expect(inLibrary("unmanaged")).toEqual(["alpha"]);
+		expect(filterRows(rows, NO_FILTERS, managed)).toHaveLength(2);
 	});
 });
 

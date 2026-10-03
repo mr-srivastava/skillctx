@@ -1,7 +1,7 @@
 # ADR-008: Local usefulness analytics with harness telemetry and paired evals
 
 ## Status
-Accepted
+Accepted. Amended by ADR-025: telemetry and hook sources (Claude Code OpenTelemetry, `PreToolUse`) are usage-signal capabilities of harness adapters, so core collects events without naming a harness; agents whose adapter has no usage signal get none.
 
 ## Date
 2026-10-02

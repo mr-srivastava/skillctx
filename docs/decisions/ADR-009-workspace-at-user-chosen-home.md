@@ -1,7 +1,7 @@
 # ADR-009: All skillctx data lives in one workspace at a user-chosen path
 
 ## Status
-Accepted. Supersedes the storage locations in ADR-003 (the three-layer cascade itself still holds). Amends ADR-001: compiled output is written to the workspace. Amended by ADR-021 (the workspace gains a library, a lockfile and `build/`, and what gets committed) and ADR-022 (skillctx writes into agent folders, only to entries in its deployment record).
+Accepted. Supersedes the storage locations in ADR-003 (the three-layer cascade itself still holds). Amends ADR-001: compiled output is written to the workspace. Amended by ADR-021 (the workspace gains a library, a lockfile and `build/`, and what gets committed) and ADR-022 (skillctx writes into agent folders, only to entries in its deployment record). Amended by ADR-025: project versions are always kept in the workspace, never in `<repo>/.skillctx/`; a repo gets only a built copy. The opt-in still applies to Phase 5 lenses.
 
 ## Date
 2026-10-02

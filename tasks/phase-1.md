@@ -10,6 +10,7 @@ Gate: the author manages their own machine's skills through skillctx, with no wr
 - Agents: the folders the inventory already reads, except Skills Manager's library, which stays a source.
 - Skills Manager import: its library now; presets and tags stored in the lockfile for Phase 3.
 - Commands are top-level verbs: `adopt`, `deploy`, `undeploy`, `import`.
+- ADR-025 (2026-10-04) sets the direction for Phases 2 and 3: versions, the update inbox, project targets, harness adapters with capabilities. Nothing in this plan changes, but new core code should stay free of harness names, and the agent table in `src/core/deploy/agents.ts` is where the harness adapter layer will grow.
 
 ## Architecture
 
@@ -92,7 +93,7 @@ Which user-level folders each agent reads (engine review, candidate 3, verified 
 ### 11. UI
 - [x] Token-protected mutation routes for adopt, plan, apply and undeploy (ADR-020 mutation pattern). Undeploy is a plan with no agents, then apply. Apply takes the plan the user reviewed, plans again under the workspace lock, and answers 409 with the new plan if the disk changed since (`applyReviewed`). Read routes for the library and deployments; client mutations in `lib/queries.ts`
 - [x] Skill page: Adopt button; Deploy panel with agent toggles, the plan, warnings, and a confirm step; deployments listed with their state. A successful apply rescans, so the header and locations show the new links
-- [ ] Library filter: managed skills
+- [x] Library filter: in your library, or not (with counts)
 
 ### Checkpoint: real machine
 - [ ] Adopt and deploy a handful of the author's skills; undeploy restores the old links; `git status` in the workspace shows only `library/` changes

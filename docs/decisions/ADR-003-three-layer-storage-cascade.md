@@ -1,7 +1,7 @@
 # ADR-003: Three-layer cascade and where each layer lives
 
 ## Status
-Accepted in part. The three-layer cascade still holds; the storage locations are superseded by ADR-009.
+Accepted in part. The three-layer cascade still holds; the storage locations are superseded by ADR-009. Amended by ADR-025: the layers are versions that chain (`upstream → mine → <project>`); the project layer arrives in Phase 3, mastered in the workspace, and a repo gets only a built copy.
 
 ## Date
 2026-10-02
