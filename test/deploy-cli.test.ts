@@ -2,9 +2,11 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import {
 	mkdirSync,
 	mkdtempSync,
+	readFileSync,
 	readlinkSync,
 	rmSync,
 	symlinkSync,
+	unlinkSync,
 	writeFileSync,
 } from "node:fs";
 import os from "node:os";
@@ -118,5 +120,37 @@ describe("deploy and undeploy", () => {
 	test("a skill that isn't adopted exits 1 with the command to run", async () => {
 		expect(await run("deploy", "other", "--agent", "claude")).toBe(1);
 		expect(err[0]).toContain("skillctx adopt other");
+	});
+});
+
+describe("inventory after deploying", () => {
+	const record = () =>
+		JSON.parse(readFileSync(at("sk/inventory/skills/tdd.json"), "utf8")) as {
+			copies: { realPath: string; provenance: { kind: string }[] }[];
+		};
+
+	beforeEach(async () => {
+		await run("adopt", "tdd");
+		await run("deploy", "tdd", "--agent", "claude", "--replace");
+	});
+
+	test("the deployed copy is marked as skillctx's, and counted", async () => {
+		expect(await run("inventory")).toBe(0);
+		const build = record().copies.find((c) => c.realPath === "~/sk/build/tdd");
+		expect(build?.provenance).toEqual([
+			{ kind: "skillctx", skill: "tdd", mode: "symlink" },
+		]);
+		expect(out).toContain("Deployments: 1 deployed.");
+	});
+
+	test("an entry another tool rewrote is reported", async () => {
+		unlinkSync(at(".claude/skills/tdd"));
+		symlinkSync(at(".agents/skills/tdd"), at(".claude/skills/tdd"));
+		expect(await run("inventory")).toBe(0);
+		expect(out).toContain(
+			"Deployments: 0 deployed, 1 taken back by another tool. Run `skillctx deploy` to see which.",
+		);
+		expect(await run("deploy")).toBe(0);
+		expect(out[0]).toContain("taken back by another tool");
 	});
 });

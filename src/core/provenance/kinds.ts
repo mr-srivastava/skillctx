@@ -141,6 +141,17 @@ const KINDS: { [K in ProvenanceKind]: KindSpec<Of<K>> } = {
 		label: "Claude app",
 		details: () => [{ text: "Synced by the Claude desktop app" }],
 	},
+	skillctx: {
+		label: "skillctx",
+		details: (p) => [
+			{
+				text:
+					p.mode === "copy"
+						? "Copied in from skillctx's library"
+						: "Linked to skillctx's build",
+			},
+		],
+	},
 };
 
 /**

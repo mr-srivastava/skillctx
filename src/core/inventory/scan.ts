@@ -1,3 +1,4 @@
+import { skillctxLookup, tallyDeployments } from "../deploy/inventory.ts";
 import { gitTreeSha } from "../indexer/git-tree.ts";
 import { buildIndex, type Skill } from "../indexer/index.ts";
 import { toPortable } from "../paths.ts";
@@ -51,6 +52,7 @@ export function scan(ws: Workspace, homeDir: string): ScanResult {
 		skillsManagerLookup(homeDir, warn),
 		claudePluginLookup(plugins),
 		claudeAppSyncedLookup(homeDir),
+		skillctxLookup(ws, homeDir),
 	]);
 	for (const skill of skills) {
 		for (const copy of skill.copies) {
@@ -98,5 +100,7 @@ export function scan(ws: Workspace, homeDir: string): ScanResult {
 		})),
 		warnings,
 	};
+	const deployments = tallyDeployments(ws, homeDir);
+	if (deployments) summary.deployments = deployments;
 	return { skills, summary };
 }

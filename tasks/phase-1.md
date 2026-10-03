@@ -75,8 +75,8 @@ Which user-level folders each agent reads (engine review, candidate 3, verified 
 - [x] Tests through `main()` with a temp HOME, like `test/inventory.test.ts`
 
 ### 8. Inventory awareness
-- [ ] Provenance kind `skillctx` for copies whose real path is under `<home>/build/`, or recorded copy-mode entries
-- [ ] Scan summary counts taken-back deployments; `inventory` prints them
+- [x] Provenance kind `skillctx` for copies whose real path is under `<home>/build/`, or recorded copy-mode entries
+- [x] Scan summary counts taken-back deployments; `inventory` prints them
 
 ### 9. Import from Skills Manager
 - [ ] `skillctx import skills-manager [--dry-run]` adopts every skill in `~/.skills-manager/skills` (read-only on its side) and stores its presets and tags in the lockfile

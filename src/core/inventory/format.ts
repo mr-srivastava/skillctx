@@ -40,6 +40,8 @@ export interface InventorySummary {
 	roots: RootSummary[];
 	/** Problems reading other tools' files (lockfile, databases). */
 	warnings: string[];
+	/** How skillctx's deployments stand; absent until something is deployed. */
+	deployments?: { deployed: number; takenBack: number; missing: number };
 }
 
 /** Where one copy is visible: a root entry, possibly through a symlink. */
