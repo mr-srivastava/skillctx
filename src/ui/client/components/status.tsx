@@ -1,6 +1,53 @@
-import { STATUS_ICON, STATUS_TEXT } from "@/components/display";
-import { type Row, STATUS_LABEL } from "@/lib/model";
+import {
+	CircleArrowUpIcon,
+	GitCompareIcon,
+	type LucideIcon,
+	PencilIcon,
+	TriangleAlertIcon,
+} from "lucide-react";
+import type { Row, Status } from "@/lib/model";
 import { cn } from "@/lib/utils";
+
+interface StatusLook {
+	/** On pills and in list rows; lowercased on the Library's filter chips. */
+	label: string;
+	/** Completes "3 skills …" (many) or "1 skill …" (one). */
+	phrase: { one: string; many: string };
+	icon: LucideIcon;
+	/** Text colour class; pills tint their background from it. */
+	tone: string;
+}
+
+/** How each status reads and looks, everywhere it's shown. */
+export const STATUS: Record<Status, StatusLook> = {
+	outdated: {
+		label: "Outdated",
+		phrase: { one: "is outdated", many: "are outdated" },
+		icon: CircleArrowUpIcon,
+		tone: "text-outdated",
+	},
+	edited: {
+		label: "Edited",
+		phrase: {
+			one: "was edited after install",
+			many: "were edited after install",
+		},
+		icon: PencilIcon,
+		tone: "text-edited",
+	},
+	drift: {
+		label: "Copies differ",
+		phrase: { one: "has copies that differ", many: "have copies that differ" },
+		icon: GitCompareIcon,
+		tone: "text-differs",
+	},
+	warnings: {
+		label: "Warnings",
+		phrase: { one: "has broken frontmatter", many: "have broken frontmatter" },
+		icon: TriangleAlertIcon,
+		tone: "text-problem",
+	},
+};
 
 /**
  * A skill's states, coloured by status. `compact` draws them as pills (cards
@@ -26,18 +73,18 @@ export function SkillStatuses({
 			)}
 		>
 			{row.statuses.map((status) => {
-				const Icon = STATUS_ICON[status];
+				const { icon: Icon, tone, label } = STATUS[status];
 				return (
 					<span
 						key={status}
 						className={cn(
 							"flex items-center gap-1.5 text-caption font-medium whitespace-nowrap",
-							STATUS_TEXT[status],
+							tone,
 							compact && "rounded-full bg-current/10 px-2 py-0.5 text-chip",
 						)}
 					>
 						<Icon aria-hidden className="size-3.5 shrink-0" />
-						{STATUS_LABEL[status]}
+						{label}
 					</span>
 				);
 			})}

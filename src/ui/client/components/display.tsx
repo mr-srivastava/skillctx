@@ -1,13 +1,6 @@
-import {
-	CircleArrowUpIcon,
-	GitCompareIcon,
-	type LucideIcon,
-	PencilIcon,
-	TriangleAlertIcon,
-} from "lucide-react";
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { Spinner } from "@/components/ui/spinner";
-import type { Status } from "@/lib/model";
+import { cn } from "@/lib/utils";
 
 /** A file path, repo or hash: the only things set in monospace. */
 export function Path({ children }: { children: ReactNode }) {
@@ -15,16 +8,36 @@ export function Path({ children }: { children: ReactNode }) {
 }
 
 /** The bordered strip that holds a page's pickers and filters. */
-export const TOOLBAR =
-	"flex flex-wrap items-center gap-2 rounded-md border border-rule bg-raised/40 p-2";
+export function Toolbar({ className, ...props }: ComponentProps<"div">) {
+	return (
+		<div
+			{...props}
+			className={cn(
+				"flex flex-wrap items-center gap-2 rounded-md border border-rule bg-raised/40 p-2",
+				className,
+			)}
+		/>
+	);
+}
 
-/** Pickers in a toolbar shrink to fit rather than push the row wide. */
-export const TOOLBAR_SELECT =
-	"max-w-[min(42vw,12rem)] overflow-hidden [&_[data-slot=select-value]]:min-w-0 [&_[data-slot=select-value]]:overflow-hidden";
-
-/** The large sentence-style heading on the list and empty pages. */
-export const HEADLINE =
-	"max-w-[40ch] text-[clamp(24px,3.4vw,34px)] leading-[1.3] font-medium tracking-[-0.015em] text-balance";
+/** The large heading on the Library and the empty page. One per page. */
+export function PageHeading({
+	className,
+	children,
+	...props
+}: ComponentProps<"h1">) {
+	return (
+		<h1
+			{...props}
+			className={cn(
+				"max-w-[40ch] text-display leading-[1.3] font-medium tracking-[-0.015em] text-balance",
+				className,
+			)}
+		>
+			{children}
+		</h1>
+	);
+}
 
 /** Notes with an ink left edge: what to do about a skill. */
 export function Notes({ children }: { children: ReactNode }) {
@@ -39,17 +52,3 @@ export function Notes({ children }: { children: ReactNode }) {
 export function BusySpinner() {
 	return <Spinner role="presentation" aria-label={undefined} aria-hidden />;
 }
-
-export const STATUS_ICON: Record<Status, LucideIcon> = {
-	outdated: CircleArrowUpIcon,
-	edited: PencilIcon,
-	drift: GitCompareIcon,
-	warnings: TriangleAlertIcon,
-};
-
-export const STATUS_TEXT: Record<Status, string> = {
-	outdated: "text-outdated",
-	edited: "text-edited",
-	drift: "text-differs",
-	warnings: "text-problem",
-};

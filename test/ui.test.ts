@@ -11,8 +11,14 @@ import {
 	initWorkspace,
 	type Workspace,
 } from "../src/core/workspace.ts";
+import { adviceFor } from "../src/ui/client/lib/advice.ts";
 import { formatBytes, plural } from "../src/ui/client/lib/format.ts";
-import { filterRows, NO_FILTERS, toRows } from "../src/ui/client/lib/model.ts";
+import {
+	filterRows,
+	NO_FILTERS,
+	type Row,
+	toRows,
+} from "../src/ui/client/lib/model.ts";
 import { startUiServer, type UiServer } from "../src/ui/server.ts";
 
 let tmp: string;
@@ -224,6 +230,68 @@ describe("list model", () => {
 				status: "drift",
 			}).map((r) => r.name),
 		).toEqual(["alpha"]);
+	});
+});
+
+describe("skill advice", () => {
+	const row = (over: Partial<Row>): Row => ({
+		name: "beta",
+		description: "",
+		sources: [],
+		roots: [],
+		presence: {},
+		statuses: [],
+		upstream: [],
+		...over,
+	});
+
+	test("nothing to say about a skill with no statuses", () => {
+		expect(adviceFor({ name: "beta", drift: false }, row({}))).toEqual([]);
+	});
+
+	test("an outdated skill gets its update command; a failed check says why", () => {
+		const advice = adviceFor(
+			{ name: "beta", drift: false },
+			row({
+				statuses: ["outdated"],
+				upstream: [
+					{
+						skill: "beta",
+						copy: "~/.agents/skills/beta",
+						via: "skill-lock",
+						repo: "https://github.com/acme/skills.git",
+						installed: "a",
+						latest: "b",
+						status: "outdated",
+					},
+					{
+						skill: "beta",
+						copy: "~/.cursor/skills/beta",
+						via: "skill-lock",
+						repo: "r",
+						installed: "a",
+						status: "error",
+						error: "rate limited",
+					},
+				],
+			}),
+		);
+		expect(advice.map((a) => a.kind)).toEqual(["outdated", "error"]);
+		expect(advice[0]?.text).toStartWith("acme/skills has a newer version");
+		expect(advice[0]?.command).toBe("npx skills update beta");
+		expect(advice[1]?.text).toContain("rate limited");
+	});
+
+	test("edits warn more strongly when an update is waiting; drift is explained", () => {
+		const edited = (statuses: Row["statuses"]) =>
+			adviceFor({ name: "beta", drift: true }, row({ statuses })).map(
+				(a) => a.key,
+			);
+		expect(edited(["edited"])).toEqual(["edited", "drift"]);
+		expect(edited(["outdated", "edited"])).toEqual([
+			"edited-outdated",
+			"drift",
+		]);
 	});
 });
 

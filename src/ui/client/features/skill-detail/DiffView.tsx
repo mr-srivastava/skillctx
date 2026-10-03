@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { CodeBlock } from "@/components/code-block";
-import { Path, TOOLBAR } from "@/components/display";
+import { Path, Toolbar } from "@/components/display";
 import { Picker } from "@/components/picker";
 import { Problem } from "@/components/problem";
 import { copyDiffQuery } from "@/lib/queries";
@@ -34,11 +34,11 @@ export function DiffView({ skill }: { skill: SkillRecord }) {
 
 	return (
 		<>
-			<div className={cn(TOOLBAR, "mb-3.5")}>
+			<Toolbar className="mb-3.5">
 				<Picker items={copies} value={a} onChange={setA} label="Compare" />{" "}
 				<span className="text-ink-soft">with</span>{" "}
 				<Picker items={copies} value={b} onChange={setB} label="With" />
-			</div>
+			</Toolbar>
 			{a === b && (
 				<p className="my-4 text-ink-soft">Pick two different copies.</p>
 			)}

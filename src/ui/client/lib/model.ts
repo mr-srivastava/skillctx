@@ -4,7 +4,13 @@ import type {
 	UpstreamResult,
 } from "../../../core/upstream/index.ts";
 
-export type Status = "outdated" | "edited" | "drift" | "warnings";
+/**
+ * Something about a skill worth a reader's attention, in the order they're
+ * listed. How each looks is STATUS in components/status.tsx.
+ */
+export const STATUSES = ["outdated", "edited", "drift", "warnings"] as const;
+
+export type Status = (typeof STATUSES)[number];
 
 /** How a skill shows up in one location. */
 export type Presence = "folder" | "link" | "differs" | "absent";
@@ -136,10 +142,3 @@ export function filterRows(rows: Row[], f: Filters): Row[] {
 export function countBy(rows: Row[], status: Status): number {
 	return rows.filter((r) => r.statuses.includes(status)).length;
 }
-
-export const STATUS_LABEL: Record<Status, string> = {
-	outdated: "Outdated",
-	edited: "Edited",
-	drift: "Copies differ",
-	warnings: "Warnings",
-};

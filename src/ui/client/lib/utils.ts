@@ -23,6 +23,7 @@ export const cn = createCn({
 						"lead",
 						"heading",
 						"title",
+						"display",
 					],
 				},
 			],

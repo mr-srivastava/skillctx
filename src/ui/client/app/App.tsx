@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { FolderSearchIcon } from "lucide-react";
 import { useState } from "react";
-import { BusySpinner, HEADLINE } from "@/components/display";
+import { BusySpinner, PageHeading } from "@/components/display";
 import { Problem } from "@/components/problem";
 import { Button } from "@/components/ui/button";
 import { SkillDetail } from "@/features/skill-detail/SkillDetail";
@@ -9,7 +9,6 @@ import { SkillList, type SkillView } from "@/features/skill-list/SkillList";
 import type { Inventory } from "@/lib/api";
 import { type Filters, NO_FILTERS, toRows } from "@/lib/model";
 import { inventoryQuery, useRefresh } from "@/lib/queries";
-import { cn } from "@/lib/utils";
 import { type Busy, TopBar } from "./TopBar.tsx";
 import { useHashRoute } from "./useHashRoute.ts";
 
@@ -89,7 +88,7 @@ export function App() {
 			<main className={PAGE}>
 				{bar}
 				<section className="max-w-[52ch] py-12">
-					<h1 className={cn(HEADLINE, "mb-7")}>No inventory yet</h1>
+					<PageHeading className="mb-7">No inventory yet</PageHeading>
 					<p className="mb-5">
 						Scan your skill folders to see every skill on this machine and where
 						it lives.

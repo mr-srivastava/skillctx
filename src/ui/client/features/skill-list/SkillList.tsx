@@ -6,15 +6,10 @@ import {
 	XIcon,
 } from "lucide-react";
 import { Fragment, useEffect, useRef } from "react";
-import {
-	HEADLINE,
-	STATUS_ICON,
-	STATUS_TEXT,
-	TOOLBAR,
-	TOOLBAR_SELECT,
-} from "@/components/display";
+import { PageHeading, Toolbar } from "@/components/display";
 import { type PickerItem, Picker } from "@/components/picker";
 import { ListLegend, rootIcon } from "@/components/presence";
+import { STATUS } from "@/components/status";
 import { Button } from "@/components/ui/button";
 import {
 	InputGroup,
@@ -30,6 +25,7 @@ import {
 	filterRows,
 	NO_FILTERS,
 	type Row,
+	STATUSES,
 	type Status,
 } from "@/lib/model";
 import { cn } from "@/lib/utils";
@@ -49,34 +45,15 @@ function Headline({
 	filters: Filters;
 	setStatus: (s: Status | "") => void;
 }) {
-	const all: { status: Status; count: number; text: string }[] = [
-		{
-			status: "outdated",
-			count: countBy(rows, "outdated"),
-			text: "are outdated",
-		},
-		{
-			status: "edited",
-			count: countBy(rows, "edited"),
-			text: "were edited after install",
-		},
-		{
-			status: "drift",
-			count: countBy(rows, "drift"),
-			text: "have copies that differ",
-		},
-		{
-			status: "warnings",
-			count: countBy(rows, "warnings"),
-			text: "have broken frontmatter",
-		},
-	];
-	const parts = all.filter((p) => p.count > 0);
+	const parts = STATUSES.map((status) => ({
+		status,
+		count: countBy(rows, status),
+	})).filter((p) => p.count > 0);
 
 	return (
 		<div className="mt-7 mb-5 wide:mt-9">
 			<div className="flex items-center gap-3">
-				<h1 className={cn(HEADLINE, "text-[clamp(24px,3vw,30px)]")}>Library</h1>
+				<PageHeading>Library</PageHeading>
 				<span className="rounded-full border border-rule bg-raised px-2.5 py-0.5 text-caption font-medium tabular-nums text-ink-soft">
 					<span aria-hidden>{rows.length}</span>
 					<span className="sr-only">{plural(rows.length, "skill")}</span>
@@ -97,28 +74,27 @@ function Headline({
 							Needs attention
 						</span>
 						{parts.map((part) => {
-							const Icon = STATUS_ICON[part.status];
+							const { icon: Icon, tone, label, phrase } = STATUS[part.status];
 							const selected = filters.status === part.status;
+							const says = `${plural(part.count, "skill")} ${part.count === 1 ? phrase.one : phrase.many}.`;
 							return (
 								<button
 									key={part.status}
 									type="button"
 									className={cn(
 										"inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-caption font-medium transition-colors hover:bg-raised focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
-										STATUS_TEXT[part.status],
+										tone,
 										selected
 											? "border-current bg-current/10"
 											: "border-rule bg-transparent",
 									)}
 									aria-pressed={selected}
-									aria-label={`${part.count} ${part.text}. ${selected ? "Showing only these; press to show all." : "Press to show only these."}`}
+									aria-label={`${says} ${selected ? "Showing only these; press to show all." : "Press to show only these."}`}
 									onClick={() => setStatus(selected ? "" : part.status)}
 								>
 									<Icon aria-hidden className="size-3.5" />
 									<span className="tabular-nums">{part.count}</span>
-									<span>
-										{part.status === "drift" ? "copies differ" : part.status}
-									</span>
+									<span>{label.toLowerCase()}</span>
 								</button>
 							);
 						})}
@@ -202,7 +178,7 @@ export function SkillList({
 				setStatus={(status) => set({ status })}
 			/>
 
-			<div className={cn(TOOLBAR, "mb-4")}>
+			<Toolbar className="mb-4">
 				<InputGroup className="w-auto max-w-[420px] flex-[1_1_260px]">
 					<InputGroupAddon align="inline-start">
 						<SearchIcon aria-hidden />
@@ -226,21 +202,21 @@ export function SkillList({
 					value={filters.source}
 					onChange={(source) => set({ source })}
 					label="Installed by"
-					className={TOOLBAR_SELECT}
+					shrink
 				/>
 				<Picker
 					items={rootItems}
 					value={filters.root}
 					onChange={(root) => set({ root })}
 					label="Location"
-					className={TOOLBAR_SELECT}
+					shrink
 				/>
 				<Picker
 					items={sortItems}
 					value={filters.sort}
 					onChange={(sort) => set({ sort })}
 					label="Sort"
-					className={TOOLBAR_SELECT}
+					shrink
 				/>
 				{filtered && (
 					<Button
@@ -289,7 +265,7 @@ export function SkillList({
 						<ListIcon aria-hidden />
 					</Button>
 				</div>
-			</div>
+			</Toolbar>
 
 			<ListLegend
 				count={

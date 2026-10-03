@@ -6,11 +6,11 @@ import {
 	type LucideIcon,
 } from "lucide-react";
 import { Fragment, type ReactNode, useEffect, useRef, useState } from "react";
-import { Notes, Path, STATUS_ICON, STATUS_TEXT } from "@/components/display";
+import { Notes, Path } from "@/components/display";
 import { Hint } from "@/components/Hint";
 import { DiffersDot, ListLegend, LocationIcons } from "@/components/presence";
 import { Problem } from "@/components/problem";
-import { SkillStatuses } from "@/components/status";
+import { SkillStatuses, STATUS } from "@/components/status";
 import { Button } from "@/components/ui/button";
 import {
 	Item,
@@ -20,6 +20,7 @@ import {
 	ItemSeparator,
 } from "@/components/ui/item";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { type Advice, adviceFor } from "@/lib/advice";
 import { formatBytes, plural } from "@/lib/format";
 import { copyPresence, mainCopy, type Row } from "@/lib/model";
 import { cn } from "@/lib/utils";
@@ -30,7 +31,6 @@ import type {
 import {
 	provenanceDetails,
 	sourceLabel,
-	updateCommand,
 } from "../../../../core/provenance/kinds.ts";
 import { Contents } from "./Contents.tsx";
 import { DiffView } from "./DiffView.tsx";
@@ -92,85 +92,37 @@ function CopyButton({ text }: { text: string }) {
 	);
 }
 
-function shortRepo(url: string): string {
-	return url.replace(/^https:\/\/github\.com\//, "").replace(/\.git$/, "");
+/** The icon and colour for a piece of advice: its status's, or a problem's. */
+function adviceLook(kind: Advice["kind"]): { icon: LucideIcon; tone: string } {
+	return kind === "error"
+		? { icon: CircleAlertIcon, tone: "text-problem" }
+		: STATUS[kind];
 }
 
-function Advice({ skill, row }: { skill: SkillRecord; row?: Row }) {
-	const items: {
-		key: string;
-		icon: LucideIcon;
-		/** Text colour for the icon. */
-		tone: string;
-		text: string;
-		command?: string;
-	}[] = [];
-	for (const u of row?.upstream ?? []) {
-		const command =
-			u.status === "outdated"
-				? updateCommand(u.via, skill.name, u.copy)
-				: undefined;
-		if (command) {
-			items.push({
-				key: `up-${u.copy}-${u.via}`,
-				icon: STATUS_ICON.outdated,
-				tone: STATUS_TEXT.outdated,
-				text: `${shortRepo(u.repo)} has a newer version. To update:`,
-				command,
-			});
-		}
-		if (u.status === "error") {
-			items.push({
-				key: `err-${u.copy}`,
-				icon: CircleAlertIcon,
-				tone: "text-problem",
-				text: `Couldn't check for updates: ${u.error}`,
-			});
-		}
-	}
-	const edited = row?.statuses.includes("edited");
-	if (edited && row?.statuses.includes("outdated")) {
-		items.push({
-			key: "edited-outdated",
-			icon: STATUS_ICON.edited,
-			tone: STATUS_TEXT.edited,
-			text: "You edited this skill after installing it. Updating replaces those edits, so save anything you want to keep first.",
-		});
-	} else if (edited) {
-		items.push({
-			key: "edited",
-			icon: STATUS_ICON.edited,
-			tone: STATUS_TEXT.edited,
-			text: "You edited this skill after installing it. The next update will replace those edits.",
-		});
-	}
-	if (skill.drift) {
-		items.push({
-			key: "drift",
-			icon: STATUS_ICON.drift,
-			tone: STATUS_TEXT.drift,
-			text: "Agents reading different locations see different versions of this skill. Compare copies shows what differs.",
-		});
-	}
+function AdviceNotes({ skill, row }: { skill: SkillRecord; row?: Row }) {
+	const items = adviceFor(skill, row);
 	if (items.length === 0) return null;
 	return (
 		<Notes>
-			{items.map(({ key, icon: Icon, tone, text, command }) => (
-				<li key={key} className="flex gap-2.5">
-					<Icon aria-hidden className={cn("mt-1 size-4 shrink-0", tone)} />
-					<div className="min-w-0">
-						{text}
-						{command && (
-							<div className="mt-2 flex flex-wrap items-center gap-2">
-								<code className="max-w-full overflow-x-auto rounded-md border border-rule bg-paper px-2.5 py-1.5 font-mono text-caption whitespace-nowrap">
-									{command}
-								</code>
-								<CopyButton text={command} />
-							</div>
-						)}
-					</div>
-				</li>
-			))}
+			{items.map(({ key, kind, text, command }) => {
+				const { icon: Icon, tone } = adviceLook(kind);
+				return (
+					<li key={key} className="flex gap-2.5">
+						<Icon aria-hidden className={cn("mt-1 size-4 shrink-0", tone)} />
+						<div className="min-w-0">
+							{text}
+							{command && (
+								<div className="mt-2 flex flex-wrap items-center gap-2">
+									<code className="max-w-full overflow-x-auto rounded-md border border-rule bg-paper px-2.5 py-1.5 font-mono text-caption whitespace-nowrap">
+										{command}
+									</code>
+									<CopyButton text={command} />
+								</div>
+							)}
+						</div>
+					</li>
+				);
+			})}
 		</Notes>
 	);
 }
@@ -335,7 +287,7 @@ export function SkillDetail({
 		<article>
 			<Header skill={skill} row={row} roots={roots} />
 
-			<Advice skill={skill} row={row} />
+			<AdviceNotes skill={skill} row={row} />
 			{skill.copies.some((c) => c.diagnostics.length > 0) && (
 				<div className="mb-2 grid max-w-reading gap-2">
 					{skill.copies

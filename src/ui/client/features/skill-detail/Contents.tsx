@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { CodeBlock } from "@/components/code-block";
-import { Path, TOOLBAR } from "@/components/display";
+import { Path, Toolbar } from "@/components/display";
 import { Picker, type PickerItem } from "@/components/picker";
 import { Problem } from "@/components/problem";
 import { formatBytes } from "@/lib/format";
@@ -95,7 +95,7 @@ export function Contents({
 	return (
 		<div className="mt-6 grid gap-x-12 split:grid-cols-[minmax(0,1fr)_220px]">
 			<div className="min-w-0">
-				<div className={cn(TOOLBAR, "mb-2 empty:hidden")}>
+				<Toolbar className="mb-2 empty:hidden">
 					{skill.copies.length > 1 && (
 						<Picker
 							items={copies}
@@ -115,7 +115,7 @@ export function Contents({
 							label="File"
 						/>
 					)}
-				</div>
+				</Toolbar>
 				{listing && file && (
 					<p className="mb-6 text-caption text-ink-soft wrap-anywhere">
 						<Path>

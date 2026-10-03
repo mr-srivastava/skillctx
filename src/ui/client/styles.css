@@ -67,6 +67,8 @@
 	--text-lead: 16px;
 	--text-heading: 17px;
 	--text-title: 20px;
+	/* Page headings: grows with the window between phone and desktop. */
+	--text-display: clamp(24px, 3vw, 30px);
 
 	/* A comfortable line of prose: descriptions, notes, rendered files. */
 	--container-reading: 72ch;
