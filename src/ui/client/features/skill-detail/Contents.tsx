@@ -51,10 +51,7 @@ export function Contents({
 	const listingQuery = useQuery(copyFilesQuery(skill.name, copy));
 	const listing = listingQuery.data ?? null;
 	const file = picked ?? (listing ? entryFile(listing.files) : null);
-	const fileQuery = useQuery({
-		...copyFileQuery(skill.name, copy, file ?? ""),
-		enabled: file !== null,
-	});
+	const fileQuery = useQuery(copyFileQuery(skill.name, copy, file));
 	// Keyed by copy and path, so only the current selection's file shows.
 	const current = fileQuery.data ?? null;
 	const error = listingQuery.error?.message ?? fileQuery.error?.message ?? null;

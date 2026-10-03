@@ -1,11 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { FolderSearchIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { BusySpinner, HEADLINE } from "@/components/display";
 import { Problem } from "@/components/problem";
 import { Button } from "@/components/ui/button";
 import { SkillDetail } from "@/features/skill-detail/SkillDetail";
 import { SkillList, type SkillView } from "@/features/skill-list/SkillList";
+import type { Inventory } from "@/lib/api";
 import { type Filters, NO_FILTERS, toRows } from "@/lib/model";
 import { inventoryQuery, useRefresh } from "@/lib/queries";
 import { cn } from "@/lib/utils";
@@ -13,8 +14,17 @@ import { type Busy, TopBar } from "./TopBar.tsx";
 import { useHashRoute } from "./useHashRoute.ts";
 
 const PAGE = "mx-auto max-w-[1180px] px-4 pb-16 wide:px-8 wide:pb-24";
+
+/**
+ * The inventory plus the list rows derived from it. As a query `select`
+ * defined once, it reruns only when the inventory itself changes.
+ */
+function withRows(inventory: Inventory) {
+	return { ...inventory, rows: toRows(inventory.skills, inventory.upstream) };
+}
+
 export function App() {
-	const inventory = useQuery(inventoryQuery);
+	const inventory = useQuery({ ...inventoryQuery, select: withRows });
 	const data = inventory.data ?? null;
 	// Only a first load that fails replaces the page. A failed refetch (on
 	// window focus) keeps the inventory already shown and retries next time.
@@ -45,10 +55,7 @@ export function App() {
 		});
 	};
 
-	const rows = useMemo(
-		() => (data ? toRows(data.skills, data.upstream) : []),
-		[data],
-	);
+	const rows = data?.rows ?? [];
 
 	const bar = (
 		<TopBar

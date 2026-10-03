@@ -1,10 +1,11 @@
 import {
+	mutationOptions,
 	QueryClient,
 	queryOptions,
+	skipToken,
 	useMutation,
 	useQueryClient,
 } from "@tanstack/react-query";
-import type { RefreshResult } from "../../server.ts";
 import * as api from "./api.ts";
 
 /*
@@ -23,14 +24,19 @@ export function createQueryClient(): QueryClient {
 				// second, and the page says what went wrong.
 				retry: false,
 				refetchOnWindowFocus: false,
+				// The server is 127.0.0.1, so the browser's online state says
+				// nothing about it. The default ("online") would leave the page
+				// loading forever on a machine with no network (local-first).
+				networkMode: "always",
 			},
+			mutations: { networkMode: "always" },
 		},
 	});
 }
 
 export const inventoryQuery = queryOptions({
 	queryKey: ["inventory"],
-	queryFn: api.loadInventory,
+	queryFn: ({ signal }) => api.loadInventory(signal),
 	// `skillctx inventory` in a terminal rescans too; pick that up when the
 	// reader comes back to the page.
 	staleTime: 0,
@@ -40,41 +46,44 @@ export const inventoryQuery = queryOptions({
 export function copyFilesQuery(name: string, copy: number) {
 	return queryOptions({
 		queryKey: ["skill", name, "files", copy],
-		queryFn: () => api.copyFiles(name, copy),
+		queryFn: ({ signal }) => api.copyFiles(name, copy, signal),
 	});
 }
 
-export function copyFileQuery(name: string, copy: number, path: string) {
+/** One file of a copy; `path` null (not picked yet) fetches nothing. */
+export function copyFileQuery(name: string, copy: number, path: string | null) {
 	return queryOptions({
 		queryKey: ["skill", name, "file", copy, path],
-		queryFn: () => api.copyFile(name, copy, path),
+		queryFn:
+			path === null
+				? skipToken
+				: ({ signal }) => api.copyFile(name, copy, path, signal),
 	});
 }
 
+/** Comparing a copy with itself fetches nothing. */
 export function copyDiffQuery(name: string, a: number, b: number) {
 	return queryOptions({
 		queryKey: ["skill", name, "diff", a, b],
-		queryFn: () => api.copyDiff(name, a, b),
-		enabled: a !== b,
+		queryFn:
+			a === b ? skipToken : ({ signal }) => api.copyDiff(name, a, b, signal),
 	});
 }
 
 /**
  * Rescan (and with `check`, compare with upstream), then reload everything:
- * a rescan can change any skill's files, not just the inventory.
+ * a rescan can change any skill's files, not just the inventory. onSuccess
+ * returns the reload, so the mutation stays pending until the page has the
+ * new data. A refused refresh (ok: false) reloads nothing.
  */
-export async function refreshAll(
-	client: QueryClient,
-	check: boolean,
-): Promise<RefreshResult> {
-	const result = await api.refresh(check);
-	if (result.ok) await client.invalidateQueries();
-	return result;
+export function refreshMutation(client: QueryClient) {
+	return mutationOptions({
+		mutationKey: ["refresh"],
+		mutationFn: (check: boolean) => api.refresh(check),
+		onSuccess: (result) => (result.ok ? client.invalidateQueries() : undefined),
+	});
 }
 
 export function useRefresh() {
-	const client = useQueryClient();
-	return useMutation({
-		mutationFn: (check: boolean) => refreshAll(client, check),
-	});
+	return useMutation(refreshMutation(useQueryClient()));
 }

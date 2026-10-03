@@ -8,7 +8,8 @@ import type { RefreshResult } from "../../server.ts";
 
 /*
  * The client side of src/ui/server.ts: every request the page makes. Errors
- * carry the server's message when it sent one.
+ * carry the server's message when it sent one. Reads take an AbortSignal so
+ * a query can cancel a request it no longer needs (lib/queries.ts).
  */
 
 export interface Inventory {
@@ -17,8 +18,8 @@ export interface Inventory {
 	skills: SkillRecord[];
 }
 
-async function getJson<T>(url: string): Promise<T> {
-	const res = await fetch(url);
+async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> {
+	const res = await fetch(url, { signal });
 	if (!res.ok) {
 		const body = (await res.json().catch(() => null)) as {
 			error?: string;
@@ -28,11 +29,11 @@ async function getJson<T>(url: string): Promise<T> {
 	return (await res.json()) as T;
 }
 
-export async function loadInventory(): Promise<Inventory> {
+export async function loadInventory(signal?: AbortSignal): Promise<Inventory> {
 	const [summary, upstream, skills] = await Promise.all([
-		getJson<InventorySummary | null>("/api/summary"),
-		getJson<UpstreamReport | null>("/api/upstream"),
-		getJson<SkillRecord[]>("/api/skills"),
+		getJson<InventorySummary | null>("/api/summary", signal),
+		getJson<UpstreamReport | null>("/api/upstream", signal),
+		getJson<SkillRecord[]>("/api/skills", signal),
 	]);
 	return { summary, upstream, skills };
 }
@@ -62,15 +63,22 @@ export function copyDiff(
 	name: string,
 	a: number,
 	b: number,
+	signal?: AbortSignal,
 ): Promise<CopyDiff> {
 	return getJson<CopyDiff>(
 		`/api/skills/${encodeURIComponent(name)}/diff?a=${a}&b=${b}`,
+		signal,
 	);
 }
 
-export function copyFiles(name: string, copy: number): Promise<CopyFiles> {
+export function copyFiles(
+	name: string,
+	copy: number,
+	signal?: AbortSignal,
+): Promise<CopyFiles> {
 	return getJson<CopyFiles>(
 		`/api/skills/${encodeURIComponent(name)}/files?copy=${copy}`,
+		signal,
 	);
 }
 
@@ -78,8 +86,10 @@ export function copyFile(
 	name: string,
 	copy: number,
 	file: string,
+	signal?: AbortSignal,
 ): Promise<FileText> {
 	return getJson<FileText>(
 		`/api/skills/${encodeURIComponent(name)}/file?copy=${copy}&path=${encodeURIComponent(file)}`,
+		signal,
 	);
 }
