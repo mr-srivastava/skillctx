@@ -1,9 +1,12 @@
 // Bun Snapshot v1, https://bun.sh/docs/test/snapshots
 
 exports[`golden inventory inventory --check output is unchanged: .gitignore 1`] = `
-"# Rebuildable caches and per-machine settings (ADR-009)
+"# Rebuildable caches and per-machine state (ADR-009, ADR-023)
 .cache/
 local.yaml
+local/
+build/
+library/fetched/
 "
 `;
 

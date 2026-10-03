@@ -14,7 +14,9 @@ import path from "node:path";
 import { main } from "../src/cli/index.ts";
 import { fromPortable, toPortable } from "../src/core/paths.ts";
 import {
+	ensureLayout,
 	type Env,
+	IGNORED,
 	initWorkspace,
 	LAYOUT,
 	resolveWorkspace,
@@ -90,6 +92,59 @@ describe("initWorkspace", () => {
 		mkdirSync(dir);
 		writeFileSync(path.join(dir, "notes.txt"), "hi");
 		expect(() => initWorkspace("~/busy", env)).toThrow(WorkspaceError);
+	});
+});
+
+describe("ensureLayout", () => {
+	test("a new workspace ignores every per-machine folder", () => {
+		const { workspace } = initWorkspace("~/sk", env);
+		const lines = readFileSync(
+			path.join(workspace.root, ".gitignore"),
+			"utf8",
+		).split("\n");
+		for (const line of IGNORED) expect(lines).toContain(line);
+	});
+
+	test("a pre-Phase-1 workspace gains the missing lines once, keeping its own", () => {
+		const { workspace } = initWorkspace("~/sk", env);
+		const file = path.join(workspace.root, ".gitignore");
+		writeFileSync(file, "# mine\n.cache/\nlocal.yaml\nnotes/");
+		rmSync(path.join(workspace.root, "library"), { recursive: true });
+		ensureLayout(workspace);
+		const first = readFileSync(file, "utf8");
+		expect(first).toBe(
+			"# mine\n.cache/\nlocal.yaml\nnotes/\nlocal/\nbuild/\nlibrary/fetched/\n",
+		);
+		expect(existsSync(path.join(workspace.root, "library"))).toBe(true);
+		ensureLayout(workspace);
+		expect(readFileSync(file, "utf8")).toBe(first);
+	});
+});
+
+describe("Workspace.replaceFolder", () => {
+	test("copies the listed files and replaces what was there", () => {
+		const { workspace } = initWorkspace("~/sk", env);
+		const src = path.join(tmp, "src");
+		mkdirSync(path.join(src, "refs"), { recursive: true });
+		writeFileSync(path.join(src, "SKILL.md"), "a");
+		writeFileSync(path.join(src, "refs/x.md"), "b");
+		writeFileSync(path.join(src, "skip.txt"), "c");
+		workspace.write("build/s/old.md", "old");
+		workspace.replaceFolder("build/s", src, ["SKILL.md", "refs/x.md"]);
+		const out = path.join(workspace.root, "build/s");
+		expect(readFileSync(path.join(out, "refs/x.md"), "utf8")).toBe("b");
+		expect(existsSync(path.join(out, "skip.txt"))).toBe(false);
+		expect(existsSync(path.join(out, "old.md"))).toBe(false);
+	});
+
+	test("refuses targets and files outside the workspace", () => {
+		const { workspace } = initWorkspace("~/sk", env);
+		expect(() => workspace.replaceFolder("../out", tmp, [])).toThrow(
+			WorkspaceError,
+		);
+		expect(() =>
+			workspace.replaceFolder("build/s", tmp, ["../../../escape"]),
+		).toThrow(WorkspaceError);
 	});
 });
 
