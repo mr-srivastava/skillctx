@@ -21,24 +21,38 @@ export interface Row {
 	upstream: UpstreamResult[];
 }
 
+/** The copy most locations point at counts as the main one. */
+export function mainCopy(
+	s: SkillRecord,
+): SkillRecord["copies"][number] | undefined {
+	return [...s.copies].sort((a, b) => b.seenIn.length - a.seenIn.length)[0];
+}
+
 /**
- * The copy most locations point at counts as the main one; locations that
- * hold a copy with different content are marked "differs".
+ * How one copy shows up in each location that holds it: "differs" when its
+ * content isn't the main copy's.
  */
-function presenceOf(s: SkillRecord): Record<string, Presence> {
-	const main = [...s.copies].sort(
-		(a, b) => b.seenIn.length - a.seenIn.length,
-	)[0];
-	const out: Record<string, Presence> = {};
-	for (const copy of s.copies) {
-		for (const e of copy.seenIn) {
-			const here: Presence =
-				copy.hash !== main?.hash ? "differs" : e.symlink ? "link" : "folder";
-			const prev = out[e.root];
-			// A real folder or a differing copy says more than a symlink.
-			if (!prev || prev === "link") out[e.root] = here;
-		}
+export function copyPresence(
+	s: SkillRecord,
+	copy: SkillRecord["copies"][number],
+	main = mainCopy(s),
+	out: Record<string, Presence> = {},
+): Record<string, Presence> {
+	const differs = copy.hash !== main?.hash;
+	for (const e of copy.seenIn) {
+		const here: Presence = differs ? "differs" : e.symlink ? "link" : "folder";
+		const prev = out[e.root];
+		// A real folder or a differing copy says more than a symlink.
+		if (!prev || prev === "link") out[e.root] = here;
 	}
+	return out;
+}
+
+/** Every location's presence, across all copies of the skill. */
+function presenceOf(s: SkillRecord): Record<string, Presence> {
+	const main = mainCopy(s);
+	const out: Record<string, Presence> = {};
+	for (const copy of s.copies) copyPresence(s, copy, main, out);
 	return out;
 }
 

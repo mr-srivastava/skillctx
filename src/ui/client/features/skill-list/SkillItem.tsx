@@ -1,12 +1,12 @@
-import { STATUS_ICON, STATUS_TEXT } from "@/components/display";
 import { LocationIcons } from "@/components/presence";
+import { SkillStatuses } from "@/components/status";
 import {
 	Item,
 	ItemActions,
 	ItemContent,
 	ItemDescription,
 } from "@/components/ui/item";
-import { type Row, STATUS_LABEL } from "@/lib/model";
+import type { Row } from "@/lib/model";
 import { cn } from "@/lib/utils";
 
 export function SkillRow({ row, roots }: { row: Row; roots: string[] }) {
@@ -69,43 +69,5 @@ function SkillName({
 		>
 			{row.name}
 		</a>
-	);
-}
-
-function SkillStatuses({
-	row,
-	compact = false,
-}: {
-	row: Row;
-	compact?: boolean;
-}) {
-	// In list rows the column keeps its width when empty, so logos line up.
-	if (compact && row.statuses.length === 0) return null;
-	return (
-		<div
-			className={cn(
-				"flex gap-1",
-				compact
-					? "flex-wrap justify-end"
-					: "min-w-[130px] flex-col wide:w-[130px]",
-			)}
-		>
-			{row.statuses.map((status) => {
-				const Icon = STATUS_ICON[status];
-				return (
-					<span
-						key={status}
-						className={cn(
-							"flex items-center gap-1.5 text-caption font-medium whitespace-nowrap",
-							STATUS_TEXT[status],
-							compact && "rounded-full bg-current/10 px-2 py-0.5 text-[11px]",
-						)}
-					>
-						<Icon aria-hidden className="size-3.5 shrink-0" />
-						{STATUS_LABEL[status]}
-					</span>
-				);
-			})}
-		</div>
 	);
 }

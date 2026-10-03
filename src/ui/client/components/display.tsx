@@ -14,7 +14,13 @@ export function Path({ children }: { children: ReactNode }) {
 	return <span className="font-mono text-[0.86em]">{children}</span>;
 }
 
-export const H2 = "mt-10 mb-2.5 text-heading font-semibold";
+/** The bordered strip that holds a page's pickers and filters. */
+export const TOOLBAR =
+	"flex flex-wrap items-center gap-2 rounded-md border border-rule bg-raised/40 p-2";
+
+/** Pickers in a toolbar shrink to fit rather than push the row wide. */
+export const TOOLBAR_SELECT =
+	"max-w-[min(42vw,12rem)] overflow-hidden [&_[data-slot=select-value]]:min-w-0 [&_[data-slot=select-value]]:overflow-hidden";
 
 /** The large sentence-style heading on the list and empty pages. */
 export const HEADLINE =
@@ -47,8 +53,5 @@ export const STATUS_TEXT: Record<Status, string> = {
 	drift: "text-differs",
 	warnings: "text-problem",
 };
-
-export const DESC =
-	"mt-0.5 line-clamp-2 max-w-[64ch] text-caption text-ink-soft";
 
 /** Marks a logo whose copy differs from the one most locations hold. */

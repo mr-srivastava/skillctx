@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Path } from "@/components/display";
+import { Path, TOOLBAR } from "@/components/display";
 import { Problem } from "@/components/problem";
 import {
 	Select,
@@ -132,7 +132,7 @@ export function Contents({
 	return (
 		<div className="mt-6 grid gap-x-12 split:grid-cols-[minmax(0,1fr)_220px]">
 			<div className="min-w-0">
-				<div className="mb-2 flex flex-wrap items-center gap-2">
+				<div className={cn(TOOLBAR, "mb-2 empty:hidden")}>
 					{skill.copies.length > 1 && (
 						<Select
 							items={copies}

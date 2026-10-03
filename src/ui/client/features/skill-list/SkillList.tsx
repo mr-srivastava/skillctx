@@ -6,7 +6,13 @@ import {
 	XIcon,
 } from "lucide-react";
 import { Fragment, useEffect, useRef } from "react";
-import { HEADLINE, STATUS_ICON, STATUS_TEXT } from "@/components/display";
+import {
+	HEADLINE,
+	STATUS_ICON,
+	STATUS_TEXT,
+	TOOLBAR,
+	TOOLBAR_SELECT,
+} from "@/components/display";
 import { DiffersDot, rootIcon } from "@/components/presence";
 import { Button } from "@/components/ui/button";
 import {
@@ -202,7 +208,7 @@ export function SkillList({
 				setStatus={(status) => set({ status })}
 			/>
 
-			<div className="mb-4 flex flex-wrap items-center gap-2 rounded-md border border-rule bg-raised/40 p-2">
+			<div className={cn(TOOLBAR, "mb-4")}>
 				<InputGroup className="w-auto max-w-[420px] flex-[1_1_260px]">
 					<InputGroupAddon align="inline-start">
 						<SearchIcon aria-hidden />
@@ -226,10 +232,7 @@ export function SkillList({
 					value={filters.source}
 					onValueChange={(v) => set({ source: v ?? "" })}
 				>
-					<SelectTrigger
-						aria-label="Installed by"
-						className="max-w-[min(42vw,12rem)] overflow-hidden [&_[data-slot=select-value]]:min-w-0 [&_[data-slot=select-value]]:overflow-hidden"
-					>
+					<SelectTrigger aria-label="Installed by" className={TOOLBAR_SELECT}>
 						<SelectValue />
 					</SelectTrigger>
 					<SelectContent>
@@ -245,10 +248,7 @@ export function SkillList({
 					value={filters.root}
 					onValueChange={(v) => set({ root: v ?? "" })}
 				>
-					<SelectTrigger
-						aria-label="Location"
-						className="max-w-[min(42vw,12rem)] overflow-hidden [&_[data-slot=select-value]]:min-w-0 [&_[data-slot=select-value]]:overflow-hidden"
-					>
+					<SelectTrigger aria-label="Location" className={TOOLBAR_SELECT}>
 						<SelectValue />
 					</SelectTrigger>
 					<SelectContent>
@@ -264,10 +264,7 @@ export function SkillList({
 					value={filters.sort}
 					onValueChange={(v) => v !== null && set({ sort: v })}
 				>
-					<SelectTrigger
-						aria-label="Sort"
-						className="max-w-[min(42vw,12rem)] overflow-hidden [&_[data-slot=select-value]]:min-w-0 [&_[data-slot=select-value]]:overflow-hidden"
-					>
+					<SelectTrigger aria-label="Sort" className={TOOLBAR_SELECT}>
 						<SelectValue />
 					</SelectTrigger>
 					<SelectContent>

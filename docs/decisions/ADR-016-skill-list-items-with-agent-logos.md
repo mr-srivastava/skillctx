@@ -1,7 +1,7 @@
 # ADR-016: Skill list as items with agent logos
 
 ## Status
-Accepted. Supersedes two conventions in ADR-012: "icons come from `lucide-react` only" and "the presence squares stay custom" (for the skill list).
+Accepted. Supersedes two conventions in ADR-012: "icons come from `lucide-react` only" and "the presence squares stay custom" (for the skill list). ADR-019 applies the same layout to the skill page and removes its presence squares.
 
 ## Date
 2026-10-02

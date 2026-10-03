@@ -5,7 +5,7 @@ import {
 	type LucideIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Path } from "@/components/display";
+import { Path, TOOLBAR } from "@/components/display";
 import { Problem } from "@/components/problem";
 import {
 	Select,
@@ -79,7 +79,7 @@ export function DiffView({ skill }: { skill: SkillRecord }) {
 
 	return (
 		<>
-			<div className="mb-3.5 flex flex-wrap items-center gap-2">
+			<div className={cn(TOOLBAR, "mb-3.5")}>
 				{pick(a, setA, "Compare")} <span className="text-ink-soft">with</span>{" "}
 				{pick(b, setB, "With")}
 			</div>
