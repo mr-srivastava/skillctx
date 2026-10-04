@@ -142,8 +142,19 @@ describe("adopt", () => {
 		writeFileSync(path.join(home, ".agents/skills/beta/extra.md"), "new\n");
 		await scan();
 		expect(() => adopt(ws, home, { name: "beta", now: NOW })).toThrow(
-			/Phase 2/,
+			/adopted from ~\/\.agents\/skills\/beta on .*has changed since.*Phase 2/,
 		);
+	});
+
+	test("a different drifted copy of an adopted name says which copies differ", () => {
+		const main = adopt(ws, home, { name: "gamma", now: NOW });
+		expect(() =>
+			adopt(ws, home, {
+				name: "gamma",
+				copy: main.copy === 0 ? 1 : 0,
+				now: NOW,
+			}),
+		).toThrow(/differs from the one adopted from ~\/\.agents\/skills\/gamma/);
 	});
 
 	test("a folder edited since the last scan is refused", () => {

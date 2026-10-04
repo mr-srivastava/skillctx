@@ -198,21 +198,29 @@ export function plan(input: PlanInput): Plan {
 	]);
 	const present = (f: FolderView) =>
 		chosen.includes(f.id) || OTHERS.has(f.state);
+	// Before applying: any entry for this skill, ours or another tool's.
+	const presentNow = (f: FolderView) => f.state !== "missing";
 	const exposed = unchosen.filter((a) =>
 		foldersOf(a).some((id) => chosen.includes(id)),
 	);
 	for (const agent of [...reachable, ...exposed]) {
-		const seen = foldersOf(agent)
+		const views = foldersOf(agent)
 			.map((id) => byId.get(id))
-			.filter((f): f is FolderView => f !== undefined && present(f));
-		if (seen.length > 1)
-			warnings.push(
-				`${agentLabel(agent)} will see ${input.skill} ${seen.length} times: ${seen.map((f) => f.path).join(", ")}`,
-			);
+			.filter((f): f is FolderView => f !== undefined);
+		const seen = views.filter(present);
+		if (seen.length < 2) continue;
+		const paths = seen.map((f) => f.path).join(", ");
+		// Say whether this deploy adds the duplicate or it was already there
+		// (e.g. npx skills linking one folder into every agent's).
+		warnings.push(
+			seen.length > views.filter(presentNow).length
+				? `${agentLabel(agent)} will see ${input.skill} ${seen.length} times: ${paths}`
+				: `${agentLabel(agent)} already sees ${input.skill} ${seen.length} times; this deploy adds none: ${paths}`,
+		);
 	}
 	if (exposed.length > 0)
 		warnings.push(
-			`Also visible to ${exposed.map(agentLabel).join(", ")}, which read the same folder.`,
+			`Also visible to ${exposed.map(agentLabel).join(", ")}, which ${exposed.length === 1 ? "reads" : "read"} the same folder.`,
 		);
 	for (const op of ops)
 		if (op.kind === "forget")
