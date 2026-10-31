@@ -2,7 +2,9 @@
 
 A local skill manager for coding agents. Install, deploy and edit skills without losing upstream updates, see where every skill came from and whether it's used, and later compile project-specific skills. Skills installed by other tools (`npx skills`, `gh skill`, Skills Manager) are never modified; skillctx reads them, and can adopt them into its own library. All its data lives in one workspace folder you choose and can back up to your own GitHub repo. "skillctx" is a working name.
 
-Status: Phase 0 (inventory and local web UI) works. Phase 1 is in progress: adopting skills into a library, importing Skills Manager's library, and deploying into agent folders work from the CLI, and adopting and deploying also work from each skill's page in the UI ([ADR-021](docs/decisions/ADR-021-skillctx-becomes-a-skill-manager.md), [ADR-022](docs/decisions/ADR-022-deploying-into-agent-folders.md)). The current plan is [tasks/phase-1.md](tasks/phase-1.md).
+Status: paused. Nothing is shipped or released, and there is no plan to ship for now. The code builds and the tests pass; it is kept as is until work resumes.
+
+Phase 0 (inventory and local web UI) works. Phase 1 is in progress: adopting skills into a library, importing Skills Manager's library, and deploying into agent folders work from the CLI, and adopting and deploying also work from each skill's page in the UI ([ADR-021](docs/decisions/ADR-021-skillctx-becomes-a-skill-manager.md), [ADR-022](docs/decisions/ADR-022-deploying-into-agent-folders.md)). The current plan is [tasks/phase-1.md](tasks/phase-1.md).
 
 ## Docs
 
